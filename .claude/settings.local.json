@@ -1,11 +1,21 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh auth:*)",
+      "Bash(brew install:*)",
+      "mcp__task-master-ai__get_tasks",
+      "mcp__task-master-ai__next_task",
+      "mcp__task-master-ai__set_task_status",
+      "mcp__task-master-ai__get_task",
+      "Bash(python3:*)",
+      "Bash(python -m pytest tests/test_event_hub.py -v)"
+    ]
+  },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "task-master-ai"
-  ],
-  "permissions": {
-    "allow": [
-      "Bash(git add:*)"
-    ]
-  }
+  ]
 }

@@ -65,7 +65,7 @@
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -73,7 +73,7 @@
             "description": "core/event_hub.py 파일에 EventHub 클래스의 기본 구조를 정의하고 초기화 메서드를 구현합니다.",
             "dependencies": [],
             "details": "EventHub 클래스를 생성하고 구독자 저장을 위한 내부 데이터 구조(딕셔너리)를 초기화합니다. 스레드 안전성을 위한 Lock 객체도 함께 초기화합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -84,7 +84,7 @@
               "2.1"
             ],
             "details": "event_type을 키로 하고 핸들러 리스트를 값으로 하는 구독자 관리 시스템을 구현합니다. 스레드 안전성을 보장하기 위해 Lock을 사용합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -95,7 +95,7 @@
               "2.2"
             ],
             "details": "비동기 핸들러와 동기 핸들러를 모두 지원하도록 구현합니다. asyncio.create_task를 사용하여 비동기 핸들러를 실행하고, 일반 함수는 직접 호출합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -106,7 +106,7 @@
               "2.3"
             ],
             "details": "threading.RLock 사용으로 재진입 가능한 락 구현, 비동기 핸들러 실행 시 예외 처리 추가, 핸들러 실행 실패가 다른 핸들러에 영향을 주지 않도록 격리합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -117,7 +117,7 @@
               "2.4"
             ],
             "details": "MARKET_DATA_RECEIVED, TRADING_SIGNAL_GENERATED 등의 이벤트 타입 상수를 정의합니다. 단일/다중 구독자, 비동기 핸들러, 구독자가 없는 경우의 발행 등을 테스트합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -676,7 +676,7 @@
     ],
     "metadata": {
       "created": "2025-09-21T14:07:37.892Z",
-      "updated": "2025-09-21T17:04:51.816Z",
+      "updated": "2025-09-21T22:15:51.182Z",
       "description": "Tasks for master context"
     }
   }

@@ -1,0 +1,93 @@
+{
+	"meta": {
+		"generatedAt": "2025-09-21T14:26:11.348Z",
+		"tasksAnalyzed": 10,
+		"totalTasks": 10,
+		"analysisCount": 10,
+		"thresholdScore": 5,
+		"projectName": "Taskmaster",
+		"usedResearch": false
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Initialize Project Structure and Core Infrastructure",
+			"complexityScore": 3,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "프로젝트 초기 구조 설정을 위해 디렉토리 생성, 종속성 관리 설정, 설정 관리자 구현, 로깅 시스템 구현으로 세분화하여 각각을 독립적인 서브태스크로 나누어 구현하세요.",
+			"reasoning": "기본적인 프로젝트 설정 작업으로 복잡성은 낮으나, 향후 모든 컴포넌트의 기반이 되는 중요한 작업입니다. 디렉토리 구조, requirements.txt, ConfigManager, Logger 등 독립적인 4개 컴포넌트로 구성됩니다."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Implement Event-Driven Core with Event Hub",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "이벤트 허브 아키텍처를 위해 기본 EventHub 클래스 설계, 발행-구독 메커니즘 구현, 스레드 안전성 보장, 비동기 핸들러 지원, 이벤트 타입 상수 정의로 세분화하여 구현하세요.",
+			"reasoning": "전체 시스템의 핵심 아키텍처 컴포넌트로 높은 복잡성을 가집니다. 스레드 안전성, 비동기 처리, 발행-구독 패턴 등 고급 프로그래밍 개념이 필요하며, 향후 모든 모듈 간 통신의 기반이 됩니다."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Develop Binance API Client and WebSocket Manager",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "바이낸스 연동을 위해 API 클라이언트 래퍼 구현, 인증 시스템 설정, WebSocket 연결 관리자 구현, 자동 재연결 로직, 실시간 데이터 스트림 처리, EventHub 통합으로 세분화하여 구현하세요.",
+			"reasoning": "외부 API 통합과 WebSocket 연결 관리가 포함된 복잡한 태스크입니다. 네트워크 연결 안정성, 인증, 실시간 데이터 처리, 오류 복구 등 다양한 기술적 도전이 있습니다."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Create Market Data Processor",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "시장 데이터 처리를 위해 원시 데이터 파싱 로직, 캔들 집계 알고리즘, MarketData 객체 생성, EventHub 연동 및 데이터 검증으로 세분화하여 구현하세요.",
+			"reasoning": "데이터 변환 및 처리 로직이 중심인 중간 복잡성 태스크입니다. WebSocket에서 받은 원시 데이터를 구조화된 형태로 변환하는 작업이 필요합니다."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Define Strategy Interface and Implement Basic ICT Strategy",
+			"complexityScore": 8,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "ICT 전략 구현을 위해 추상 Strategy 인터페이스 설계, ICT Order Block 감지 알고리즘, 패턴 인식 로직, TradingSignal 생성, 백테스팅 검증, EventHub 신호 발행으로 세분화하여 구현하세요.",
+			"reasoning": "ICT 이론에 기반한 복잡한 금융 알고리즘 구현이 필요한 고복잡성 태스크입니다. Order Block 패턴 인식, 시장 구조 분석 등 전문적인 트레이딩 지식과 고급 데이터 분석 기술이 요구됩니다."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Implement Basic Risk Management Module",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "리스크 관리를 위해 포지션 사이징 계산 알고리즘, 위험도 기반 계산 로직, 손절/익절 레벨 설정, 계좌 잔고 기반 리스크 평가, ORDER_REQUEST 이벤트 생성으로 세분화하여 구현하세요.",
+			"reasoning": "금융 리스크 관리 로직 구현이 필요한 중고복잡성 태스크입니다. 수학적 계산, 리스크 평가, 포지션 관리 등 정확성이 중요한 금융 로직이 포함됩니다."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Develop Order Execution Engine",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "주문 실행을 위해 주문 요청 처리 로직, 바이낸스 주문 전송, 주문 상태 모니터링, 체결 확인 처리, 오류 처리 및 재시도, ORDER_FILLED 이벤트 발행으로 세분화하여 구현하세요.",
+			"reasoning": "실제 거래 실행을 담당하는 중요하고 복잡한 태스크입니다. API 호출, 주문 상태 관리, 오류 처리, 실시간 모니터링 등 높은 신뢰성이 요구되는 복잡한 로직이 필요합니다."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Implement Portfolio Manager",
+			"complexityScore": 5,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "포트폴리오 관리를 위해 포지션 상태 추적 시스템, 잔고 업데이트 로직, 미실현 손익 계산, 포지션 변경 이벤트 처리, 계좌 정보 주기적 동기화로 세분화하여 구현하세요.",
+			"reasoning": "포트폴리오 상태 관리와 회계 로직이 필요한 중간 복잡성 태스크입니다. 포지션 추적, 손익 계산, 상태 동기화 등의 기능이 포함됩니다."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Integrate Discord Notification System",
+			"complexityScore": 4,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Discord 알림을 위해 Discord 클라이언트 설정, 메시지 포맷팅 시스템, 이벤트 구독 및 처리, 웹훅 전송 및 오류 처리로 세분화하여 구현하세요.",
+			"reasoning": "비교적 단순한 알림 시스템 구현으로 중저복잡성 태스크입니다. Discord API 연동과 메시지 포맷팅이 주요 작업이며, 기술적 난이도는 높지 않습니다."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Create Main Application Entrypoint and Integration",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "메인 애플리케이션 통합을 위해 컴포넌트 초기화 시퀀스, 이벤트 구독 연결, 비동기 루프 관리, 시스템 시작/종료 로직, 통합 테스트 및 검증으로 세분화하여 구현하세요.",
+			"reasoning": "모든 컴포넌트를 통합하는 중고복잡성 태스크입니다. 의존성 관리, 초기화 순서, 비동기 루프 관리 등 시스템 아키텍처 전반에 대한 이해가 필요합니다."
+		}
+	]
+}
