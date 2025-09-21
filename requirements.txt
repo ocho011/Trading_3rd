@@ -1,0 +1,32 @@
+# Trading Bot Dependencies
+# Core trading and exchange libraries
+python-binance==1.0.19
+
+# Async HTTP and WebSocket libraries
+aiohttp==3.8.6
+websockets==11.0.3
+
+# Data analysis and numerical computation
+pandas==2.1.1
+numpy==1.24.4
+
+# Notification systems
+discord-webhook==1.3.0
+
+# Configuration management
+python-dotenv==1.0.0
+
+# Additional essential libraries for trading bot
+configparser==5.3.0
+asyncio-throttle==1.0.2
+ccxt==4.1.9
+pydantic==2.4.2
+requests==2.31.0
+
+# Development and testing dependencies
+pytest==7.4.2
+pytest-asyncio==0.21.1
+black==23.9.1
+flake8==6.1.0
+isort==5.12.0
+pylint==2.17.6

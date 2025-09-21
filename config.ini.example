@@ -1,0 +1,14 @@
+[api]
+binance_api_key = your_binance_api_key_here
+binance_secret_key = your_binance_secret_key_here
+
+[notification]
+discord_webhook_url = your_discord_webhook_url_here
+
+[logging]
+log_level = INFO
+
+[trading]
+trading_mode = paper
+max_position_size = 0.1
+risk_percentage = 2.0

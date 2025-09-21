@@ -1,0 +1,683 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize Project Structure and Core Infrastructure",
+        "description": "Set up the foundational directory structure, dependency management, configuration, and logging systems as outlined in the PRD. This task establishes the skeleton of the application.",
+        "details": "Create the main directory structure: `trading_bot/core`, `trading_bot/market_data`, `trading_bot/strategies`, etc. Initialize a `requirements.txt` file with `python-binance`, `aiohttp`, `websockets`, `pandas`, `numpy`, and `discord-webhook`. Implement `core/config_manager.py` to load settings (API keys, Discord URL) from a `.env` or `config.ini` file. Implement `core/logger.py` for application-wide logging.",
+        "testStrategy": "Verify that the directory structure is created correctly. Write a unit test for `ConfigManager` to ensure it correctly loads parameters from a sample config file. Confirm that the logger can write messages to both console and a file.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "프로젝트 디렉토리 구조 생성",
+            "description": "트레이딩 봇 애플리케이션의 기본 디렉토리 구조를 생성합니다",
+            "dependencies": [],
+            "details": "trading_bot/core, trading_bot/market_data, trading_bot/strategies, trading_bot/risk_management, trading_bot/notification 등의 주요 디렉토리를 생성하고 각 디렉토리에 __init__.py 파일을 추가하여 Python 패키지로 설정합니다",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "프로젝트 종속성 관리 설정",
+            "description": "requirements.txt 파일을 생성하고 필요한 Python 패키지들을 정의합니다",
+            "dependencies": [
+              "1.1"
+            ],
+            "details": "python-binance, aiohttp, websockets, pandas, numpy, discord-webhook 등 필수 라이브러리들을 포함한 requirements.txt 파일을 생성하고 적절한 버전을 명시합니다",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "설정 관리자 구현",
+            "description": "애플리케이션 설정을 관리하는 ConfigManager 클래스를 구현합니다",
+            "dependencies": [
+              "1.1"
+            ],
+            "details": "core/config_manager.py에 ConfigManager 클래스를 구현하여 .env 또는 config.ini 파일에서 API 키, Discord URL 등의 설정값을 로드하고 관리하는 기능을 제공합니다",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "로깅 시스템 구현",
+            "description": "애플리케이션 전체에서 사용할 로깅 시스템을 구현합니다",
+            "dependencies": [
+              "1.1"
+            ],
+            "details": "core/logger.py에 애플리케이션 전체에서 사용할 로거를 구현하여 콘솔과 파일 모두에 로그를 출력할 수 있도록 설정하고, 로그 레벨 및 포맷을 관리합니다",
+            "status": "done",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Implement Event-Driven Core with Event Hub",
+        "description": "Develop the central `EventHub` based on a publish-subscribe pattern. This component is critical for decoupling all other modules and enabling the asynchronous architecture.",
+        "details": "In `core/event_hub.py`, create an `EventHub` class. It should have methods like `subscribe(event_type, handler)` and `publish(event_type, data)`. The implementation must be thread-safe and support asynchronous handlers (`async def`). Define initial event types as constants (e.g., `MARKET_DATA_RECEIVED`, `TRADING_SIGNAL_GENERATED`).",
+        "testStrategy": "Write unit tests to verify that a subscriber receives an event published to a specific topic. Test with multiple subscribers for the same event. Ensure that publishing an event to a topic with no subscribers does not cause an error. Test asynchronous handler execution.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "EventHub 클래스 기본 구조 설계 및 생성",
+            "description": "core/event_hub.py 파일에 EventHub 클래스의 기본 구조를 정의하고 초기화 메서드를 구현합니다.",
+            "dependencies": [],
+            "details": "EventHub 클래스를 생성하고 구독자 저장을 위한 내부 데이터 구조(딕셔너리)를 초기화합니다. 스레드 안전성을 위한 Lock 객체도 함께 초기화합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "구독(subscribe) 메서드 구현",
+            "description": "이벤트 타입과 핸들러를 받아 구독자를 등록하는 subscribe 메서드를 구현합니다.",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "event_type을 키로 하고 핸들러 리스트를 값으로 하는 구독자 관리 시스템을 구현합니다. 스레드 안전성을 보장하기 위해 Lock을 사용합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "발행(publish) 메서드 구현",
+            "description": "이벤트 타입과 데이터를 받아 등록된 모든 구독자에게 이벤트를 발행하는 publish 메서드를 구현합니다.",
+            "dependencies": [
+              "2.2"
+            ],
+            "details": "비동기 핸들러와 동기 핸들러를 모두 지원하도록 구현합니다. asyncio.create_task를 사용하여 비동기 핸들러를 실행하고, 일반 함수는 직접 호출합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "스레드 안전성 및 비동기 처리 강화",
+            "description": "EventHub의 모든 메서드에 대해 스레드 안전성을 보장하고 비동기 핸들러 실행을 최적화합니다.",
+            "dependencies": [
+              "2.3"
+            ],
+            "details": "threading.RLock 사용으로 재진입 가능한 락 구현, 비동기 핸들러 실행 시 예외 처리 추가, 핸들러 실행 실패가 다른 핸들러에 영향을 주지 않도록 격리합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "이벤트 타입 상수 정의 및 테스트",
+            "description": "시스템에서 사용할 이벤트 타입 상수들을 정의하고 EventHub의 동작을 검증하는 테스트를 작성합니다.",
+            "dependencies": [
+              "2.4"
+            ],
+            "details": "MARKET_DATA_RECEIVED, TRADING_SIGNAL_GENERATED 등의 이벤트 타입 상수를 정의합니다. 단일/다중 구독자, 비동기 핸들러, 구독자가 없는 경우의 발행 등을 테스트합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Develop Binance API Client and WebSocket Manager",
+        "description": "Create a robust client for interacting with the Binance API for both RESTful requests (account info, order placement) and WebSocket connections (market data streams).",
+        "details": "In `market_data/binance_client.py`, wrap the `python-binance` library to handle API authentication using keys from `ConfigManager`. In `market_data/websocket_manager.py`, implement a class to manage the WebSocket connection for real-time kline/ticker data for BTC/USDT. It should include automatic reconnection logic and publish raw data to the `EventHub`.",
+        "testStrategy": "Use the Binance Testnet. For `BinanceClient`, test fetching account balance. For `WebSocketManager`, connect to the testnet stream, verify that data is received, and confirm that it correctly publishes events to the `EventHub`. Simulate a connection drop to test the reconnection logic.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "python-binance 라이브러리 래퍼 클래스 구현",
+            "description": "BinanceClient 클래스를 구현하여 python-binance 라이브러리를 래핑하고 기본 API 연결 기능을 제공합니다.",
+            "dependencies": [],
+            "details": "market_data/binance_client.py 파일에 BinanceClient 클래스를 생성합니다. python-binance 라이브러리의 Client 클래스를 래핑하여 계정 정보 조회, 주문 실행 등의 기본 기능을 제공하는 인터페이스를 구현합니다. 에러 핸들링과 로깅 기능을 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "ConfigManager를 통한 API 인증 시스템 구현",
+            "description": "ConfigManager에서 바이낸스 API 키를 안전하게 가져와 인증을 처리하는 시스템을 구현합니다.",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "BinanceClient 클래스에 ConfigManager와 연동하여 API 키와 시크릿을 안전하게 로드하고 바이낸스 클라이언트를 초기화하는 기능을 구현합니다. 테스트넷과 메인넷 환경을 구분하여 설정할 수 있도록 합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "WebSocket 연결 관리자 기본 클래스 구현",
+            "description": "market_data/websocket_manager.py에 WebSocket 연결을 관리하는 기본 클래스를 구현합니다.",
+            "dependencies": [],
+            "details": "WebSocketManager 클래스를 생성하여 바이낸스 WebSocket 스트림에 연결하는 기본 기능을 구현합니다. BTC/USDT kline과 ticker 데이터를 구독할 수 있는 메서드를 포함하고, 연결 상태를 모니터링하는 기능을 추가합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "자동 재연결 로직 구현",
+            "description": "WebSocket 연결이 끊어졌을 때 자동으로 재연결을 시도하는 로직을 구현합니다.",
+            "dependencies": [
+              "3.3"
+            ],
+            "details": "WebSocketManager에 연결 상태를 감지하고 연결이 끊어졌을 때 지수 백오프 알고리즘을 사용하여 자동으로 재연결을 시도하는 기능을 구현합니다. 최대 재시도 횟수와 재연결 간격을 설정할 수 있도록 합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "실시간 데이터 스트림 처리 및 파싱",
+            "description": "WebSocket으로 수신되는 실시간 마켓 데이터를 파싱하고 처리하는 기능을 구현합니다.",
+            "dependencies": [
+              "3.4"
+            ],
+            "details": "WebSocketManager에서 수신되는 JSON 데이터를 파싱하여 kline과 ticker 정보를 추출하는 기능을 구현합니다. 데이터 유효성 검증과 예외 처리를 포함하여 안정적인 데이터 처리가 가능하도록 합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "EventHub 통합 및 데이터 발행",
+            "description": "처리된 마켓 데이터를 EventHub를 통해 다른 모듈로 발행하는 기능을 구현합니다.",
+            "dependencies": [
+              "3.5"
+            ],
+            "details": "WebSocketManager에서 파싱된 마켓 데이터를 EventHub의 publish 메서드를 사용하여 MARKET_DATA_RECEIVED 이벤트로 발행하는 기능을 구현합니다. 이벤트 데이터 구조를 정의하고 다른 모듈들이 쉽게 사용할 수 있도록 표준화합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Create Market Data Processor",
+        "description": "Build a component that subscribes to raw market data from the WebSocket, processes it into a structured format, and publishes it for consumption by strategy modules.",
+        "details": "Create `market_data/data_processor.py`. This class will subscribe to raw data events from the `WebSocketManager` via the `EventHub`. It will parse the raw data, potentially aggregate it into candles (e.g., 1-minute, 5-minute), and then publish a structured `MarketData` object (as defined in the PRD) back to the `EventHub` under a new topic like `CANDLE_DATA_PROCESSED`.",
+        "testStrategy": "Write unit tests that feed sample raw WebSocket payloads to the processor and verify that the correct `MarketData` objects are generated. Test the subscription and publishing logic by mocking the `EventHub`.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "원시 데이터 파싱 로직 구현",
+            "description": "WebSocket으로부터 받은 원시 시장 데이터를 파싱하고 검증하는 기본 로직을 구현합니다.",
+            "dependencies": [],
+            "details": "market_data/data_processor.py에서 원시 WebSocket 데이터 (kline/ticker)를 받아 파싱하는 메서드를 구현합니다. 데이터 형식 검증, 필수 필드 확인, 타임스탬프 정규화 등의 기본 처리 로직을 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "캔들 집계 알고리즘 개발",
+            "description": "1분, 5분 등 다양한 시간 간격의 캔들 데이터를 집계하는 알고리즘을 구현합니다.",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "파싱된 원시 데이터를 기반으로 OHLCV (Open, High, Low, Close, Volume) 캔들을 생성하는 집계 로직을 구현합니다. 다중 시간 프레임 지원과 캔들 완성 이벤트 처리를 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "MarketData 객체 생성 및 구조화",
+            "description": "PRD에 정의된 MarketData 객체 형식에 맞춰 처리된 데이터를 구조화합니다.",
+            "dependencies": [
+              "4.2"
+            ],
+            "details": "집계된 캔들 데이터를 MarketData 객체로 변환하는 로직을 구현합니다. 데이터 타입 변환, 필드 매핑, 객체 직렬화 등을 포함하여 일관된 데이터 구조를 보장합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "EventHub 연동 및 데이터 발행",
+            "description": "EventHub를 통한 데이터 구독/발행 메커니즘을 구현하고 데이터 검증을 추가합니다.",
+            "dependencies": [
+              "4.3"
+            ],
+            "details": "EventHub에서 원시 데이터 이벤트를 구독하고, 처리된 MarketData 객체를 CANDLE_DATA_PROCESSED 토픽으로 발행하는 로직을 구현합니다. 에러 핸들링과 데이터 무결성 검증 로직을 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Define Strategy Interface and Implement Basic ICT Strategy",
+        "description": "Establish the standard interface for all trading strategies and implement the first MVP strategy based on the ICT Order Block concept.",
+        "details": "In `strategies/base_strategy.py`, define an abstract base class `Strategy` with an abstract method `generate_signal(data: MarketData)`. In `strategies/ict_strategy.py`, create `ICTStrategy` inheriting from `Strategy`. Implement a simplified version of Order Block detection. When a signal is identified, it should create a `TradingSignal` dataclass instance and publish it to the `EventHub`.",
+        "testStrategy": "Create a unit test for `ICTStrategy` with a predefined `pandas` DataFrame of candle data. The test should verify that a `TradingSignal` is correctly generated when an Order Block pattern appears in the data, and that no signal is generated otherwise.",
+        "priority": "medium",
+        "dependencies": [
+          4
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "추상 Strategy 인터페이스 설계 및 구현",
+            "description": "모든 트레이딩 전략의 기본이 되는 추상 Strategy 클래스를 정의하고 필수 메서드들을 설계합니다.",
+            "dependencies": [],
+            "details": "`strategies/base_strategy.py`에 추상 기본 클래스 `Strategy`를 생성합니다. `generate_signal(data: MarketData)` 추상 메서드와 전략 초기화, 설정 관리를 위한 기본 메서드들을 포함합니다. ABC(Abstract Base Class)를 사용하여 구현합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "ICT Order Block 패턴 감지 알고리즘 구현",
+            "description": "ICT 이론에 기반한 Order Block 패턴을 식별하는 핵심 알고리즘을 구현합니다.",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "ICT Order Block의 정의에 따라 가격 움직임에서 주요 지지/저항 영역을 감지하는 알고리즘을 구현합니다. 캔들스틱 데이터에서 브레이크아웃, 리테스트, 반전 패턴을 식별하는 로직을 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "ICTStrategy 클래스 구현 및 패턴 인식 로직",
+            "description": "Strategy 인터페이스를 상속받는 ICTStrategy 클래스를 구현하고 Order Block 패턴 인식 로직을 통합합니다.",
+            "dependencies": [
+              "5.1",
+              "5.2"
+            ],
+            "details": "`strategies/ict_strategy.py`에 `ICTStrategy` 클래스를 생성합니다. `generate_signal` 메서드에서 Order Block 감지 알고리즘을 활용하여 매매 신호를 생성하는 로직을 구현합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "TradingSignal 데이터클래스 생성 및 신호 처리",
+            "description": "거래 신호를 표현하는 TradingSignal 데이터클래스를 정의하고 신호 생성 로직을 구현합니다.",
+            "dependencies": [
+              "5.3"
+            ],
+            "details": "TradingSignal 데이터클래스에 진입가격, 방향(매수/매도), 신뢰도, 타임스탬프 등의 필드를 포함합니다. ICTStrategy에서 패턴이 감지되었을 때 적절한 TradingSignal 인스턴스를 생성하는 로직을 구현합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "EventHub 신호 발행 및 통합",
+            "description": "생성된 거래 신호를 EventHub를 통해 발행하는 기능을 구현합니다.",
+            "dependencies": [
+              "5.4"
+            ],
+            "details": "ICTStrategy에서 TradingSignal이 생성되었을 때 EventHub의 publish 메서드를 사용하여 `TRADING_SIGNAL_GENERATED` 이벤트를 발행합니다. 이벤트 타입 상수를 정의하고 적절한 에러 처리를 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "ICTStrategy 단위 테스트 및 백테스팅 검증",
+            "description": "ICTStrategy의 정확성을 검증하기 위한 포괄적인 단위 테스트를 작성합니다.",
+            "dependencies": [
+              "5.5"
+            ],
+            "details": "미리 정의된 pandas DataFrame 캔들 데이터로 ICTStrategy를 테스트합니다. Order Block 패턴이 나타날 때 올바른 TradingSignal이 생성되는지, 패턴이 없을 때는 신호가 생성되지 않는지 검증합니다. 다양한 시장 상황에 대한 테스트 케이스를 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Implement Basic Risk Management Module",
+        "description": "Develop the initial risk management component responsible for calculating position size and defining stop-loss/take-profit levels for a given trading signal.",
+        "details": "Create `risk_management/position_sizer.py`. This module will subscribe to `TRADING_SIGNAL_GENERATED` events. Upon receiving a signal, it will calculate the appropriate position size based on a fixed risk percentage (e.g., 1% of total balance) defined in the configuration. It will then enrich the signal with position size, stop-loss, and take-profit prices, and publish a new `ORDER_REQUEST_GENERATED` event.",
+        "testStrategy": "Write unit tests to verify correct position size calculation based on different account balances and risk percentages. Test that stop-loss and take-profit levels are calculated correctly based on the entry price and configured percentages/ATR.",
+        "priority": "high",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "포지션 사이징 계산 알고리즘 구현",
+            "description": "고정 리스크 비율 기반 포지션 크기 계산 로직 개발",
+            "dependencies": [],
+            "details": "계좌 잔고와 설정된 리스크 비율(예: 1%)을 기반으로 포지션 크기를 계산하는 알고리즘을 구현합니다. 다양한 계좌 크기와 리스크 설정에 대응할 수 있는 유연한 계산 로직을 포함해야 합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "위험도 기반 계산 로직 구현",
+            "description": "트레이딩 신호의 위험도를 평가하고 리스크 관리 매개변수를 계산하는 로직 개발",
+            "dependencies": [
+              "6.1"
+            ],
+            "details": "입력된 트레이딩 신호를 분석하여 위험도를 평가하고, 이를 바탕으로 적절한 리스크 관리 매개변수를 계산합니다. 시장 변동성과 신호 강도를 고려한 동적 리스크 조정 기능을 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "손절/익절 레벨 설정 기능 구현",
+            "description": "진입가격 기반 손절매와 익절매 레벨을 자동 계산하는 기능 개발",
+            "dependencies": [
+              "6.2"
+            ],
+            "details": "진입가격을 기준으로 설정된 손절/익절 비율 또는 ATR 기반으로 스톱로스와 테이크프로핏 레벨을 자동 계산합니다. 다양한 계산 방식을 지원하고 설정 가능한 매개변수를 제공합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "계좌 잔고 기반 리스크 평가 시스템 구현",
+            "description": "현재 계좌 상태를 고려한 포지션 리스크 평가 및 검증 로직 개발",
+            "dependencies": [
+              "6.3"
+            ],
+            "details": "현재 계좌 잔고, 기존 포지션, 미실현 손익을 종합하여 새로운 포지션의 리스크를 평가합니다. 과도한 레버리지나 집중 투자를 방지하는 안전장치를 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "ORDER_REQUEST 이벤트 생성 및 발행 기능 구현",
+            "description": "계산된 리스크 매개변수를 포함한 주문 요청 이벤트 생성 및 EventHub 발행 기능 개발",
+            "dependencies": [
+              "6.4"
+            ],
+            "details": "TRADING_SIGNAL_GENERATED 이벤트를 구독하고, 리스크 관리 계산을 완료한 후 포지션 크기, 손절/익절 레벨이 포함된 ORDER_REQUEST_GENERATED 이벤트를 생성하여 EventHub에 발행합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Develop Order Execution Engine",
+        "description": "Create the engine that translates trade signals into actual orders on the exchange. This component is responsible for placing, monitoring, and confirming trades.",
+        "details": "In `trading/execution_engine.py`, create a class that subscribes to `ORDER_REQUEST_GENERATED` events from the risk manager. It will use the `BinanceClient` to place the market or limit order on the exchange. It should also handle order status updates (e.g., FILLED, CANCELED) and publish corresponding events like `ORDER_FILLED` to the `EventHub`.",
+        "testStrategy": "Using the Binance Testnet, create an integration test. Manually publish an `ORDER_REQUEST_GENERATED` event and verify that the `ExecutionEngine` places the correct order on the testnet exchange. Check that an `ORDER_FILLED` event is published upon successful execution.",
+        "priority": "high",
+        "dependencies": [
+          3,
+          6
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "주문 요청 처리 로직 구현",
+            "description": "ORDER_REQUEST_GENERATED 이벤트를 구독하고 주문 요청을 받아 처리하는 기본 구조를 구현합니다.",
+            "dependencies": [],
+            "details": "ExecutionEngine 클래스를 생성하고 EventHub에서 ORDER_REQUEST_GENERATED 이벤트를 구독하는 로직을 구현합니다. 이벤트 핸들러를 통해 주문 요청 데이터를 파싱하고 검증하는 기능을 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "바이낸스 주문 전송 기능 구현",
+            "description": "BinanceClient를 사용하여 실제 거래소에 마켓/리미트 주문을 전송하는 기능을 구현합니다.",
+            "dependencies": [
+              "7.1"
+            ],
+            "details": "주문 요청 데이터를 바이낸스 API 형식으로 변환하고, BinanceClient를 통해 시장가/지정가 주문을 전송하는 로직을 구현합니다. 주문 전송 시 필요한 매개변수 설정과 API 호출을 처리합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "주문 상태 모니터링 시스템 구현",
+            "description": "전송된 주문의 상태를 실시간으로 모니터링하고 추적하는 시스템을 구현합니다.",
+            "dependencies": [
+              "7.2"
+            ],
+            "details": "주문 ID를 기반으로 주문 상태를 주기적으로 확인하고, FILLED, CANCELED, PARTIALLY_FILLED 등의 상태 변화를 감지하는 모니터링 로직을 구현합니다. 비동기 작업으로 처리하여 성능을 최적화합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "주문 체결 확인 및 처리 로직 구현",
+            "description": "주문이 체결되었을 때의 확인 및 후속 처리 로직을 구현합니다.",
+            "dependencies": [
+              "7.3"
+            ],
+            "details": "주문 체결을 확인하고 체결가격, 체결수량, 수수료 등의 정보를 수집하여 처리하는 로직을 구현합니다. 부분 체결과 전체 체결을 구분하여 처리하는 기능을 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "오류 처리 및 재시도 메커니즘 구현",
+            "description": "주문 실행 과정에서 발생할 수 있는 오류를 처리하고 재시도하는 메커니즘을 구현합니다.",
+            "dependencies": [
+              "7.2"
+            ],
+            "details": "네트워크 오류, API 제한, 잔액 부족 등의 다양한 오류 상황을 처리하고, 재시도 가능한 오류에 대해서는 지수 백오프 방식으로 재시도하는 로직을 구현합니다. 오류 로그 기록과 알림 기능을 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "ORDER_FILLED 이벤트 발행 기능 구현",
+            "description": "주문 체결 완료 시 ORDER_FILLED 이벤트를 EventHub에 발행하는 기능을 구현합니다.",
+            "dependencies": [
+              "7.4"
+            ],
+            "details": "주문이 성공적으로 체결되었을 때 체결 정보를 포함한 ORDER_FILLED 이벤트를 생성하고 EventHub를 통해 다른 모듈들에게 알리는 기능을 구현합니다. 이벤트 데이터에는 체결가격, 수량, 시간, 수수료 등이 포함됩니다.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Implement Portfolio Manager",
+        "description": "Create a module to track the current portfolio state, including open positions, account balance, and unrealized PnL.",
+        "details": "In `trading/portfolio_manager.py`, create a class that subscribes to `ORDER_FILLED` events. It will maintain a dictionary or list of `Position` objects. It should update positions on new fills (opening, closing, or partial fills) and periodically update the account balance and unrealized PnL by querying the `BinanceClient`.",
+        "testStrategy": "Write unit tests to simulate a sequence of `ORDER_FILLED` events (buy to open, sell to close) and verify that the internal state of the `PortfolioManager` (open positions, PnL) is updated correctly.",
+        "priority": "medium",
+        "dependencies": [
+          7
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "포지션 상태 추적 시스템 구현",
+            "description": "Position 클래스와 포지션 상태를 관리하는 핵심 데이터 구조를 구현합니다.",
+            "dependencies": [],
+            "details": "trading/portfolio_manager.py에 Position 클래스를 정의하고, 포지션의 진입가격, 수량, 방향(long/short), 미실현 손익 등을 추적할 수 있는 속성들을 구현합니다. PortfolioManager 클래스에서 포지션들을 딕셔너리나 리스트로 관리하는 구조를 설계합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "ORDER_FILLED 이벤트 처리 로직 구현",
+            "description": "EventHub의 ORDER_FILLED 이벤트를 구독하고 포지션 변경을 처리하는 로직을 구현합니다.",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "PortfolioManager가 ORDER_FILLED 이벤트를 구독하도록 설정하고, 새로운 주문 체결 시 포지션을 열거나, 기존 포지션을 부분적으로 또는 완전히 닫는 로직을 구현합니다. 포지션의 평균 진입가격 계산과 수량 업데이트를 처리합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "계좌 잔고 업데이트 시스템 구현",
+            "description": "BinanceClient를 사용하여 계좌 잔고를 주기적으로 조회하고 업데이트하는 시스템을 구현합니다.",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "PortfolioManager에서 BinanceClient의 계좌 정보 조회 API를 호출하여 현재 잔고를 가져오는 메서드를 구현합니다. 주기적으로 잔고를 동기화하는 스케줄링 로직을 추가하고, 잔고 변경 시 적절한 이벤트를 발행합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "미실현 손익(PnL) 계산 로직 구현",
+            "description": "현재 포지션들의 미실현 손익을 계산하고 업데이트하는 로직을 구현합니다.",
+            "dependencies": [
+              "8.1",
+              "8.3"
+            ],
+            "details": "각 포지션별로 현재 시장가격과 진입가격을 비교하여 미실현 손익을 계산하는 메서드를 구현합니다. 전체 포트폴리오의 총 미실현 손익을 집계하고, 실시간으로 업데이트되도록 시장 데이터와 연동합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "포트폴리오 상태 조회 및 리포팅 기능 구현",
+            "description": "포트폴리오의 현재 상태를 조회하고 리포트를 생성하는 기능을 구현합니다.",
+            "dependencies": [
+              "8.2",
+              "8.4"
+            ],
+            "details": "PortfolioManager에서 현재 열린 포지션 목록, 총 잔고, 총 미실현 손익 등을 조회할 수 있는 메서드들을 구현합니다. 포트폴리오 상태 변경 시 적절한 이벤트를 발행하여 다른 모듈들이 상태를 알 수 있도록 합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Integrate Discord Notification System",
+        "description": "Set up a notification service to send real-time alerts for critical events like trade execution, errors, and system status changes to a Discord channel.",
+        "details": "Create `notification/discord_notifier.py`. This class will subscribe to relevant events from the `EventHub`, such as `ORDER_FILLED`, `SYSTEM_ERROR`, and `CONNECTION_STATUS_CHANGED`. Upon receiving an event, it will format a structured message and send it to the Discord webhook URL specified in the configuration file.",
+        "testStrategy": "Create a dedicated test Discord channel. Write an integration test that manually publishes various events and verifies that correctly formatted messages appear in the channel. Test edge cases like an invalid webhook URL.",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Discord 웹훅 클라이언트 설정 구현",
+            "description": "Discord 웹훅 URL을 사용하여 메시지를 전송할 수 있는 기본 클라이언트 클래스를 구현합니다.",
+            "dependencies": [],
+            "details": "notification/discord_notifier.py에서 Discord 웹훅 클라이언트를 설정합니다. 설정 파일에서 웹훅 URL을 읽어오고, HTTP 요청을 통해 Discord API에 메시지를 전송하는 기본 기능을 구현합니다. 연결 테스트 및 기본 오류 처리를 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "이벤트별 메시지 포맷팅 시스템 구현",
+            "description": "다양한 이벤트 타입에 대해 구조화된 Discord 메시지 포맷을 생성하는 시스템을 구현합니다.",
+            "dependencies": [],
+            "details": "ORDER_FILLED, SYSTEM_ERROR, CONNECTION_STATUS_CHANGED 등 각 이벤트 타입별로 적절한 메시지 포맷을 정의합니다. 이벤트 데이터를 받아서 읽기 쉬운 Discord 메시지로 변환하는 포맷터 함수들을 구현합니다. 색상 코딩, 임베드 메시지 등 Discord의 풍부한 메시지 기능을 활용합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "EventHub 이벤트 구독 및 처리 로직 구현",
+            "description": "EventHub에서 관련 이벤트들을 구독하고 처리하는 로직을 구현합니다.",
+            "dependencies": [
+              "9.2"
+            ],
+            "details": "DiscordNotifier 클래스가 EventHub에서 ORDER_FILLED, SYSTEM_ERROR, CONNECTION_STATUS_CHANGED 이벤트를 구독하도록 설정합니다. 각 이벤트를 받았을 때 적절한 메시지 포맷터를 호출하고 Discord로 전송하는 이벤트 핸들러를 구현합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "웹훅 전송 및 오류 처리 구현",
+            "description": "Discord 웹훅으로 메시지를 안전하게 전송하고 다양한 오류 상황을 처리하는 로직을 구현합니다.",
+            "dependencies": [
+              "9.1",
+              "9.3"
+            ],
+            "details": "포맷된 메시지를 Discord 웹훅으로 전송하는 기능을 구현합니다. 네트워크 오류, 잘못된 웹훅 URL, 속도 제한 등의 오류 상황을 처리합니다. 재시도 로직, 로깅, 그리고 실패한 알림에 대한 백업 처리 방법을 포함합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Create Main Application Entrypoint and Integration",
+        "description": "Develop the main script to initialize, configure, and run all the components of the trading bot, tying everything together into a functional application.",
+        "details": "Create a `main.py` file in the root of the `trading_bot` directory. This script will: 1. Initialize the `ConfigManager`, `EventHub`, and `Logger`. 2. Instantiate all other modules (`BinanceClient`, `DataProcessor`, `ICTStrategy`, `RiskManager`, `ExecutionEngine`, `PortfolioManager`, `DiscordNotifier`). 3. Register all subscribers to their respective events in the `EventHub`. 4. Start the main asynchronous event loop, beginning with the `WebSocketManager` connection.",
+        "testStrategy": "This is the final integration test. Run the `main.py` script connected to the Binance Testnet. Monitor the logs and Discord channel. Manually create market conditions that should trigger a trade and verify the entire pipeline works: data received -> signal generated -> risk applied -> order executed -> position tracked -> notification sent.",
+        "priority": "high",
+        "dependencies": [
+          8,
+          9
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "코어 컴포넌트 초기화 시퀀스 구현",
+            "description": "ConfigManager, EventHub, Logger를 올바른 순서로 초기화하고 기본 설정을 로드하는 로직을 구현합니다.",
+            "dependencies": [],
+            "details": "main.py에서 시스템의 핵심 컴포넌트들을 안전한 순서로 초기화합니다. ConfigManager를 먼저 초기화하여 설정을 로드하고, EventHub를 생성한 후 Logger를 설정합니다. 각 초기화 단계에서 발생할 수 있는 예외를 처리하고 적절한 로깅을 구현합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "모든 트레이딩 모듈 인스턴스화",
+            "description": "BinanceClient, DataProcessor, ICTStrategy, RiskManager, ExecutionEngine, PortfolioManager, DiscordNotifier를 생성하고 의존성을 주입합니다.",
+            "dependencies": [
+              "10.1"
+            ],
+            "details": "초기화된 코어 컴포넌트들을 사용하여 모든 트레이딩 관련 모듈들을 인스턴스화합니다. 각 모듈에 필요한 의존성(EventHub, ConfigManager 등)을 올바르게 주입하고, 모듈 간의 참조 관계를 설정합니다. 모듈 생성 실패 시 적절한 에러 처리를 구현합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "EventHub 이벤트 구독 연결 설정",
+            "description": "모든 모듈들을 EventHub의 해당 이벤트에 구독자로 등록하고 이벤트 플로우를 설정합니다.",
+            "dependencies": [
+              "10.2"
+            ],
+            "details": "DataProcessor, ICTStrategy, RiskManager, ExecutionEngine, PortfolioManager, DiscordNotifier를 EventHub의 적절한 이벤트 토픽에 구독자로 등록합니다. 이벤트 플로우가 올바르게 연결되도록 구독 순서를 관리하고, 구독 등록 실패 시 에러 처리를 구현합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "비동기 메인 루프 및 WebSocket 연결 시작",
+            "description": "메인 비동기 이벤트 루프를 시작하고 WebSocketManager를 통해 실시간 데이터 스트림을 개시합니다.",
+            "dependencies": [
+              "10.3"
+            ],
+            "details": "asyncio를 사용하여 메인 이벤트 루프를 설정하고, WebSocketManager의 연결을 시작합니다. 시스템이 안정적으로 실행되도록 태스크 스케줄링을 관리하고, 비동기 작업들의 생명주기를 제어합니다. 연결 실패나 예외 발생 시 적절한 복구 로직을 구현합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "시스템 시작/종료 로직 및 통합 검증",
+            "description": "graceful shutdown 로직을 구현하고 전체 시스템의 통합 테스트를 수행합니다.",
+            "dependencies": [
+              "10.4"
+            ],
+            "details": "SIGINT, SIGTERM 신호 처리를 통한 graceful shutdown을 구현합니다. 시스템 종료 시 모든 연결을 안전하게 닫고 리소스를 정리합니다. Binance Testnet을 사용하여 전체 파이프라인이 정상 작동하는지 검증하고, 로그 및 Discord 알림이 올바르게 작동하는지 확인합니다.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-09-21T14:07:37.892Z",
+      "updated": "2025-09-21T17:04:51.816Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
