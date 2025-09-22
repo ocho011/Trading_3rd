@@ -11,7 +11,9 @@
       "mcp__task-master-ai__set_task_status",
       "mcp__task-master-ai__get_task",
       "Bash(python3:*)",
-      "Bash(python -m pytest tests/test_event_hub.py -v)"
+      "Bash(python -m pytest tests/test_event_hub.py -v)",
+      "Bash(python -m pytest tests/test_binance_client.py -v)",
+      "Bash(python -m pytest tests/test_data_processor.py -v)"
     ]
   },
   "enableAllProjectMcpServers": true,

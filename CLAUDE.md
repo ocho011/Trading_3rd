@@ -40,6 +40,8 @@
 * **Lint Check**: `python3 -m flake8 application/ domain/ infrastructure/ tests/ main.py` - Check code style and errors
 * **Format Code**: `python3 -m black .` - Auto-format Python code
 * **Sort Imports**: `python3 -m isort .` - Organize import statements
-* **Full Lint**: `python3 -m pylint application/ domain/ infrastructure/` - Comprehensive code analysis
+* **Full Lint**: `python3 -m pylint application/ domain/ infrastructure/` - Comprehensive 
+
+## Workflow for Code development and refactoring
 - Files that are only needed, used, or generated during the development phase should be managed in separate directories.
-- When generating code, use the code-writer subagent, and when reviewing the generated code, use the code-reviewer subagent respectively.
+- When generating code, use the code-writer subagent, and when reviewing the generated code, use the code-revißewer subagent respectively.

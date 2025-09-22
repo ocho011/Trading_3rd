@@ -209,7 +209,7 @@
         "dependencies": [
           3
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -217,7 +217,7 @@
             "description": "WebSocket으로부터 받은 원시 시장 데이터를 파싱하고 검증하는 기본 로직을 구현합니다.",
             "dependencies": [],
             "details": "market_data/data_processor.py에서 원시 WebSocket 데이터 (kline/ticker)를 받아 파싱하는 메서드를 구현합니다. 데이터 형식 검증, 필수 필드 확인, 타임스탬프 정규화 등의 기본 처리 로직을 포함합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -228,7 +228,7 @@
               "4.1"
             ],
             "details": "파싱된 원시 데이터를 기반으로 OHLCV (Open, High, Low, Close, Volume) 캔들을 생성하는 집계 로직을 구현합니다. 다중 시간 프레임 지원과 캔들 완성 이벤트 처리를 포함합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -239,7 +239,7 @@
               "4.2"
             ],
             "details": "집계된 캔들 데이터를 MarketData 객체로 변환하는 로직을 구현합니다. 데이터 타입 변환, 필드 매핑, 객체 직렬화 등을 포함하여 일관된 데이터 구조를 보장합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -250,7 +250,7 @@
               "4.3"
             ],
             "details": "EventHub에서 원시 데이터 이벤트를 구독하고, 처리된 MarketData 객체를 CANDLE_DATA_PROCESSED 토픽으로 발행하는 로직을 구현합니다. 에러 핸들링과 데이터 무결성 검증 로직을 포함합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -676,7 +676,7 @@
     ],
     "metadata": {
       "created": "2025-09-21T14:07:37.892Z",
-      "updated": "2025-09-22T19:15:46.379Z",
+      "updated": "2025-09-22T19:31:41.084Z",
       "description": "Tasks for master context"
     }
   }

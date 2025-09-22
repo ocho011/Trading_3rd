@@ -22,6 +22,7 @@ class EventType:
 
     # Market data events
     MARKET_DATA_RECEIVED: str = "market_data_received"
+    CANDLE_DATA_PROCESSED: str = "candle_data_processed"
     PRICE_UPDATE: str = "price_update"
     VOLUME_UPDATE: str = "volume_update"
     ORDER_BOOK_UPDATE: str = "order_book_update"
