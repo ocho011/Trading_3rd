@@ -53,9 +53,7 @@ class StandardLogFormatter(ILogFormatter):
             logging.Formatter: Standard formatter instance
         """
         if self._include_module:
-            format_string = (
-                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            )
+            format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         else:
             format_string = "%(asctime)s - %(levelname)s - %(message)s"
 
@@ -241,9 +239,7 @@ class LoggerManager:
             RuntimeError: If logger not configured
         """
         if not self._is_configured or self._logger is None:
-            raise RuntimeError(
-                "Logger not configured. Call configure_logger() first."
-            )
+            raise RuntimeError("Logger not configured. Call configure_logger() first.")
 
         return self._logger
 
@@ -280,8 +276,7 @@ class LoggerManager:
         """
         log_dir = Path("logs")
         log_file = (
-            log_dir
-            / f"{self._logger_name}_{datetime.now().strftime('%Y%m%d')}.log"
+            log_dir / f"{self._logger_name}_{datetime.now().strftime('%Y%m%d')}.log"
         )
 
         return {
@@ -326,9 +321,7 @@ def create_trading_logger(
         "file": FileLogHandler(str(log_file), level=level),
     }
 
-    manager.configure_logger(
-        level=level, formatter=formatter, handlers=handlers
-    )
+    manager.configure_logger(level=level, formatter=formatter, handlers=handlers)
     return manager.get_logger()
 
 

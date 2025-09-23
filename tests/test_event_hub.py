@@ -189,7 +189,7 @@ class TestEventHubNoSubscribers:
         self.event_hub = EventHub()
 
     def test_publish_with_no_subscribers_does_not_error(self) -> None:
-        """Test that publishing to an event type with no subscribers doesn't raise errors."""
+        """Test publishing to event type with no subscribers doesn't raise errors."""
         # Should not raise any exceptions
         self.event_hub.publish(EventType.PRICE_UPDATE, {"price": 100})
         self.event_hub.publish(EventType.ORDER_PLACED, {"order_id": "123"})

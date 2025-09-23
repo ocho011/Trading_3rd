@@ -7,10 +7,9 @@ and integration with ConfigManager following dependency injection patterns.
 
 import unittest
 from decimal import Decimal
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
-import pytest
-from binance.exceptions import BinanceAPIException, BinanceRequestException
+from binance.exceptions import BinanceAPIException
 
 from trading_bot.core.config_manager import ConfigManager
 from trading_bot.market_data.binance_client import (
@@ -86,9 +85,7 @@ class TestBinanceClientInitialization(unittest.TestCase):
             "api_key": "test_key",
             "secret_key": "test_secret",
         }
-        self.config_mock.get_trading_config.return_value = {
-            "trading_mode": "paper"
-        }
+        self.config_mock.get_trading_config.return_value = {"trading_mode": "paper"}
 
     def test_init_with_config_manager(self) -> None:
         """Test initialization with ConfigManager dependency injection."""
@@ -125,9 +122,7 @@ class TestBinanceClientInitialization(unittest.TestCase):
     @patch("trading_bot.market_data.binance_client.Client")
     def test_initialize_success_mainnet(self, mock_client_class: Mock) -> None:
         """Test successful initialization in mainnet mode."""
-        self.config_mock.get_trading_config.return_value = {
-            "trading_mode": "live"
-        }
+        self.config_mock.get_trading_config.return_value = {"trading_mode": "live"}
 
         mock_client = Mock()
         mock_client.get_account.return_value = {"status": "TRADING"}
@@ -145,9 +140,7 @@ class TestBinanceClientInitialization(unittest.TestCase):
         self.assertFalse(client._is_testnet)
 
     @patch("trading_bot.market_data.binance_client.Client")
-    def test_initialize_authentication_error(
-        self, mock_client_class: Mock
-    ) -> None:
+    def test_initialize_authentication_error(self, mock_client_class: Mock) -> None:
         """Test initialization with authentication error."""
         mock_client = Mock()
         mock_client.get_account.side_effect = create_binance_api_exception(
@@ -187,9 +180,7 @@ class TestBinanceClientOperations(unittest.TestCase):
             "api_key": "test_key",
             "secret_key": "test_secret",
         }
-        self.config_mock.get_trading_config.return_value = {
-            "trading_mode": "paper"
-        }
+        self.config_mock.get_trading_config.return_value = {"trading_mode": "paper"}
 
         self.client = BinanceClient(self.config_mock)
         self.mock_binance_client = Mock()
@@ -267,8 +258,8 @@ class TestBinanceClientOperations(unittest.TestCase):
 
     def test_place_market_order_api_error(self) -> None:
         """Test market order placement with API error."""
-        self.mock_binance_client.order_market.side_effect = create_binance_api_exception(
-            "Insufficient balance", -2010
+        self.mock_binance_client.order_market.side_effect = (
+            create_binance_api_exception("Insufficient balance", -2010)
         )
 
         with self.assertRaises(BinanceOrderError) as context:
@@ -281,9 +272,7 @@ class TestBinanceClientOperations(unittest.TestCase):
         expected_order = {"orderId": 456, "status": "NEW"}
         self.mock_binance_client.order_limit.return_value = expected_order
 
-        result = self.client.place_limit_order(
-            "BTCUSDT", "SELL", "0.001", "50000"
-        )
+        result = self.client.place_limit_order("BTCUSDT", "SELL", "0.001", "50000")
 
         self.assertEqual(result, expected_order)
         self.mock_binance_client.order_limit.assert_called_once_with(
@@ -298,9 +287,7 @@ class TestBinanceClientOperations(unittest.TestCase):
         quantity = Decimal("0.001")
         price = Decimal("50000.50")
 
-        result = self.client.place_limit_order(
-            "BTCUSDT", "SELL", quantity, price
-        )
+        result = self.client.place_limit_order("BTCUSDT", "SELL", quantity, price)
 
         self.assertEqual(result, expected_order)
         self.mock_binance_client.order_limit.assert_called_once_with(
@@ -351,9 +338,7 @@ class TestBinanceClientOperations(unittest.TestCase):
         result = self.client.get_exchange_info("BTCUSDT")
 
         self.assertEqual(result, expected_info)
-        self.mock_binance_client.get_symbol_info.assert_called_once_with(
-            "BTCUSDT"
-        )
+        self.mock_binance_client.get_symbol_info.assert_called_once_with("BTCUSDT")
 
 
 class TestBinanceClientErrorHandling(unittest.TestCase):
@@ -380,9 +365,7 @@ class TestBinanceClientErrorHandling(unittest.TestCase):
 
     def test_general_error_handling(self) -> None:
         """Test general error handling."""
-        self.mock_binance_client.get_account.side_effect = Exception(
-            "Network timeout"
-        )
+        self.mock_binance_client.get_account.side_effect = Exception("Network timeout")
 
         with self.assertRaises(BinanceError) as context:
             self.client.get_account_info()
@@ -438,9 +421,7 @@ class TestBinanceClientValidation(unittest.TestCase):
         # Should not raise any exceptions
         self.client._validate_order_params("BTCUSDT", "BUY", "0.001")
         self.client._validate_order_params("ETHUSDT", "SELL", Decimal("1.5"))
-        self.client._validate_order_params(
-            "BTCUSDT", "BUY", "0.001", "50000"
-        )
+        self.client._validate_order_params("BTCUSDT", "BUY", "0.001", "50000")
 
     def test_validate_order_params_invalid(self) -> None:
         """Test order parameter validation with invalid inputs."""
@@ -463,9 +444,7 @@ class TestBinanceClientValidation(unittest.TestCase):
             self.client._validate_order_params("BTCUSDT", "BUY", "0.001", "0")
 
         with self.assertRaises(ValueError):
-            self.client._validate_order_params(
-                "BTCUSDT", "BUY", "0.001", "invalid"
-            )
+            self.client._validate_order_params("BTCUSDT", "BUY", "0.001", "invalid")
 
 
 class TestBinanceClientFactory(unittest.TestCase):

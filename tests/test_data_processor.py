@@ -5,10 +5,9 @@ Tests all components of the market data processing system including
 data validation, candle aggregation, and event publishing.
 """
 
-import asyncio
 import time
 import unittest
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -16,9 +15,7 @@ from trading_bot.core.config_manager import ConfigManager
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.market_data.data_processor import (
     BinanceDataValidator,
-    CandleAggregationError,
     CandleData,
-    DataProcessingError,
     InvalidDataError,
     MarketData,
     MarketDataProcessor,
@@ -67,7 +64,7 @@ class TestMarketData(unittest.TestCase):
             price=50000.0,
             volume=1.5,
             source="binance",
-            data_type="kline"
+            data_type="kline",
         )
         self.assertEqual(data.symbol, "BTCUSDT")
         self.assertEqual(data.price, 50000.0)
@@ -82,7 +79,7 @@ class TestMarketData(unittest.TestCase):
                 price=0.0,  # Invalid price
                 volume=1.5,
                 source="binance",
-                data_type="kline"
+                data_type="kline",
             )
 
     def test_invalid_volume(self) -> None:
@@ -94,7 +91,7 @@ class TestMarketData(unittest.TestCase):
                 price=50000.0,
                 volume=-1.0,  # Invalid volume
                 source="binance",
-                data_type="kline"
+                data_type="kline",
             )
 
     def test_invalid_symbol(self) -> None:
@@ -106,7 +103,7 @@ class TestMarketData(unittest.TestCase):
                 price=50000.0,
                 volume=1.5,
                 source="binance",
-                data_type="kline"
+                data_type="kline",
             )
 
 
@@ -124,7 +121,7 @@ class TestCandleData(unittest.TestCase):
             high_price=50100.0,
             low_price=49900.0,
             close_price=50050.0,
-            volume=1.5
+            volume=1.5,
         )
         self.assertEqual(candle.symbol, "BTCUSDT")
         self.assertEqual(candle.open_price, 50000.0)
@@ -142,7 +139,7 @@ class TestCandleData(unittest.TestCase):
                 high_price=50100.0,
                 low_price=49900.0,
                 close_price=50050.0,
-                volume=1.5
+                volume=1.5,
             )
 
     def test_invalid_high_price(self) -> None:
@@ -157,7 +154,7 @@ class TestCandleData(unittest.TestCase):
                 high_price=49000.0,  # High < Open
                 low_price=49900.0,
                 close_price=50050.0,
-                volume=1.5
+                volume=1.5,
             )
 
     def test_invalid_low_price(self) -> None:
@@ -172,7 +169,7 @@ class TestCandleData(unittest.TestCase):
                 high_price=50100.0,
                 low_price=51000.0,  # Low > Open
                 close_price=50050.0,
-                volume=1.5
+                volume=1.5,
             )
 
 
@@ -197,9 +194,9 @@ class TestBinanceDataValidator(unittest.TestCase):
                     "l": "49900.0",
                     "v": "1.5",
                     "n": 100,
-                    "x": True
+                    "x": True,
                 }
-            }
+            },
         }
         self.assertTrue(self.validator.validate_raw_data(data))
 
@@ -212,7 +209,7 @@ class TestBinanceDataValidator(unittest.TestCase):
                     "t": 1640995200000,
                     # Missing required fields
                 }
-            }
+            },
         }
         self.assertFalse(self.validator.validate_raw_data(data))
 
@@ -225,8 +222,8 @@ class TestBinanceDataValidator(unittest.TestCase):
                 "c": "50000.0",
                 "h": "50100.0",
                 "l": "49900.0",
-                "v": "1.5"
-            }
+                "v": "1.5",
+            },
         }
         self.assertTrue(self.validator.validate_raw_data(data))
 
@@ -237,7 +234,7 @@ class TestBinanceDataValidator(unittest.TestCase):
             "data": {
                 "s": "BTCUSDT",
                 # Missing required fields
-            }
+            },
         }
         self.assertFalse(self.validator.validate_raw_data(data))
 
@@ -252,7 +249,7 @@ class TestBinanceDataValidator(unittest.TestCase):
             high_price=50100.0,
             low_price=49900.0,
             close_price=50050.0,
-            volume=1.5
+            volume=1.5,
         )
         self.assertTrue(self.validator.validate_candle_data(candle))
 
@@ -268,7 +265,7 @@ class TestBinanceDataValidator(unittest.TestCase):
             high_price=50100.0,
             low_price=49900.0,
             close_price=50050.0,
-            volume=1.5
+            volume=1.5,
         )
         self.assertFalse(self.validator.validate_candle_data(candle))
 
@@ -280,7 +277,7 @@ class TestTimeframeCandleAggregator(unittest.TestCase):
         """Set up test fixtures."""
         self.aggregator = TimeframeCandleAggregator(
             symbol="BTCUSDT",
-            supported_timeframes=[Timeframe.ONE_MINUTE, Timeframe.FIVE_MINUTES]
+            supported_timeframes=[Timeframe.ONE_MINUTE, Timeframe.FIVE_MINUTES],
         )
 
     def test_create_first_candle(self) -> None:
@@ -291,7 +288,7 @@ class TestTimeframeCandleAggregator(unittest.TestCase):
             price=50000.0,
             volume=1.5,
             source="binance",
-            data_type="kline"
+            data_type="kline",
         )
 
         completed_candle = self.aggregator.update_candle(market_data)
@@ -312,7 +309,7 @@ class TestTimeframeCandleAggregator(unittest.TestCase):
             price=50000.0,
             volume=1.0,
             source="binance",
-            data_type="kline"
+            data_type="kline",
         )
         self.aggregator.update_candle(market_data1)
 
@@ -323,7 +320,7 @@ class TestTimeframeCandleAggregator(unittest.TestCase):
             price=50100.0,
             volume=0.5,
             source="binance",
-            data_type="kline"
+            data_type="kline",
         )
         self.aggregator.update_candle(market_data2)
 
@@ -342,7 +339,7 @@ class TestTimeframeCandleAggregator(unittest.TestCase):
             price=50000.0,
             volume=1.0,
             source="binance",
-            data_type="kline"
+            data_type="kline",
         )
         self.aggregator.update_candle(market_data1)
 
@@ -353,7 +350,7 @@ class TestTimeframeCandleAggregator(unittest.TestCase):
             price=50100.0,
             volume=0.5,
             source="binance",
-            data_type="kline"
+            data_type="kline",
         )
         completed_candle = self.aggregator.update_candle(market_data2)
 
@@ -371,7 +368,7 @@ class TestTimeframeCandleAggregator(unittest.TestCase):
                 price=50000.0 + i,
                 volume=1.0,
                 source="binance",
-                data_type="kline"
+                data_type="kline",
             )
             self.aggregator.update_candle(market_data)
 
@@ -394,8 +391,7 @@ class TestMarketDataProcessor(unittest.TestCase):
         self.event_hub = Mock(spec=EventHub)
 
         self.processor = MarketDataProcessor(
-            config_manager=self.config_manager,
-            event_hub=self.event_hub
+            config_manager=self.config_manager, event_hub=self.event_hub
         )
 
     @pytest.mark.asyncio
@@ -405,8 +401,7 @@ class TestMarketDataProcessor(unittest.TestCase):
 
         # Verify subscription to market data events
         self.event_hub.subscribe.assert_called_once_with(
-            EventType.MARKET_DATA_RECEIVED,
-            self.processor.process_market_data
+            EventType.MARKET_DATA_RECEIVED, self.processor.process_market_data
         )
 
     @pytest.mark.asyncio
@@ -417,8 +412,7 @@ class TestMarketDataProcessor(unittest.TestCase):
 
         # Verify unsubscription from events
         self.event_hub.unsubscribe.assert_called_once_with(
-            EventType.MARKET_DATA_RECEIVED,
-            self.processor.process_market_data
+            EventType.MARKET_DATA_RECEIVED, self.processor.process_market_data
         )
 
     def test_process_valid_kline_data(self) -> None:
@@ -441,9 +435,9 @@ class TestMarketDataProcessor(unittest.TestCase):
                     "v": "1.5",
                     "n": 100,
                     "x": True,
-                    "i": "1m"
+                    "i": "1m",
                 }
-            }
+            },
         }
 
         self.processor.process_market_data(event_data)
@@ -453,11 +447,7 @@ class TestMarketDataProcessor(unittest.TestCase):
 
     def test_process_invalid_data(self) -> None:
         """Test processing invalid data."""
-        event_data = {
-            "symbol": "BTCUSDT",
-            "type": "invalid",
-            "source": "binance"
-        }
+        event_data = {"symbol": "BTCUSDT", "type": "invalid", "source": "binance"}
 
         # Should not raise exception
         self.processor.process_market_data(event_data)
@@ -471,18 +461,19 @@ class TestMarketDataProcessor(unittest.TestCase):
         self.assertIn("error_count", stats)
         self.assertIn("active_symbols", stats)
 
-    @patch('time.time')
+    @patch("time.time")
     def test_stale_data_rejection(self, mock_time) -> None:
         """Test rejection of stale data."""
         mock_time.return_value = 1640995500  # Current time
 
         # Configure max age to 60 seconds
-        self.config_manager.get_config_value.side_effect = lambda key, default: 60 if key == "max_data_age_seconds" else default
+        self.config_manager.get_config_value.side_effect = lambda key, default: (
+            60 if key == "max_data_age_seconds" else default
+        )
 
         # Create processor with config
         processor = MarketDataProcessor(
-            config_manager=self.config_manager,
-            event_hub=self.event_hub
+            config_manager=self.config_manager, event_hub=self.event_hub
         )
 
         # Old data (more than 60 seconds old)
@@ -502,9 +493,9 @@ class TestMarketDataProcessor(unittest.TestCase):
                     "v": "1.5",
                     "n": 100,
                     "x": True,
-                    "i": "1m"
+                    "i": "1m",
                 }
-            }
+            },
         }
 
         processor.process_market_data(event_data)
@@ -524,7 +515,7 @@ class TestFactoryFunction(unittest.TestCase):
         processor = create_market_data_processor(
             config_manager=config_manager,
             event_hub=event_hub,
-            supported_timeframes=["1m", "5m"]
+            supported_timeframes=["1m", "5m"],
         )
 
         self.assertIsInstance(processor, MarketDataProcessor)
@@ -538,7 +529,7 @@ class TestFactoryFunction(unittest.TestCase):
             create_market_data_processor(
                 config_manager=config_manager,
                 event_hub=event_hub,
-                supported_timeframes=["invalid"]
+                supported_timeframes=["invalid"],
             )
 
 

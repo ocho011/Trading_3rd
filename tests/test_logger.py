@@ -11,10 +11,15 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from trading_bot.core.logger import (ConsoleLogHandler, FileLogHandler,
-                                     LoggerManager, StandardLogFormatter,
-                                     TradingLogFormatter,
-                                     create_trading_logger, get_module_logger)
+from trading_bot.core.logger import (
+    ConsoleLogHandler,
+    FileLogHandler,
+    LoggerManager,
+    StandardLogFormatter,
+    TradingLogFormatter,
+    create_trading_logger,
+    get_module_logger,
+)
 
 
 class TestStandardLogFormatter(unittest.TestCase):
@@ -78,9 +83,7 @@ class TestFileLogHandler(unittest.TestCase):
 
                 handler = handler_strategy.create_handler(formatter)
 
-                self.assertIsInstance(
-                    handler, logging.handlers.RotatingFileHandler
-                )
+                self.assertIsInstance(handler, logging.handlers.RotatingFileHandler)
                 self.assertEqual(handler.level, logging.INFO)
                 self.assertEqual(handler.maxBytes, 1024)
                 self.assertEqual(handler.backupCount, 3)

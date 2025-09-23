@@ -7,9 +7,10 @@ following test-driven development principles.
 
 import asyncio
 import json
-import pytest
-from unittest.mock import AsyncMock, Mock, patch
 from typing import Any, Dict
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from trading_bot.core.config_manager import ConfigManager
 from trading_bot.core.event_hub import EventHub, EventType
@@ -44,8 +45,8 @@ class TestWebSocketDataValidator:
                 "c": "50100.00",
                 "h": "50200.00",
                 "l": "49900.00",
-                "v": "10.5"
-            }
+                "v": "10.5",
+            },
         }
 
         assert self.validator.validate_kline_data(valid_kline_data) is True
@@ -57,9 +58,9 @@ class TestWebSocketDataValidator:
             "s": "BTCUSDT",
             "k": {
                 "t": 1234567800,
-                "o": "50000.00"
+                "o": "50000.00",
                 # Missing required fields
-            }
+            },
         }
 
         assert self.validator.validate_kline_data(invalid_kline_data) is False
@@ -68,7 +69,7 @@ class TestWebSocketDataValidator:
         """Test validation of data without kline section."""
         invalid_data = {
             "e": "kline",
-            "s": "BTCUSDT"
+            "s": "BTCUSDT",
             # Missing 'k' section
         }
 
@@ -83,7 +84,7 @@ class TestWebSocketDataValidator:
             "c": "50000.00",
             "h": "51000.00",
             "l": "49000.00",
-            "v": "1000.0"
+            "v": "1000.0",
         }
 
         assert self.validator.validate_ticker_data(valid_ticker_data) is True
@@ -93,7 +94,7 @@ class TestWebSocketDataValidator:
         invalid_ticker_data = {
             "e": "24hrTicker",
             "s": "BTCUSDT",
-            "c": "50000.00"
+            "c": "50000.00",
             # Missing required fields
         }
 
@@ -112,15 +113,11 @@ class TestBinanceWebSocketManager:
     def setup_method(self):
         """Set up test fixtures."""
         self.config_manager = Mock(spec=ConfigManager)
-        self.config_manager.get_trading_config.return_value = {
-            "trading_mode": "paper"
-        }
+        self.config_manager.get_trading_config.return_value = {"trading_mode": "paper"}
 
         self.event_hub = Mock(spec=EventHub)
         self.ws_manager = BinanceWebSocketManager(
-            self.config_manager,
-            self.event_hub,
-            symbol="btcusdt"
+            self.config_manager, self.event_hub, symbol="btcusdt"
         )
 
     def test_initialization(self):
@@ -131,18 +128,14 @@ class TestBinanceWebSocketManager:
 
     def test_get_websocket_url_testnet(self):
         """Test WebSocket URL selection for testnet mode."""
-        self.config_manager.get_trading_config.return_value = {
-            "trading_mode": "paper"
-        }
+        self.config_manager.get_trading_config.return_value = {"trading_mode": "paper"}
 
         url = self.ws_manager._get_websocket_url()
         assert url == BinanceWebSocketManager.TESTNET_WS_URL
 
     def test_get_websocket_url_mainnet(self):
         """Test WebSocket URL selection for mainnet mode."""
-        self.config_manager.get_trading_config.return_value = {
-            "trading_mode": "live"
-        }
+        self.config_manager.get_trading_config.return_value = {"trading_mode": "live"}
 
         url = self.ws_manager._get_websocket_url()
         assert url == BinanceWebSocketManager.MAINNET_WS_URL
@@ -156,27 +149,18 @@ class TestBinanceWebSocketManager:
 
     def test_is_kline_message(self):
         """Test kline message detection."""
-        kline_message = {
-            "e": "kline",
-            "k": {"t": 1234567800}
-        }
+        kline_message = {"e": "kline", "k": {"t": 1234567800}}
 
-        ticker_message = {
-            "e": "24hrTicker"
-        }
+        ticker_message = {"e": "24hrTicker"}
 
         assert self.ws_manager._is_kline_message(kline_message) is True
         assert self.ws_manager._is_kline_message(ticker_message) is False
 
     def test_is_ticker_message(self):
         """Test ticker message detection."""
-        ticker_message = {
-            "e": "24hrTicker"
-        }
+        ticker_message = {"e": "24hrTicker"}
 
-        kline_message = {
-            "e": "kline"
-        }
+        kline_message = {"e": "kline"}
 
         assert self.ws_manager._is_ticker_message(ticker_message) is True
         assert self.ws_manager._is_ticker_message(kline_message) is False
@@ -184,11 +168,7 @@ class TestBinanceWebSocketManager:
     @pytest.mark.asyncio
     async def test_publish_market_data(self):
         """Test market data publishing through EventHub."""
-        test_data = {
-            "e": "kline",
-            "E": 1234567890,
-            "s": "BTCUSDT"
-        }
+        test_data = {"e": "kline", "E": 1234567890, "s": "BTCUSDT"}
 
         await self.ws_manager._publish_market_data(test_data, "kline")
 
@@ -207,48 +187,50 @@ class TestBinanceWebSocketManager:
     @pytest.mark.asyncio
     async def test_process_message_valid_kline(self):
         """Test processing of valid kline message."""
-        kline_message = json.dumps({
-            "e": "kline",
-            "E": 1234567890,
-            "s": "BTCUSDT",
-            "k": {
-                "t": 1234567800,
-                "T": 1234567859,
-                "o": "50000.00",
-                "c": "50100.00",
-                "h": "50200.00",
-                "l": "49900.00",
-                "v": "10.5"
+        kline_message = json.dumps(
+            {
+                "e": "kline",
+                "E": 1234567890,
+                "s": "BTCUSDT",
+                "k": {
+                    "t": 1234567800,
+                    "T": 1234567859,
+                    "o": "50000.00",
+                    "c": "50100.00",
+                    "h": "50200.00",
+                    "l": "49900.00",
+                    "v": "10.5",
+                },
             }
-        })
+        )
 
         await self.ws_manager._process_message(kline_message)
 
         # Verify data was published
         self.event_hub.publish.assert_called_once_with(
-            EventType.MARKET_DATA_RECEIVED,
-            self.event_hub.publish.call_args[0][1]
+            EventType.MARKET_DATA_RECEIVED, self.event_hub.publish.call_args[0][1]
         )
 
     @pytest.mark.asyncio
     async def test_process_message_valid_ticker(self):
         """Test processing of valid ticker message."""
-        ticker_message = json.dumps({
-            "e": "24hrTicker",
-            "E": 1234567890,
-            "s": "BTCUSDT",
-            "c": "50000.00",
-            "h": "51000.00",
-            "l": "49000.00",
-            "v": "1000.0"
-        })
+        ticker_message = json.dumps(
+            {
+                "e": "24hrTicker",
+                "E": 1234567890,
+                "s": "BTCUSDT",
+                "c": "50000.00",
+                "h": "51000.00",
+                "l": "49000.00",
+                "v": "1000.0",
+            }
+        )
 
         await self.ws_manager._process_message(ticker_message)
 
         # Verify data was published
         self.event_hub.publish.assert_called_once_with(
-            EventType.MARKET_DATA_RECEIVED,
-            self.event_hub.publish.call_args[0][1]
+            EventType.MARKET_DATA_RECEIVED, self.event_hub.publish.call_args[0][1]
         )
 
     @pytest.mark.asyncio
@@ -268,7 +250,7 @@ class TestBinanceWebSocketManager:
         assert self.ws_manager.get_connection_state() == ConnectionState.DISCONNECTED
 
     @pytest.mark.asyncio
-    @patch('websockets.connect')
+    @patch("websockets.connect")
     async def test_start_connection_failure(self, mock_connect):
         """Test WebSocket start with connection failure."""
         mock_connect.side_effect = Exception("Connection failed")
@@ -287,27 +269,29 @@ class TestBinanceWebSocketManager:
         await self.ws_manager.start()
 
     @pytest.mark.asyncio
-    @patch('websockets.connect')
+    @patch("websockets.connect")
     async def test_websocket_lifecycle(self, mock_connect):
         """Test complete WebSocket lifecycle."""
         # Mock WebSocket connection
         mock_websocket = AsyncMock()
         mock_websocket.recv.side_effect = [
-            json.dumps({
-                "e": "kline",
-                "E": 1234567890,
-                "s": "BTCUSDT",
-                "k": {
-                    "t": 1234567800,
-                    "T": 1234567859,
-                    "o": "50000.00",
-                    "c": "50100.00",
-                    "h": "50200.00",
-                    "l": "49900.00",
-                    "v": "10.5"
+            json.dumps(
+                {
+                    "e": "kline",
+                    "E": 1234567890,
+                    "s": "BTCUSDT",
+                    "k": {
+                        "t": 1234567800,
+                        "T": 1234567859,
+                        "o": "50000.00",
+                        "c": "50100.00",
+                        "h": "50200.00",
+                        "l": "49900.00",
+                        "v": "10.5",
+                    },
                 }
-            }),
-            asyncio.CancelledError()  # Simulate task cancellation
+            ),
+            asyncio.CancelledError(),  # Simulate task cancellation
         ]
 
         mock_connect.return_value.__aenter__.return_value = mock_websocket
@@ -343,26 +327,22 @@ class TestWebSocketManagerFactory:
     def test_create_binance_websocket_manager(self):
         """Test factory function for creating WebSocket manager."""
         ws_manager = create_binance_websocket_manager(
-            self.config_manager,
-            self.event_hub,
-            symbol="ethusdt"
+            self.config_manager, self.event_hub, symbol="ethusdt"
         )
 
         assert isinstance(ws_manager, BinanceWebSocketManager)
         assert ws_manager._symbol == "ethusdt"
 
     @pytest.mark.asyncio
-    @patch('trading_bot.market_data.websocket_manager.BinanceWebSocketManager.start')
-    @patch('trading_bot.market_data.websocket_manager.BinanceWebSocketManager.stop')
+    @patch("trading_bot.market_data.websocket_manager.BinanceWebSocketManager.start")
+    @patch("trading_bot.market_data.websocket_manager.BinanceWebSocketManager.stop")
     async def test_create_websocket_manager_context(self, mock_stop, mock_start):
         """Test async context manager for WebSocket manager."""
         mock_start.return_value = None
         mock_stop.return_value = None
 
         async with create_websocket_manager(
-            self.config_manager,
-            self.event_hub,
-            symbol="ethusdt"
+            self.config_manager, self.event_hub, symbol="ethusdt"
         ) as ws_manager:
             assert isinstance(ws_manager, BinanceWebSocketManager)
             assert ws_manager._symbol == "ethusdt"
@@ -381,7 +361,7 @@ class TestWebSocketManagerIntegration:
         config_loader = Mock()
         config_loader.load_config.return_value = {
             "trading_mode": "paper",
-            "log_level": "INFO"
+            "log_level": "INFO",
         }
 
         self.config_manager = ConfigManager(config_loader)
@@ -392,8 +372,7 @@ class TestWebSocketManagerIntegration:
 
         # Subscribe to market data events
         self.event_hub.subscribe(
-            EventType.MARKET_DATA_RECEIVED,
-            self._on_market_data_received
+            EventType.MARKET_DATA_RECEIVED, self._on_market_data_received
         )
 
     def _on_market_data_received(self, data: Dict[str, Any]) -> None:
@@ -404,9 +383,7 @@ class TestWebSocketManagerIntegration:
     async def test_websocket_manager_with_real_event_hub(self):
         """Test WebSocket manager with real EventHub instance."""
         ws_manager = BinanceWebSocketManager(
-            self.config_manager,
-            self.event_hub,
-            symbol="btcusdt"
+            self.config_manager, self.event_hub, symbol="btcusdt"
         )
 
         # Simulate processing a market data message
@@ -421,8 +398,8 @@ class TestWebSocketManagerIntegration:
                 "c": "50100.00",
                 "h": "50200.00",
                 "l": "49900.00",
-                "v": "10.5"
-            }
+                "v": "10.5",
+            },
         }
 
         await ws_manager._publish_market_data(test_data, "kline")
@@ -438,10 +415,7 @@ class TestWebSocketManagerIntegration:
 
     def test_websocket_manager_configuration_dependency(self):
         """Test WebSocket manager dependency on configuration."""
-        ws_manager = BinanceWebSocketManager(
-            self.config_manager,
-            self.event_hub
-        )
+        ws_manager = BinanceWebSocketManager(self.config_manager, self.event_hub)
 
         # Test URL selection based on configuration
         url = ws_manager._get_websocket_url()

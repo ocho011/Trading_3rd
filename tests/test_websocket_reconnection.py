@@ -6,19 +6,18 @@ and error handling following comprehensive testing practices.
 """
 
 import asyncio
-import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call
-from websockets.exceptions import ConnectionClosed, WebSocketException
+from websockets.exceptions import ConnectionClosed
 
 from trading_bot.core.config_manager import ConfigManager
 from trading_bot.core.event_hub import EventHub
 from trading_bot.market_data.websocket_manager import (
     BinanceWebSocketManager,
     ReconnectionConfig,
-    ConnectionState,
     WebSocketConnectionError,
-    create_binance_websocket_manager
+    create_binance_websocket_manager,
 )
 
 
@@ -44,7 +43,7 @@ class TestReconnectionConfig:
             initial_delay=2.0,
             max_delay=30.0,
             backoff_multiplier=1.5,
-            jitter_factor=0.1
+            jitter_factor=0.1,
         )
 
         assert config.enabled is False
@@ -71,7 +70,7 @@ class TestBinanceWebSocketManagerReconnection:
                 "websocket_initial_delay": 0.1,
                 "websocket_max_delay": 1.0,
                 "websocket_backoff_multiplier": 2.0,
-                "websocket_jitter_factor": 0.1
+                "websocket_jitter_factor": 0.1,
             }
             return config_values.get(key, default)
 
@@ -87,11 +86,7 @@ class TestBinanceWebSocketManagerReconnection:
     @pytest.fixture
     def ws_manager(self, mock_config_manager, mock_event_hub):
         """Create WebSocket manager instance."""
-        return BinanceWebSocketManager(
-            mock_config_manager,
-            mock_event_hub,
-            "btcusdt"
-        )
+        return BinanceWebSocketManager(mock_config_manager, mock_event_hub, "btcusdt")
 
     def test_reconnection_config_loading(self, ws_manager):
         """Test reconnection configuration is loaded correctly."""
@@ -110,11 +105,7 @@ class TestBinanceWebSocketManagerReconnection:
         config_manager.get_config_value.side_effect = Exception("Config error")
         config_manager.get_trading_config.return_value = {"trading_mode": "paper"}
 
-        ws_manager = BinanceWebSocketManager(
-            config_manager,
-            mock_event_hub,
-            "btcusdt"
-        )
+        ws_manager = BinanceWebSocketManager(config_manager, mock_event_hub, "btcusdt")
 
         # Should use default configuration
         config = ws_manager._reconnection_config
@@ -182,13 +173,13 @@ class TestBinanceWebSocketManagerReconnection:
     @pytest.mark.asyncio
     async def test_start_initializes_reconnection_state(self, ws_manager):
         """Test that start() properly initializes reconnection state."""
-        with patch.object(ws_manager, '_connect_and_stream') as mock_connect:
+        with patch.object(ws_manager, "_connect_and_stream") as mock_connect:
             mock_connect.side_effect = ConnectionClosed(None, None)
 
-            with patch.object(ws_manager, '_should_reconnect', return_value=False):
+            with patch.object(ws_manager, "_should_reconnect", return_value=False):
                 try:
                     await ws_manager.start()
-                except:
+                except Exception:
                     pass
 
             assert ws_manager._manual_disconnect is False
@@ -203,8 +194,8 @@ class TestBinanceWebSocketManagerReconnection:
 
         error = ConnectionClosed(None, None)
 
-        with patch.object(ws_manager, '_should_reconnect', return_value=True):
-            with patch.object(ws_manager, '_attempt_reconnection') as mock_reconnect:
+        with patch.object(ws_manager, "_should_reconnect", return_value=True):
+            with patch.object(ws_manager, "_attempt_reconnection") as mock_reconnect:
                 mock_reconnect.return_value = True
 
                 await ws_manager._handle_connection_error(error)
@@ -219,7 +210,7 @@ class TestBinanceWebSocketManagerReconnection:
 
         error = ConnectionClosed(None, None)
 
-        with patch.object(ws_manager, '_attempt_reconnection') as mock_reconnect:
+        with patch.object(ws_manager, "_attempt_reconnection") as mock_reconnect:
             await ws_manager._handle_connection_error(error)
 
             mock_reconnect.assert_not_called()
@@ -230,7 +221,7 @@ class TestBinanceWebSocketManagerReconnection:
         ws_manager._retry_count = 2
         ws_manager._running = True
 
-        with patch.object(ws_manager, '_connect_without_reconnection') as mock_connect:
+        with patch.object(ws_manager, "_connect_without_reconnection") as mock_connect:
             mock_connect.return_value = None
 
             result = await ws_manager._attempt_reconnection()
@@ -244,7 +235,7 @@ class TestBinanceWebSocketManagerReconnection:
         initial_retry_count = ws_manager._retry_count
         ws_manager._running = True
 
-        with patch.object(ws_manager, '_connect_without_reconnection') as mock_connect:
+        with patch.object(ws_manager, "_connect_without_reconnection") as mock_connect:
             mock_connect.side_effect = ConnectionClosed(None, None)
 
             result = await ws_manager._attempt_reconnection()
@@ -258,54 +249,52 @@ class TestBinanceWebSocketManagerReconnection:
         ws_manager._running = True
         ws_manager._websocket = MagicMock()
 
-        with patch.object(ws_manager, '_should_reconnect', return_value=True):
-            with patch('asyncio.wait_for') as mock_wait_for:
+        with patch.object(ws_manager, "_should_reconnect", return_value=True):
+            with patch("asyncio.wait_for") as mock_wait_for:
                 mock_wait_for.side_effect = asyncio.TimeoutError()
 
                 with pytest.raises(WebSocketConnectionError):
                     await ws_manager._stream_data()
 
     @pytest.mark.asyncio
-    async def test_stream_data_connection_closed_triggers_reconnection(self, ws_manager):
+    async def test_stream_data_connection_closed_triggers_reconnection(
+        self, ws_manager
+    ):
         """Test that connection closed during streaming triggers reconnection."""
         ws_manager._running = True
         ws_manager._websocket = MagicMock()
 
-        with patch.object(ws_manager, '_should_reconnect', return_value=True):
-            with patch('asyncio.wait_for') as mock_wait_for:
+        with patch.object(ws_manager, "_should_reconnect", return_value=True):
+            with patch("asyncio.wait_for") as mock_wait_for:
                 mock_wait_for.side_effect = ConnectionClosed(None, None)
 
                 with pytest.raises(WebSocketConnectionError):
                     await ws_manager._stream_data()
 
-    def test_custom_reconnection_config_via_constructor(self, mock_config_manager, mock_event_hub):
+    def test_custom_reconnection_config_via_constructor(
+        self, mock_config_manager, mock_event_hub
+    ):
         """Test custom reconnection config can be passed via constructor."""
         custom_config = ReconnectionConfig(
-            enabled=False,
-            max_retries=5,
-            initial_delay=2.0
+            enabled=False, max_retries=5, initial_delay=2.0
         )
 
         ws_manager = BinanceWebSocketManager(
-            mock_config_manager,
-            mock_event_hub,
-            "ethusdt",
-            custom_config
+            mock_config_manager, mock_event_hub, "ethusdt", custom_config
         )
 
         assert ws_manager._reconnection_config.enabled is False
         assert ws_manager._reconnection_config.max_retries == 5
         assert ws_manager._reconnection_config.initial_delay == 2.0
 
-    def test_factory_function_with_reconnection_config(self, mock_config_manager, mock_event_hub):
+    def test_factory_function_with_reconnection_config(
+        self, mock_config_manager, mock_event_hub
+    ):
         """Test factory function supports reconnection configuration."""
         custom_config = ReconnectionConfig(max_retries=7)
 
         ws_manager = create_binance_websocket_manager(
-            mock_config_manager,
-            mock_event_hub,
-            "adausdt",
-            custom_config
+            mock_config_manager, mock_event_hub, "adausdt", custom_config
         )
 
         assert isinstance(ws_manager, BinanceWebSocketManager)
@@ -317,13 +306,15 @@ class TestBinanceWebSocketManagerReconnection:
         original_streams = {"btcusdt@kline_1m", "btcusdt@ticker"}
         ws_manager._subscribed_streams = original_streams.copy()
 
-        with patch.object(ws_manager, '_get_stream_names', return_value=list(original_streams)):
-            with patch('websockets.connect') as mock_connect:
+        with patch.object(
+            ws_manager, "_get_stream_names", return_value=list(original_streams)
+        ):
+            with patch("websockets.connect") as mock_connect:
                 mock_websocket = AsyncMock()
                 mock_connect.return_value.__aenter__.return_value = mock_websocket
                 mock_connect.return_value.__aexit__.return_value = None
 
-                with patch.object(ws_manager, '_stream_data') as mock_stream:
+                with patch.object(ws_manager, "_stream_data") as mock_stream:
                     mock_stream.return_value = None
 
                     await ws_manager._connect_without_reconnection()

@@ -10,9 +10,13 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from trading_bot.core.config_manager import (ConfigManager, ConfigurationError,
-                                             EnvConfigLoader, IniConfigLoader,
-                                             create_config_manager)
+from trading_bot.core.config_manager import (
+    ConfigManager,
+    ConfigurationError,
+    EnvConfigLoader,
+    IniConfigLoader,
+    create_config_manager,
+)
 
 
 class TestEnvConfigLoader(unittest.TestCase):
@@ -66,9 +70,7 @@ trading_mode = live
 max_position_size = 0.2
 risk_percentage = 3.0
 """
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".ini", delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ini", delete=False) as f:
             f.write(ini_content)
             f.flush()
 
@@ -77,12 +79,8 @@ risk_percentage = 3.0
                 config = loader.load_config()
 
                 self.assertEqual(config["binance_api_key"], "test_api_key")
-                self.assertEqual(
-                    config["binance_secret_key"], "test_secret_key"
-                )
-                self.assertEqual(
-                    config["discord_webhook_url"], "test_webhook_url"
-                )
+                self.assertEqual(config["binance_secret_key"], "test_secret_key")
+                self.assertEqual(config["discord_webhook_url"], "test_webhook_url")
                 self.assertEqual(config["log_level"], "DEBUG")
                 self.assertEqual(config["trading_mode"], "live")
                 self.assertEqual(config["max_position_size"], 0.2)

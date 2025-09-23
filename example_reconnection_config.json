@@ -1,9 +1,0 @@
-{
-  "websocket_reconnection_enabled": true,
-  "websocket_max_retries": 10,
-  "websocket_initial_delay": 1.0,
-  "websocket_max_delay": 60.0,
-  "websocket_backoff_multiplier": 2.0,
-  "websocket_jitter_factor": 0.25,
-  "trading_mode": "paper"
-}

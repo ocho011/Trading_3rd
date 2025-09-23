@@ -1,9 +1,9 @@
 """
 Core module for trading bot infrastructure.
 
-Contains configuration management, logging, event hub, and other foundational components.
+Contains configuration, logging, event hub, and foundational components.
 """
 
-from .event_hub import EventHub, EventType, EventHubInterface
+from .event_hub import EventHub, EventHubInterface, EventType
 
-__all__ = ['EventHub', 'EventType', 'EventHubInterface']
+__all__ = ["EventHub", "EventType", "EventHubInterface"]
