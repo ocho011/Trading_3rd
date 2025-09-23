@@ -104,9 +104,7 @@ class IniConfigLoader(IConfigLoader):
         config.read(self._config_file_path)
 
         return {
-            "binance_api_key": config.get(
-                "api", "binance_api_key", fallback=None
-            ),
+            "binance_api_key": config.get("api", "binance_api_key", fallback=None),
             "binance_secret_key": config.get(
                 "api", "binance_secret_key", fallback=None
             ),
@@ -114,9 +112,7 @@ class IniConfigLoader(IConfigLoader):
                 "notification", "discord_webhook_url", fallback=None
             ),
             "log_level": config.get("logging", "log_level", fallback="INFO"),
-            "trading_mode": config.get(
-                "trading", "trading_mode", fallback="paper"
-            ),
+            "trading_mode": config.get("trading", "trading_mode", fallback="paper"),
             "max_position_size": config.getfloat(
                 "trading", "max_position_size", fallback=0.1
             ),
@@ -205,9 +201,7 @@ class ConfigManager:
             Dict[str, str]: Notification settings
         """
         return {
-            "discord_webhook_url": self.get_config_value(
-                "discord_webhook_url", ""
-            ),
+            "discord_webhook_url": self.get_config_value("discord_webhook_url", ""),
         }
 
     def get_trading_config(self) -> Dict[str, Any]:
@@ -219,12 +213,9 @@ class ConfigManager:
         """
         return {
             "trading_mode": self.get_config_value("trading_mode", "paper"),
-            "max_position_size": self.get_config_value(
-                "max_position_size", 0.1
-            ),
+            "max_position_size": self.get_config_value("max_position_size", 0.1),
             "risk_percentage": self.get_config_value("risk_percentage", 2.0),
         }
-
 
 
 def create_config_manager(config_source: str = "env") -> ConfigManager:

@@ -148,9 +148,7 @@ class CandleData:
         if self.high_price < max(self.open_price, self.close_price):
             raise InvalidDataError("High price cannot be less than open/close")
         if self.low_price > min(self.open_price, self.close_price):
-            raise InvalidDataError(
-                "Low price cannot be greater than open/close"
-            )
+            raise InvalidDataError("Low price cannot be greater than open/close")
 
 
 class IMarketDataValidator(ABC):
@@ -251,9 +249,7 @@ class ICandleAggregator(ABC):
 class TimeframeCandleAggregator(ICandleAggregator):
     """Multi-timeframe candle aggregator implementation."""
 
-    def __init__(
-        self, symbol: str, supported_timeframes: List[Timeframe]
-    ) -> None:
+    def __init__(self, symbol: str, supported_timeframes: List[Timeframe]) -> None:
         """Initialize timeframe candle aggregator.
 
         Args:
@@ -336,9 +332,7 @@ class TimeframeCandleAggregator(ICandleAggregator):
         self._completed_candles.clear()
         return completed
 
-    def _get_candle_timestamp(
-        self, timestamp: int, timeframe: Timeframe
-    ) -> int:
+    def _get_candle_timestamp(self, timestamp: int, timeframe: Timeframe) -> int:
         """Calculate candle open timestamp for given timeframe.
 
         Args:
@@ -530,9 +524,7 @@ class MarketDataProcessor(IMarketDataProcessor):
 
             # Check data freshness
             if not self._is_data_fresh(market_data):
-                self._logger.warning(
-                    f"Stale data received: {market_data.symbol}"
-                )
+                self._logger.warning(f"Stale data received: {market_data.symbol}")
                 return
 
             # Get or create aggregator for symbol
@@ -570,14 +562,10 @@ class MarketDataProcessor(IMarketDataProcessor):
             "error_count": self._error_count,
             "last_processed_time": self._last_processed_time,
             "active_symbols": list(self._aggregators.keys()),
-            "supported_timeframes": [
-                tf.value for tf in self._supported_timeframes
-            ],
+            "supported_timeframes": [tf.value for tf in self._supported_timeframes],
         }
 
-    def _parse_market_data(
-        self, event_data: Dict[str, Any]
-    ) -> Optional[MarketData]:
+    def _parse_market_data(self, event_data: Dict[str, Any]) -> Optional[MarketData]:
         """Parse event data into MarketData structure.
 
         Args:
@@ -592,9 +580,7 @@ class MarketDataProcessor(IMarketDataProcessor):
             elif event_data.get("type") == "ticker":
                 return self._parse_ticker_data(event_data)
 
-            self._logger.warning(
-                f"Unknown data type: {event_data.get('type')}"
-            )
+            self._logger.warning(f"Unknown data type: {event_data.get('type')}")
             return None
 
         except Exception as e:
@@ -692,13 +678,10 @@ class MarketDataProcessor(IMarketDataProcessor):
                 "timestamp": candle.last_update,
             }
 
-            self._event_hub.publish(
-                EventType.CANDLE_DATA_PROCESSED, event_data
-            )
+            self._event_hub.publish(EventType.CANDLE_DATA_PROCESSED, event_data)
 
             self._logger.debug(
-                f"Published candle data: {candle.symbol} "
-                f"{candle.timeframe.value}"
+                f"Published candle data: {candle.symbol} " f"{candle.timeframe.value}"
             )
 
         except Exception as e:

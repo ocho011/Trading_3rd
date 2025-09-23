@@ -90,9 +90,7 @@ class TestCoreInfrastructureIntegration(unittest.TestCase):
 
         # Log configuration values to demonstrate integration
         logger.info(f"Trading mode: {trading_config['trading_mode']}")
-        logger.info(
-            f"Max position size: {trading_config['max_position_size']}"
-        )
+        logger.info(f"Max position size: {trading_config['max_position_size']}")
         logger.info(f"Risk percentage: {trading_config['risk_percentage']}")
 
     def test_directory_structure_exists(self):
@@ -111,9 +109,7 @@ class TestCoreInfrastructureIntegration(unittest.TestCase):
         self.assertTrue((base_path / "core" / "__init__.py").exists())
         self.assertTrue((base_path / "market_data" / "__init__.py").exists())
         self.assertTrue((base_path / "strategies" / "__init__.py").exists())
-        self.assertTrue(
-            (base_path / "risk_management" / "__init__.py").exists()
-        )
+        self.assertTrue((base_path / "risk_management" / "__init__.py").exists())
         self.assertTrue((base_path / "notification" / "__init__.py").exists())
 
         # Check core modules exist

@@ -265,7 +265,7 @@
         "dependencies": [
           4
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -273,7 +273,7 @@
             "description": "모든 트레이딩 전략의 기본이 되는 추상 Strategy 클래스를 정의하고 필수 메서드들을 설계합니다.",
             "dependencies": [],
             "details": "`strategies/base_strategy.py`에 추상 기본 클래스 `Strategy`를 생성합니다. `generate_signal(data: MarketData)` 추상 메서드와 전략 초기화, 설정 관리를 위한 기본 메서드들을 포함합니다. ABC(Abstract Base Class)를 사용하여 구현합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -284,7 +284,7 @@
               "5.1"
             ],
             "details": "ICT Order Block의 정의에 따라 가격 움직임에서 주요 지지/저항 영역을 감지하는 알고리즘을 구현합니다. 캔들스틱 데이터에서 브레이크아웃, 리테스트, 반전 패턴을 식별하는 로직을 포함합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -296,7 +296,7 @@
               "5.2"
             ],
             "details": "`strategies/ict_strategy.py`에 `ICTStrategy` 클래스를 생성합니다. `generate_signal` 메서드에서 Order Block 감지 알고리즘을 활용하여 매매 신호를 생성하는 로직을 구현합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -307,7 +307,7 @@
               "5.3"
             ],
             "details": "TradingSignal 데이터클래스에 진입가격, 방향(매수/매도), 신뢰도, 타임스탬프 등의 필드를 포함합니다. ICTStrategy에서 패턴이 감지되었을 때 적절한 TradingSignal 인스턴스를 생성하는 로직을 구현합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -318,7 +318,7 @@
               "5.4"
             ],
             "details": "ICTStrategy에서 TradingSignal이 생성되었을 때 EventHub의 publish 메서드를 사용하여 `TRADING_SIGNAL_GENERATED` 이벤트를 발행합니다. 이벤트 타입 상수를 정의하고 적절한 에러 처리를 포함합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -329,7 +329,7 @@
               "5.5"
             ],
             "details": "미리 정의된 pandas DataFrame 캔들 데이터로 ICTStrategy를 테스트합니다. Order Block 패턴이 나타날 때 올바른 TradingSignal이 생성되는지, 패턴이 없을 때는 신호가 생성되지 않는지 검증합니다. 다양한 시장 상황에 대한 테스트 케이스를 포함합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -676,7 +676,7 @@
     ],
     "metadata": {
       "created": "2025-09-21T14:07:37.892Z",
-      "updated": "2025-09-22T19:31:41.084Z",
+      "updated": "2025-09-23T11:57:32.814Z",
       "description": "Tasks for master context"
     }
   }

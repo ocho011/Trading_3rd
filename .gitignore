@@ -228,4 +228,7 @@ node_modules/
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
+
+# Development phase files and documentation
+dev-files/

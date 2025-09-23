@@ -185,7 +185,7 @@ class EventHub(EventHubInterface):
             raise ValueError("Event type cannot be empty or None")
 
         with self._lock:
-            # Get a copy of subscribers to avoid issues if list is modified during iteration
+            # Get copy of subscribers to avoid issues if list modified during iteration
             subscribers = self._subscribers.get(event_type, []).copy()
 
         # Execute callbacks outside of the lock to avoid blocking other operations

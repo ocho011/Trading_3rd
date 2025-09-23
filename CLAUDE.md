@@ -43,5 +43,10 @@
 * **Full Lint**: `python3 -m pylint application/ domain/ infrastructure/` - Comprehensive 
 
 ## Workflow for Code development and refactoring
-- Files that are only needed, used, or generated during the development phase should be managed in separate directories.
-- When generating code, use the code-writer subagent, and when reviewing the generated code, use the code-revißewer subagent respectively.
+- **MANDATORY**: Files that are only needed, used, or generated during the development phase should be managed in separate directories (`dev-files/`). This includes:
+  - Demo scripts (`demo*.py`, `example*.py`)
+  - Development documentation (except README.md, CLAUDE.md)
+  - Example configurations and test data
+  - Temporary files created during development
+- **MANDATORY**: When generating code, use the code-writer subagent, and when reviewing the generated code, use the code-reviewer subagent respectively.
+- Use `/organize-dev-files` command regularly to maintain clean project structure.

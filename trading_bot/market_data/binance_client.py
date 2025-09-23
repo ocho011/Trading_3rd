@@ -237,9 +237,7 @@ class BinanceClient(IExchangeClient):
                 symbol=symbol, side=side, quantity=str(quantity)
             )
 
-            self._logger.info(
-                f"Market order placed: {side} {quantity} {symbol}"
-            )
+            self._logger.info(f"Market order placed: {side} {quantity} {symbol}")
             return order_result
 
         except BinanceAPIException as e:
@@ -365,9 +363,7 @@ class BinanceClient(IExchangeClient):
             self._client.get_account()
         except BinanceAPIException as e:
             if e.code in [-2014, -1021]:  # Authentication errors
-                raise BinanceAuthenticationError(
-                    f"Authentication failed: {e.message}"
-                )
+                raise BinanceAuthenticationError(f"Authentication failed: {e.message}")
             raise
 
     def _ensure_connected(self) -> None:
@@ -466,9 +462,7 @@ class BinanceClient(IExchangeClient):
         self._logger.error(f"Connection failed: {error}")
         raise BinanceConnectionError(f"Failed to connect to Binance: {error}")
 
-    def _handle_api_exception(
-        self, error: BinanceAPIException, operation: str
-    ) -> None:
+    def _handle_api_exception(self, error: BinanceAPIException, operation: str) -> None:
         """
         Handle Binance API exceptions.
 
@@ -515,9 +509,7 @@ class BinanceClient(IExchangeClient):
             order_details += f" @ {price}"
 
         self._logger.error(f"Order failed - {order_details}: {error.message}")
-        raise BinanceOrderError(
-            f"Failed to place {order_details}: {error.message}"
-        )
+        raise BinanceOrderError(f"Failed to place {order_details}: {error.message}")
 
     def _handle_general_error(self, error: Exception, operation: str) -> None:
         """
