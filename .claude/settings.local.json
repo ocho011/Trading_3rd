@@ -13,7 +13,10 @@
       "Bash(python3:*)",
       "Bash(python -m pytest tests/test_event_hub.py -v)",
       "Bash(python -m pytest tests/test_binance_client.py -v)",
-      "Bash(python -m pytest tests/test_data_processor.py -v)"
+      "Bash(python -m pytest tests/test_data_processor.py -v)",
+      "Bash(python -m pytest tests/test_position_sizer.py -v)",
+      "mcp__task-master-ai__update_subtask",
+      "Bash(python:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -344,15 +344,15 @@
         "dependencies": [
           5
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "포지션 사이징 계산 알고리즘 구현",
             "description": "고정 리스크 비율 기반 포지션 크기 계산 로직 개발",
             "dependencies": [],
-            "details": "계좌 잔고와 설정된 리스크 비율(예: 1%)을 기반으로 포지션 크기를 계산하는 알고리즘을 구현합니다. 다양한 계좌 크기와 리스크 설정에 대응할 수 있는 유연한 계산 로직을 포함해야 합니다.",
-            "status": "pending",
+            "details": "계좌 잔고와 설정된 리스크 비율(예: 1%)을 기반으로 포지션 크기를 계산하는 알고리즘을 구현합니다. 다양한 계좌 크기와 리스크 설정에 대응할 수 있는 유연한 계산 로직을 포함해야 합니다.\n<info added on 2025-09-23T12:27:38.445Z>\n`position_sizer.py`에 구현된 강력한 포지션 사이징 계산 로직을 기반으로, 이를 전체 시스템에 통합하는 `RiskManager` 클래스를 구현합니다. 이 클래스는 트레이딩 시그널을 받아 리스크를 적용하고, 실행 가능한 주문 요청을 생성하는 오케스트레이터 역할을 합니다.\n\n**구현 사항:**\n\n1.  **`RiskManager` 클래스 생성:**\n    *   새로운 파일 `trading_bot/risk_management/risk_manager.py`를 생성합니다.\n    *   `RiskManager` 클래스를 정의합니다. 이 클래스는 초기화 시 `ConfigManager`로부터 리스크 관련 설정을 주입받고, 이를 사용하여 `position_sizer.py`의 `create_position_sizer()` 팩토리 함수를 호출해 `PositionSizer` 인스턴스를 생성 및 보유합니다.\n\n2.  **이벤트 핸들러 구현:**\n    *   `EventHub`를 구독하여 `TRADING_SIGNAL_GENERATED` 이벤트를 처리하는 비동기 핸들러 메서드(예: `async def on_trading_signal(self, signal_data)`)를 구현합니다.\n    *   핸들러 내에서, 수신된 시그널 데이터와 `PositionSizer` 인스턴스를 사용해 `calculate_position_size()`를 호출합니다.\n\n3.  **리스크 파라미터 계산 및 보강:**\n    *   포지션 크기 외에도, 설정된 전략(예: 고정 비율, ATR 기반)에 따라 손절(Stop-Loss) 및 익절(Take-Profit) 가격을 계산하는 로직을 추가합니다.\n    *   계산된 포지션 크기, 진입 가격, 손절 가격, 익절 가격 등의 모든 리스크 파라미터를 원본 시그널 데이터에 보강합니다.\n\n4.  **주문 요청 이벤트 발행:**\n    *   리스크 파라미터가 모두 적용된 최종 데이터를 사용하여 `ORDER_REQUEST_GENERATED` 이벤트를 `EventHub`에 발행합니다. 이 이벤트는 `ExecutionEngine` 모듈에서 구독하여 실제 주문을 실행하는 데 사용됩니다.\n\n**참조 파일 및 패턴:**\n*   **사용할 모듈:** `trading_bot/risk_management/position_sizer.py`의 `PositionSizer` 및 `create_position_sizer`\n*   **구독할 이벤트:** `TRADING_SIGNAL_GENERATED` (from `strategies/ict_strategy.py`)\n*   **발행할 이벤트:** `ORDER_REQUEST_GENERATED`\n*   **설정 관리:** `ConfigManager`를 통해 리스크 설정(예: `risk_percentage`, `sizing_method`)을 가져옵니다.\n*   **로깅:** 프로젝트의 표준 로거를 사용하여 주요 결정 과정을 기록합니다.\n</info added on 2025-09-23T12:27:38.445Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -362,8 +362,8 @@
             "dependencies": [
               "6.1"
             ],
-            "details": "입력된 트레이딩 신호를 분석하여 위험도를 평가하고, 이를 바탕으로 적절한 리스크 관리 매개변수를 계산합니다. 시장 변동성과 신호 강도를 고려한 동적 리스크 조정 기능을 포함합니다.",
-            "status": "pending",
+            "details": "입력된 트레이딩 신호를 분석하여 위험도를 평가하고, 이를 바탕으로 적절한 리스크 관리 매개변수를 계산합니다. 시장 변동성과 신호 강도를 고려한 동적 리스크 조정 기능을 포함합니다.\n<info added on 2025-09-23T16:10:45.859Z>\n### Implementation Summary\n\n**1. Core Logic Implementation:**\n- A comprehensive risk assessment system was implemented in `trading_bot/risk_management/risk_assessor.py`.\n- The main class, `RiskAssessor`, adheres to the `IRiskAssessor` interface, following SOLID principles. A factory function, `create_risk_assessor`, was also added for easy instantiation in `trading_bot/risk_management/__init__.py`.\n\n**2. Risk Assessment Process:**\n- The `assess` method takes a `TradingSignal` and other contextual data (e.g., portfolio state) to produce a `RiskAssessmentResult` dataclass.\n- This result object contains key outputs:\n    - `risk_multiplier`: A dynamic multiplier (e.g., 0.1x to 3.0x) used to adjust position sizes calculated by the `PositionSizer` (from subtask 6.1).\n    - `stop_loss_adjustment_factor`: A factor to dynamically widen or tighten stop-loss levels.\n    - `risk_level`: A qualitative assessment (e.g., 'Very Low', 'Moderate', 'High').\n    - `confidence_score`: A score indicating the reliability of the assessment itself.\n\n**3. Evaluated Risk Factors:**\n- The system analyzes multiple dimensions to determine the overall risk, including:\n    - Signal Quality (confidence, strength)\n    - Market Volatility (from market data)\n    - Position Concentration (requires portfolio context)\n    - Time Context (signal freshness)\n    - Strategy Track Record (historical performance)\n    - Market Correlation\n\n**4. Integration and Testing:**\n- The `RiskAssessor` integrates with the application's core by publishing its `RiskAssessmentResult` to the `EventHub`, making the analysis available to other modules like the upcoming `RiskManager`.\n- A comprehensive test suite with 65 tests was created in `tests/test_risk_assessor.py` to ensure correctness and reliability, covering various signal and market conditions.\n</info added on 2025-09-23T16:10:45.859Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -374,7 +374,7 @@
               "6.2"
             ],
             "details": "진입가격을 기준으로 설정된 손절/익절 비율 또는 ATR 기반으로 스톱로스와 테이크프로핏 레벨을 자동 계산합니다. 다양한 계산 방식을 지원하고 설정 가능한 매개변수를 제공합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -385,7 +385,7 @@
               "6.3"
             ],
             "details": "현재 계좌 잔고, 기존 포지션, 미실현 손익을 종합하여 새로운 포지션의 리스크를 평가합니다. 과도한 레버리지나 집중 투자를 방지하는 안전장치를 포함합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -396,7 +396,7 @@
               "6.4"
             ],
             "details": "TRADING_SIGNAL_GENERATED 이벤트를 구독하고, 리스크 관리 계산을 완료한 후 포지션 크기, 손절/익절 레벨이 포함된 ORDER_REQUEST_GENERATED 이벤트를 생성하여 EventHub에 발행합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -676,7 +676,7 @@
     ],
     "metadata": {
       "created": "2025-09-21T14:07:37.892Z",
-      "updated": "2025-09-22T19:31:41.084Z",
+      "updated": "2025-09-23T16:51:09.643Z",
       "description": "Tasks for master context"
     }
   }
