@@ -412,7 +412,7 @@
           3,
           6
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -420,7 +420,7 @@
             "description": "ORDER_REQUEST_GENERATED 이벤트를 구독하고 주문 요청을 받아 처리하는 기본 구조를 구현합니다.",
             "dependencies": [],
             "details": "ExecutionEngine 클래스를 생성하고 EventHub에서 ORDER_REQUEST_GENERATED 이벤트를 구독하는 로직을 구현합니다. 이벤트 핸들러를 통해 주문 요청 데이터를 파싱하고 검증하는 기능을 포함합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -430,8 +430,8 @@
             "dependencies": [
               "7.1"
             ],
-            "details": "주문 요청 데이터를 바이낸스 API 형식으로 변환하고, BinanceClient를 통해 시장가/지정가 주문을 전송하는 로직을 구현합니다. 주문 전송 시 필요한 매개변수 설정과 API 호출을 처리합니다.",
-            "status": "pending",
+            "details": "주문 요청 데이터를 바이낸스 API 형식으로 변환하고, BinanceClient를 통해 시장가/지정가 주문을 전송하는 로직을 구현합니다. 주문 전송 시 필요한 매개변수 설정과 API 호출을 처리합니다.\n<info added on 2025-09-23T21:52:06.595Z>\n```markdown\n**구현 완료 상세 내역:**\n\n*   **`ExecutionEngine` 클래스 업데이트:**\n    *   생성자를 통해 `BinanceClient`를 의존성으로 주입받도록 구조를 변경했습니다.\n    *   `_convert_to_binance_format` 및 `_convert_signal_to_side` 헬퍼 메서드를 구현하여, 내부 `OrderRequest` 데이터를 바이낸스 API가 요구하는 형식(사이드, 심볼, 수량 등)으로 변환하는 로직을 추가했습니다.\n\n*   **실제 주문 실행 로직 구현:**\n    *   기존의 시뮬레이션 로직을 `BinanceClient`의 실제 API 호출로 대체했습니다.\n    *   `_execute_binance_order` 메서드를 추가하여 주문 유형(시장가/지정가)에 따라 `binance_client.place_market_order()` 또는 `place_limit_order()`를 호출하도록 라우팅합니다.\n    *   `process_order_request` 메서드는 이 실행 흐름을 총괄합니다.\n\n*   **응답 처리 및 상태 관리:**\n    *   `_process_order_response` 메서드를 개선하여 실제 바이낸스 API 응답을 파싱하고, `orderId`를 추출하여 다음 단계(주문 상태 모니터링)에서 사용할 수 있도록 준비합니다.\n    *   바이낸스의 주문 상태(`FILLED`, `NEW`, `PARTIALLY_FILLED`)를 내부 `OrderStatus` 열거형(`EXECUTED`, `EXECUTING`)으로 매핑하는 로직을 구현했습니다.\n\n*   **에러 핸들링 및 재시도 메커니즘:**\n    *   `BinanceOrderError`, `BinanceRateLimitError`, `BinanceError` 등 바이낸스 API 호출 시 발생할 수 있는 특정 예외에 대한 처리 로직을 구현했습니다.\n    *   특히 `BinanceRateLimitError` 발생 시, `_handle_retry_delay` 메서드를 통해 최대 30초까지 지연되는 지수 백오프(exponential backoff) 재시도 로직을 적용하여 안정성을 높였습니다. 주문 자체의 오류(`BinanceOrderError`)는 재시도하지 않습니다.\n\n*   **통합 테스트:**\n    *   `tests/integration/test_execution_engine_integration.py`에 시장가/지정가 주문 성공, 주문 실패, API 속도 제한 및 재시도 로직 등 다양한 시나리오를 검증하는 통합 테스트 스위트를 작성하고 모든 테스트 통과를 확인했습니다.\n```\n</info added on 2025-09-23T21:52:06.595Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -442,7 +442,7 @@
               "7.2"
             ],
             "details": "주문 ID를 기반으로 주문 상태를 주기적으로 확인하고, FILLED, CANCELED, PARTIALLY_FILLED 등의 상태 변화를 감지하는 모니터링 로직을 구현합니다. 비동기 작업으로 처리하여 성능을 최적화합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -452,8 +452,8 @@
             "dependencies": [
               "7.3"
             ],
-            "details": "주문 체결을 확인하고 체결가격, 체결수량, 수수료 등의 정보를 수집하여 처리하는 로직을 구현합니다. 부분 체결과 전체 체결을 구분하여 처리하는 기능을 포함합니다.",
-            "status": "pending",
+            "details": "주문 체결을 확인하고 체결가격, 체결수량, 수수료 등의 정보를 수집하여 처리하는 로직을 구현합니다. 부분 체결과 전체 체결을 구분하여 처리하는 기능을 포함합니다.\n<info added on 2025-09-23T22:02:46.195Z>\nThis will involve enhancing the `ExecutionEngine` in `trading/execution_engine.py`.\n\n**Implementation Plan:**\n\n1.  **Define `ExecutionResult` Data Structure:** Create a new `dataclass` named `ExecutionResult`, likely within `trading/execution_engine.py` or a shared types module. This structure should encapsulate all details of a filled order, including:\n    *   `order_id`: The exchange's order ID.\n    *   `client_order_id`: Our internal order ID.\n    *   `symbol`: The trading pair (e.g., 'BTCUSDT').\n    *   `side`: 'BUY' or 'SELL'.\n    *   `order_type`: 'LIMIT', 'MARKET', etc.\n    *   `cumulative_filled_quantity`: Total quantity filled.\n    *   `avg_fill_price`: The volume-weighted average price of all fills.\n    *   `commission_amount`: The total commission paid.\n    *   `commission_asset`: The asset in which commission was paid.\n    *   `slippage`: A newly calculated metric for execution quality.\n\n2.  **Enhance Fill Processing Logic:** In the `ExecutionEngine`, refine the method that handles order status updates from the `BinanceClient`. This logic must iterate through the `fills` array provided by the Binance API for a filled order. It will be responsible for:\n    *   Aggregating quantities and calculating the volume-weighted average price for partial fills.\n    *   Summing up commission costs from each partial fill.\n\n3.  **Calculate Execution Quality Metrics:**\n    *   Implement slippage calculation. For market orders, this will be the difference between the market price when the `ORDER_REQUEST_GENERATED` event was received and the final `avg_fill_price`. For limit orders, it's the difference between the limit price and `avg_fill_price`. This value will populate the `slippage` field in the `ExecutionResult`.\n\n4.  **Publish `ORDER_FILLED` Event:** After processing the fill data and constructing the complete `ExecutionResult` object, the `ExecutionEngine` will publish this object as the data payload for the `ORDER_FILLED` event via the `EventHub`.\n</info added on 2025-09-23T22:02:46.195Z>\n<info added on 2025-09-23T22:07:07.115Z>\n<info added on 2025-09-24T09:15:32.841Z>\n**Completion Summary & Enhancements:**\n\nThe fill confirmation and processing logic within `trading/execution_engine.py` has been successfully implemented, significantly exceeding the original plan's scope.\n\n1.  **Advanced Data Structures:**\n    *   The `ExecutionResult` dataclass was greatly expanded.\n    *   A new nested `FillDetail` dataclass was introduced to track each partial fill individually, capturing `price`, `quantity`, `commission_amount`, and `commission_asset` for each leg of the trade.\n    *   `ExecutionResult` now includes comprehensive statistics like `number_of_fills`, `time_to_fill_ms`, `avg_fill_price`, and detailed commission breakdowns (`total_commission_usd`, `fee_breakdown`).\n\n2.  **Sophisticated Processing Logic:**\n    *   A new private method, `_process_individual_fills`, was implemented to parse the `fills` array from the Binance API response, populating the `individual_fills` list.\n    *   The `_process_order_response` method was enhanced to orchestrate the fill processing, calculate aggregate statistics, and handle various order statuses.\n    *   Logic now explicitly distinguishes between partial, complete, and potential over-fills using helper methods (`is_partial_fill`, `is_complete_fill`).\n\n3.  **Execution Quality Metrics:**\n    *   Slippage calculation was implemented for both MARKET and LIMIT orders, comparing the average fill price against the market price at execution or the limit price.\n    *   Additional metrics such as `price_impact_percentage` and a custom `execution_efficiency_score` (0-100) have been added to provide a quantitative measure of execution quality.\n\n4.  **Enriched Event Publishing:**\n    *   The `ORDER_FILLED` event published via the `EventHub` now contains the fully populated `ExecutionResult` object. This provides downstream consumers with a rich dataset including all individual fill details, commission costs in USD, and calculated quality metrics, enabling advanced portfolio tracking and performance analysis.\n</info added on 2025-09-24T09:15:32.841Z>\n</info added on 2025-09-23T22:07:07.115Z>",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -464,7 +464,7 @@
               "7.2"
             ],
             "details": "네트워크 오류, API 제한, 잔액 부족 등의 다양한 오류 상황을 처리하고, 재시도 가능한 오류에 대해서는 지수 백오프 방식으로 재시도하는 로직을 구현합니다. 오류 로그 기록과 알림 기능을 포함합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -474,8 +474,8 @@
             "dependencies": [
               "7.4"
             ],
-            "details": "주문이 성공적으로 체결되었을 때 체결 정보를 포함한 ORDER_FILLED 이벤트를 생성하고 EventHub를 통해 다른 모듈들에게 알리는 기능을 구현합니다. 이벤트 데이터에는 체결가격, 수량, 시간, 수수료 등이 포함됩니다.",
-            "status": "pending",
+            "details": "주문이 성공적으로 체결되었을 때 체결 정보를 포함한 ORDER_FILLED 이벤트를 생성하고 EventHub를 통해 다른 모듈들에게 알리는 기능을 구현합니다. 이벤트 데이터에는 체결가격, 수량, 시간, 수수료 등이 포함됩니다.\n<info added on 2025-09-24T10:52:40.830Z>\n**구현 완료 상세 내역:**\n\n해당 기능은 `trading_bot/execution/execution_engine.py` 파일의 `_handle_order_status_update` 메소드 내에 핵심 로직이 구현되었습니다. (대략 2040-2150 라인)\n\n기본 요구사항을 초과하여, `FILLED` 및 `PARTIALLY_FILLED` 주문 상태 모두에 대해 `ORDER_FILLED` 이벤트를 발행하도록 구현되었습니다. 발행되는 이벤트 데이터는 다음과 같은 매우 상세한 정보를 포함합니다:\n\n*   **포괄적인 데이터 구조:** 전체 주문 상세 정보가 담긴 `ExecutionResult` 객체, 개별 체결 내역(fills) 배열, 체결 상태 플래그(`is_partial_fill`, `is_complete_fill` 등)를 포함합니다.\n*   **상세 수수료 정보:** 수수료 금액(`commission_amount`), 자산(`commission_asset`), USD 환산 총액(`total_commission_usd`) 및 상세 내역(`fee_breakdown`)을 제공합니다.\n*   **고급 실행 품질 지표:** 슬리피지(`slippage_percentage`), 가격 영향(`price_impact_percentage`), 실행 효율성 점수(`execution_efficiency_score`), 실행 지연 시간(`execution_latency_ms`) 등 고급 분석 메트릭을 계산하여 포함합니다.\n*   **거래 가치 계산:** 총 거래 가치(`total_trade_value`) 및 순 거래 가치(`net_trade_value`)를 계산합니다.\n*   **원시 데이터:** 완전한 투명성과 디버깅을 위해 Binance API로부터 받은 원본 응답 데이터를 포함합니다.\n</info added on 2025-09-24T10:52:40.830Z>",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -676,7 +676,7 @@
     ],
     "metadata": {
       "created": "2025-09-21T14:07:37.892Z",
-      "updated": "2025-09-23T16:51:09.643Z",
+      "updated": "2025-09-24T10:53:10.964Z",
       "description": "Tasks for master context"
     }
   }

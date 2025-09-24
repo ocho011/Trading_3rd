@@ -34,6 +34,7 @@ class EventType:
     HOLD_SIGNAL: str = "hold_signal"
 
     # Order management events
+    ORDER_REQUEST_GENERATED: str = "order_request_generated"
     ORDER_PLACED: str = "order_placed"
     ORDER_FILLED: str = "order_filled"
     ORDER_CANCELLED: str = "order_cancelled"

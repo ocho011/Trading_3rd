@@ -7,7 +7,7 @@ following SOLID principles and dependency injection patterns.
 
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
@@ -133,6 +133,56 @@ class IExchangeClient(ABC):
 
         Returns:
             bool: True if connected, False otherwise
+        """
+        pass
+
+    @abstractmethod
+    def get_order_status(self, symbol: str, order_id: str) -> Dict[str, Any]:
+        """
+        Get order status by order ID.
+
+        Args:
+            symbol: Trading pair symbol (e.g., 'BTCUSDT')
+            order_id: Order ID to query
+
+        Returns:
+            Dict[str, Any]: Order details including status, filled quantity, etc.
+
+        Raises:
+            BinanceError: If order status retrieval fails
+        """
+        pass
+
+    @abstractmethod
+    def get_all_orders(self, symbol: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Get all orders for a symbol.
+
+        Args:
+            symbol: Trading pair symbol (e.g., 'BTCUSDT')
+            limit: Maximum number of orders to return (default: 100)
+
+        Returns:
+            List[Dict[str, Any]]: List of order details
+
+        Raises:
+            BinanceError: If order retrieval fails
+        """
+        pass
+
+    @abstractmethod
+    def get_open_orders(self, symbol: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get all open orders.
+
+        Args:
+            symbol: Optional trading pair symbol to filter by
+
+        Returns:
+            List[Dict[str, Any]]: List of open order details
+
+        Raises:
+            BinanceError: If open orders retrieval fails
         """
         pass
 
@@ -352,6 +402,98 @@ class BinanceClient(IExchangeClient):
         except Exception as e:
             self._handle_general_error(e, "get exchange info")
 
+    def get_order_status(self, symbol: str, order_id: str) -> Dict[str, Any]:
+        """
+        Get order status by order ID from Binance.
+
+        Args:
+            symbol: Trading pair symbol (e.g., 'BTCUSDT')
+            order_id: Order ID to query
+
+        Returns:
+            Dict[str, Any]: Order details including status, filled quantity, etc.
+
+        Raises:
+            BinanceError: If order status retrieval fails
+        """
+        self._ensure_connected()
+        self._validate_symbol(symbol)
+        self._validate_order_id(order_id)
+
+        try:
+            order_status = self._client.get_order(symbol=symbol, orderId=order_id)
+            self._logger.debug(f"Order status retrieved for {order_id} on {symbol}")
+            return order_status
+
+        except BinanceAPIException as e:
+            self._handle_api_exception(e, f"get order status for {order_id}")
+        except Exception as e:
+            self._handle_general_error(e, f"get order status for {order_id}")
+
+    def get_all_orders(self, symbol: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Get all orders for a symbol from Binance.
+
+        Args:
+            symbol: Trading pair symbol (e.g., 'BTCUSDT')
+            limit: Maximum number of orders to return (default: 100)
+
+        Returns:
+            List[Dict[str, Any]]: List of order details
+
+        Raises:
+            BinanceError: If order retrieval fails
+        """
+        self._ensure_connected()
+        self._validate_symbol(symbol)
+        self._validate_limit(limit)
+
+        try:
+            orders = self._client.get_all_orders(symbol=symbol, limit=limit)
+            self._logger.debug(f"Retrieved {len(orders)} orders for {symbol}")
+            return orders
+
+        except BinanceAPIException as e:
+            self._handle_api_exception(e, f"get all orders for {symbol}")
+        except Exception as e:
+            self._handle_general_error(e, f"get all orders for {symbol}")
+
+    def get_open_orders(self, symbol: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get all open orders from Binance.
+
+        Args:
+            symbol: Optional trading pair symbol to filter by
+
+        Returns:
+            List[Dict[str, Any]]: List of open order details
+
+        Raises:
+            BinanceError: If open orders retrieval fails
+        """
+        self._ensure_connected()
+        if symbol:
+            self._validate_symbol(symbol)
+
+        try:
+            if symbol:
+                open_orders = self._client.get_open_orders(symbol=symbol)
+                self._logger.debug(
+                    f"Retrieved {len(open_orders)} open orders for {symbol}"
+                )
+            else:
+                open_orders = self._client.get_open_orders()
+                self._logger.debug(f"Retrieved {len(open_orders)} open orders")
+
+            return open_orders
+
+        except BinanceAPIException as e:
+            operation = f"get open orders for {symbol}" if symbol else "get open orders"
+            self._handle_api_exception(e, operation)
+        except Exception as e:
+            operation = f"get open orders for {symbol}" if symbol else "get open orders"
+            self._handle_general_error(e, operation)
+
     def _validate_connection(self) -> None:
         """
         Validate connection by making a test API call.
@@ -436,6 +578,38 @@ class BinanceClient(IExchangeClient):
                 if "positive" in str(e):
                     raise e
                 raise ValueError("Price must be a valid number")
+
+    def _validate_order_id(self, order_id: str) -> None:
+        """
+        Validate order ID format.
+
+        Args:
+            order_id: Order ID to validate
+
+        Raises:
+            ValueError: If order ID format is invalid
+        """
+        if not order_id or not isinstance(order_id, str):
+            raise ValueError("Order ID must be a non-empty string")
+
+        if not order_id.isdigit():
+            raise ValueError("Order ID must be numeric")
+
+    def _validate_limit(self, limit: int) -> None:
+        """
+        Validate limit parameter.
+
+        Args:
+            limit: Limit value to validate
+
+        Raises:
+            ValueError: If limit is invalid
+        """
+        if not isinstance(limit, int) or limit <= 0:
+            raise ValueError("Limit must be a positive integer")
+
+        if limit > 1000:  # Binance API limit
+            raise ValueError("Limit cannot exceed 1000")
 
     def _handle_connection_error(self, error: Exception) -> None:
         """
