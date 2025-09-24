@@ -188,7 +188,9 @@ class StopLossResult:
         if self.risk_reward_ratio <= 0:
             raise StopLossCalculationError("Risk reward ratio must be positive")
         if not 0.0 <= self.overall_confidence <= 1.0:
-            raise StopLossCalculationError("Overall confidence must be between 0.0 and 1.0")
+            raise StopLossCalculationError(
+                "Overall confidence must be between 0.0 and 1.0"
+            )
 
     def get_risk_amount(self, position_size: float) -> float:
         """Calculate risk amount for the position.
@@ -242,12 +244,13 @@ class StopLossResult:
                     errors.append("Long position take-profit must be above entry price")
             else:  # SHORT
                 if self.take_profit_level.price >= self.entry_price:
-                    errors.append("Short position take-profit must be below entry price")
+                    errors.append(
+                        "Short position take-profit must be below entry price"
+                    )
 
         if self.stop_loss_level and self.take_profit_level:
-            actual_ratio = (
-                abs(self.take_profit_level.price - self.entry_price) /
-                abs(self.entry_price - self.stop_loss_level.price)
+            actual_ratio = abs(self.take_profit_level.price - self.entry_price) / abs(
+                self.entry_price - self.stop_loss_level.price
             )
             expected_ratio = self.risk_reward_ratio
 
@@ -331,9 +334,7 @@ class StopLossCalculator(IStopLossCalculator):
             InvalidStopLossConfigError: If configuration is invalid
         """
         if not isinstance(config, StopLossConfig):
-            raise InvalidStopLossConfigError(
-                "Config must be StopLossConfig instance"
-            )
+            raise InvalidStopLossConfigError("Config must be StopLossConfig instance")
 
         self._config = config
         self._event_hub = event_hub
@@ -421,9 +422,7 @@ class StopLossCalculator(IStopLossCalculator):
             InvalidStopLossConfigError: If configuration is invalid
         """
         if not isinstance(config, StopLossConfig):
-            raise InvalidStopLossConfigError(
-                "Config must be StopLossConfig instance"
-            )
+            raise InvalidStopLossConfigError("Config must be StopLossConfig instance")
 
         old_method = self._config.method.value
         self._config = config
@@ -514,9 +513,13 @@ class StopLossCalculator(IStopLossCalculator):
             if method == StopLossMethod.FIXED_PERCENTAGE:
                 return self._calculate_fixed_percentage_stop(entry_price, position_type)
             elif method == StopLossMethod.ATR_BASED:
-                return self._calculate_atr_based_stop(entry_price, position_type, market_data)
+                return self._calculate_atr_based_stop(
+                    entry_price, position_type, market_data
+                )
             elif method == StopLossMethod.SUPPORT_RESISTANCE:
-                return self._calculate_support_resistance_stop(entry_price, position_type)
+                return self._calculate_support_resistance_stop(
+                    entry_price, position_type
+                )
             elif method == StopLossMethod.VOLATILITY_ADJUSTED:
                 return self._calculate_volatility_adjusted_stop(
                     entry_price, position_type, market_data
@@ -661,7 +664,9 @@ class StopLossCalculator(IStopLossCalculator):
 
         warnings = []
         if percentage_from_entry > self._config.max_stop_loss_percentage:
-            warnings.append(f"ATR-based stop exceeds maximum: {percentage_from_entry:.2f}%")
+            warnings.append(
+                f"ATR-based stop exceeds maximum: {percentage_from_entry:.2f}%"
+            )
 
         return StopLossLevel(
             price=stop_price,
@@ -696,14 +701,18 @@ class StopLossCalculator(IStopLossCalculator):
             # Use support level for long positions
             base_level = self._config.support_level
             if base_level is None:
-                raise StopLossCalculationError("Support level required for long position")
+                raise StopLossCalculationError(
+                    "Support level required for long position"
+                )
 
             stop_price = base_level * (1.0 - buffer)
         else:  # SHORT
             # Use resistance level for short positions
             base_level = self._config.resistance_level
             if base_level is None:
-                raise StopLossCalculationError("Resistance level required for short position")
+                raise StopLossCalculationError(
+                    "Resistance level required for short position"
+                )
 
             stop_price = base_level * (1.0 + buffer)
 
@@ -732,7 +741,9 @@ class StopLossCalculator(IStopLossCalculator):
             metadata={
                 "base_level": base_level,
                 "buffer_percentage": self._config.buffer_percentage,
-                "level_type": "support" if position_type == PositionType.LONG else "resistance",
+                "level_type": (
+                    "support" if position_type == PositionType.LONG else "resistance"
+                ),
             },
         )
 
@@ -874,7 +885,9 @@ class StopLossCalculator(IStopLossCalculator):
             recommendations.append("Consider tighter stop-loss to reduce risk")
 
         if stop_loss_level and stop_loss_level.percentage_from_entry < 1.0:
-            recommendations.append("Stop-loss may be too tight, consider market volatility")
+            recommendations.append(
+                "Stop-loss may be too tight, consider market volatility"
+            )
 
         if not take_profit_level:
             recommendations.append("Consider setting a take-profit target")
@@ -933,9 +946,15 @@ class StopLossCalculator(IStopLossCalculator):
                     )
 
                 result.stop_loss_level.price = new_price
-                result.stop_loss_level.percentage_from_entry = self._config.max_stop_loss_percentage
-                result.stop_loss_level.distance_from_entry = abs(result.entry_price - new_price)
-                result.stop_loss_level.warnings.append("Stop-loss capped at maximum limit")
+                result.stop_loss_level.percentage_from_entry = (
+                    self._config.max_stop_loss_percentage
+                )
+                result.stop_loss_level.distance_from_entry = abs(
+                    result.entry_price - new_price
+                )
+                result.stop_loss_level.warnings.append(
+                    "Stop-loss capped at maximum limit"
+                )
                 modified = True
 
             elif percentage < self._config.min_stop_loss_percentage:
@@ -950,8 +969,12 @@ class StopLossCalculator(IStopLossCalculator):
                     )
 
                 result.stop_loss_level.price = new_price
-                result.stop_loss_level.percentage_from_entry = self._config.min_stop_loss_percentage
-                result.stop_loss_level.distance_from_entry = abs(result.entry_price - new_price)
+                result.stop_loss_level.percentage_from_entry = (
+                    self._config.min_stop_loss_percentage
+                )
+                result.stop_loss_level.distance_from_entry = abs(
+                    result.entry_price - new_price
+                )
                 result.stop_loss_level.warnings.append("Stop-loss set to minimum limit")
                 modified = True
 
@@ -960,13 +983,19 @@ class StopLossCalculator(IStopLossCalculator):
             percentage = result.take_profit_level.percentage_from_entry
 
             if percentage > self._config.max_take_profit_percentage:
-                result.take_profit_level.warnings.append("Take-profit exceeds maximum recommended")
+                result.take_profit_level.warnings.append(
+                    "Take-profit exceeds maximum recommended"
+                )
             elif percentage < self._config.min_take_profit_percentage:
-                result.take_profit_level.warnings.append("Take-profit below minimum recommended")
+                result.take_profit_level.warnings.append(
+                    "Take-profit below minimum recommended"
+                )
 
         if modified:
             result.warnings.append("Safety limits applied to calculated levels")
-            result.overall_confidence *= 0.9  # Reduce confidence when limits are applied
+            result.overall_confidence *= (
+                0.9  # Reduce confidence when limits are applied
+            )
 
         return result
 
@@ -983,7 +1012,9 @@ class StopLossCalculator(IStopLossCalculator):
                 "position_type": result.position_type.value,
                 "method": result.method_used.value,
                 "timestamp": result.calculation_timestamp,
-                "stop_loss_price": result.stop_loss_level.price if result.stop_loss_level else None,
+                "stop_loss_price": (
+                    result.stop_loss_level.price if result.stop_loss_level else None
+                ),
                 "take_profit_price": (
                     result.take_profit_level.price if result.take_profit_level else None
                 ),

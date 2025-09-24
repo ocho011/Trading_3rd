@@ -8,12 +8,14 @@ import asyncio
 import time
 import unittest
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from trading_bot.core.config_manager import ConfigManager, EnvConfigLoader
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.market_data.data_processor import MarketData
-from trading_bot.risk_management.account_risk_evaluator import AccountState, PositionInfo
+from trading_bot.risk_management.account_risk_evaluator import (
+    AccountState,
+)
 from trading_bot.risk_management.risk_manager import (
     OrderRequest,
     OrderType,
@@ -317,9 +319,19 @@ class TestRiskManager(unittest.TestCase):
     async def test_process_trading_signal_success(self):
         """Test successful signal processing."""
         # Configure mock components to return successful results
-        from trading_bot.risk_management.position_sizer import PositionSizingResult, PositionSizingMethod
-        from trading_bot.risk_management.risk_assessor import RiskAssessmentResult, RiskLevel
-        from trading_bot.risk_management.stop_loss_calculator import StopLossResult, StopLossLevel, PositionType
+        from trading_bot.risk_management.position_sizer import (
+            PositionSizingResult,
+            PositionSizingMethod,
+        )
+        from trading_bot.risk_management.risk_assessor import (
+            RiskAssessmentResult,
+            RiskLevel,
+        )
+        from trading_bot.risk_management.stop_loss_calculator import (
+            StopLossResult,
+            StopLossLevel,
+            PositionType,
+        )
 
         # Mock position sizing result
         mock_position_result = PositionSizingResult(
@@ -332,7 +344,9 @@ class TestRiskManager(unittest.TestCase):
             risk_percentage=1.0,
             calculation_timestamp=int(time.time() * 1000),
         )
-        self.mock_position_sizer.calculate_position_size.return_value = mock_position_result
+        self.mock_position_sizer.calculate_position_size.return_value = (
+            mock_position_result
+        )
 
         # Mock risk assessment result
         mock_risk_result = MagicMock()
@@ -358,7 +372,9 @@ class TestRiskManager(unittest.TestCase):
         mock_account_result = MagicMock()
         mock_account_result.can_add_position = True
         mock_account_result.max_new_position_value = Decimal("5000")
-        self.mock_account_risk_evaluator.evaluate_new_position.return_value = mock_account_result
+        self.mock_account_risk_evaluator.evaluate_new_position.return_value = (
+            mock_account_result
+        )
 
         # Process signal
         order_request = await self.risk_manager.process_trading_signal(

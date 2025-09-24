@@ -16,10 +16,12 @@ from typing import Any, Dict, List, Optional
 
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.core.logger import get_module_logger
-from trading_bot.market_data.binance_client import (BinanceError,
-                                                    BinanceOrderError,
-                                                    BinanceRateLimitError,
-                                                    IExchangeClient)
+from trading_bot.market_data.binance_client import (
+    BinanceError,
+    BinanceOrderError,
+    BinanceRateLimitError,
+    IExchangeClient,
+)
 from trading_bot.risk_management.risk_manager import OrderRequest, OrderType
 from trading_bot.strategies.base_strategy import SignalType
 
@@ -672,7 +674,9 @@ class ExecutionEngine(IExecutionEngine):
         self._logger.info("Updated execution engine configuration")
 
     def get_execution_statistics(self) -> Dict[str, Any]:
-        """Get comprehensive execution engine statistics including error handling metrics.
+        """Get comprehensive execution engine statistics.
+
+        Including error handling metrics.
 
         Returns:
             Dictionary containing execution statistics
@@ -702,7 +706,9 @@ class ExecutionEngine(IExecutionEngine):
                 # Enhanced error handling configuration
                 "error_handling_enabled": {
                     "circuit_breaker": self._config.enable_circuit_breaker,
-                    "advanced_error_tracking": self._config.enable_advanced_error_tracking,
+                    "advanced_error_tracking": (
+                        self._config.enable_advanced_error_tracking
+                    ),
                     "error_notifications": self._config.enable_error_notifications,
                     "exponential_backoff": self._config.enable_exponential_backoff,
                     "rate_limit_protection": self._config.enable_rate_limit_protection,
@@ -719,8 +725,12 @@ class ExecutionEngine(IExecutionEngine):
                     "timeout_seconds": self._config.circuit_breaker_timeout_seconds,
                 },
                 "notification_config": {
-                    "critical_error_threshold": self._config.critical_error_notification_threshold,
-                    "cooldown_seconds": self._config.error_notification_cooldown_seconds,
+                    "critical_error_threshold": (
+                        self._config.critical_error_notification_threshold
+                    ),
+                    "cooldown_seconds": (
+                        self._config.error_notification_cooldown_seconds
+                    ),
                 },
             },
         }
@@ -874,7 +884,10 @@ class ExecutionEngine(IExecutionEngine):
             await self._check_circuit_breaker({"symbol": order_request.symbol})
             await self._check_rate_limits()
         except (CircuitBreakerError, NetworkError) as e:
-            context = {"symbol": order_request.symbol, "order_type": order_request.order_type.value}
+            context = {
+                "symbol": order_request.symbol,
+                "order_type": order_request.order_type.value,
+            }
             await self._handle_error(e, context)
             return self._create_error_result(order_request, str(e), 0)
 
@@ -1249,7 +1262,9 @@ class ExecutionEngine(IExecutionEngine):
 
                 # Track price and time data
                 fill_prices.append(float(fill_price))
-                # Note: Binance doesn't provide individual fill timestamps in order response
+                # Note: Binance doesn\'t provide individual fill timestamps
+
+                # in order response
                 # We'll estimate based on transaction time
 
             except (ValueError, TypeError) as e:
@@ -1274,7 +1289,8 @@ class ExecutionEngine(IExecutionEngine):
         if fee_breakdown:
             primary_commission_asset = max(fee_breakdown, key=fee_breakdown.get)
 
-        # Estimate USD commission value (simplified - would need price conversion in real system)
+        # Estimate USD commission value (simplified - would need price
+        # conversion in real system)
         total_commission_usd = self._estimate_commission_usd(
             fee_breakdown, order_request.symbol
         )
@@ -1596,7 +1612,7 @@ class ExecutionEngine(IExecutionEngine):
         if self._config.enable_exponential_backoff:
             # Enhanced exponential backoff with configurable multiplier
             delay = self._config.retry_delay_seconds * (
-                self._config.backoff_multiplier ** attempt
+                self._config.backoff_multiplier**attempt
             )
         else:
             # Linear backoff
@@ -1608,6 +1624,7 @@ class ExecutionEngine(IExecutionEngine):
         # Add jitter to prevent thundering herd
         if self._config.jitter_enabled:
             import random
+
             jitter_factor = random.uniform(0.5, 1.5)
             delay *= jitter_factor
 
@@ -1736,7 +1753,9 @@ class ExecutionEngine(IExecutionEngine):
                         break
 
                     # Use exponential backoff for error recovery
-                    delay = min(error_backoff_delay * (2 ** (consecutive_errors - 1)), 60.0)
+                    delay = min(
+                        error_backoff_delay * (2 ** (consecutive_errors - 1)), 60.0
+                    )
                     self._logger.warning(
                         f"Monitoring error #{consecutive_errors}, backing off for {delay}s"
                     )
@@ -1759,14 +1778,20 @@ class ExecutionEngine(IExecutionEngine):
                 try:
                     event_data = {
                         "type": "monitoring_stopped",
-                        "reason": "consecutive_errors" if consecutive_errors >= max_consecutive_errors else "normal",
+                        "reason": (
+                            "consecutive_errors"
+                            if consecutive_errors >= max_consecutive_errors
+                            else "normal"
+                        ),
                         "consecutive_errors": consecutive_errors,
                         "active_orders_count": len(self._active_orders),
                         "timestamp": int(time.time()),
                     }
                     self._event_hub.publish(EventType.ERROR_OCCURRED, event_data)
                 except Exception as publish_error:
-                    self._logger.error(f"Failed to publish monitoring stopped event: {publish_error}")
+                    self._logger.error(
+                        f"Failed to publish monitoring stopped event: {publish_error}"
+                    )
 
     async def _check_active_orders(self) -> None:
         """Check status of all active orders and process updates."""
@@ -1852,7 +1877,9 @@ class ExecutionEngine(IExecutionEngine):
             try:
                 await self._check_rate_limits()
             except NetworkError as e:
-                self._logger.warning(f"Rate limit protection triggered for {order_id}: {e}")
+                self._logger.warning(
+                    f"Rate limit protection triggered for {order_id}: {e}"
+                )
                 return None
 
             if not self._binance_client.is_connected():
@@ -1868,7 +1895,7 @@ class ExecutionEngine(IExecutionEngine):
 
             return order_status
 
-        except BinanceRateLimitError as e:
+        except BinanceRateLimitError:
             # Don't treat rate limits as failures for monitoring
             self._logger.warning(f"Rate limit hit while checking order {order_id}")
             # Add small delay to prevent rapid retries
@@ -2218,7 +2245,9 @@ class ExecutionEngine(IExecutionEngine):
 
     # Enhanced Error Handling and Resilience Methods
 
-    def _classify_error(self, error: Exception, context: Dict[str, Any] = None) -> ErrorDetails:
+    def _classify_error(
+        self, error: Exception, context: Dict[str, Any] = None
+    ) -> ErrorDetails:
         """Classify error and create detailed error information.
 
         Args:
@@ -2247,7 +2276,9 @@ class ExecutionEngine(IExecutionEngine):
         if isinstance(error, BinanceRateLimitError):
             category = ErrorCategory.RATE_LIMIT
             severity = ErrorSeverity.MEDIUM
-            recovery_suggestion = "Wait for rate limit reset and retry with exponential backoff"
+            recovery_suggestion = (
+                "Wait for rate limit reset and retry with exponential backoff"
+            )
         elif isinstance(error, BinanceOrderError):
             category = ErrorCategory.EXCHANGE
             severity = ErrorSeverity.HIGH
@@ -2271,11 +2302,15 @@ class ExecutionEngine(IExecutionEngine):
         elif isinstance(error, OrderTimeoutError):
             category = ErrorCategory.TIMEOUT
             severity = ErrorSeverity.HIGH
-            recovery_suggestion = "Check order status manually and adjust timeout settings"
+            recovery_suggestion = (
+                "Check order status manually and adjust timeout settings"
+            )
         elif isinstance(error, CircuitBreakerError):
             category = ErrorCategory.SYSTEM
             severity = ErrorSeverity.CRITICAL
-            recovery_suggestion = "Wait for circuit breaker to reset and investigate underlying issues"
+            recovery_suggestion = (
+                "Wait for circuit breaker to reset and investigate underlying issues"
+            )
         elif isinstance(error, ExecutionEngineConfigError):
             category = ErrorCategory.CONFIGURATION
             severity = ErrorSeverity.CRITICAL
@@ -2305,7 +2340,9 @@ class ExecutionEngine(IExecutionEngine):
 
         return error_details
 
-    async def _handle_error(self, error: Exception, context: Dict[str, Any] = None) -> ErrorDetails:
+    async def _handle_error(
+        self, error: Exception, context: Dict[str, Any] = None
+    ) -> ErrorDetails:
         """Comprehensively handle error with classification, logging, and notification.
 
         Args:
@@ -2407,7 +2444,8 @@ class ExecutionEngine(IExecutionEngine):
         if error_details.severity == ErrorSeverity.CRITICAL:
             should_notify = True
         elif (
-            self._consecutive_critical_errors >= self._config.critical_error_notification_threshold
+            self._consecutive_critical_errors
+            >= self._config.critical_error_notification_threshold
         ):
             should_notify = True
         elif (

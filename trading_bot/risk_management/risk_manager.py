@@ -7,7 +7,6 @@ ORDER_REQUEST_GENERATED events. Follows SOLID principles and provides a unified
 interface for all risk management operations.
 """
 
-import asyncio
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -488,9 +487,13 @@ class RiskManager(IRiskManager):
             )
 
             if order_request:
-                self._logger.debug(f"Successfully processed signal event: {signal.symbol}")
+                self._logger.debug(
+                    f"Successfully processed signal event: {signal.symbol}"
+                )
             else:
-                self._logger.debug(f"Signal rejected during processing: {signal.symbol}")
+                self._logger.debug(
+                    f"Signal rejected during processing: {signal.symbol}"
+                )
 
         except Exception as e:
             self._logger.error(f"Error handling trading signal event: {e}")
@@ -678,7 +681,9 @@ class RiskManager(IRiskManager):
             )
 
             # Apply account-level constraints
-            if account_risk_result and hasattr(account_risk_result, "max_new_position_value"):
+            if account_risk_result and hasattr(
+                account_risk_result, "max_new_position_value"
+            ):
                 max_value = float(account_risk_result.max_new_position_value)
                 current_value = float(result.position_size * signal.price)
 
@@ -686,7 +691,9 @@ class RiskManager(IRiskManager):
                     # Reduce position size to fit account constraints
                     adjusted_size = max_value / signal.price
                     result.position_size = adjusted_size
-                    result.warnings.append("Position size reduced due to account limits")
+                    result.warnings.append(
+                        "Position size reduced due to account limits"
+                    )
 
             self._logger.debug(
                 f"Position size calculated: {signal.symbol} "
@@ -897,10 +904,7 @@ class RiskManager(IRiskManager):
 
         # Check risk-reward ratio
         risk_reward = order_request.calculate_risk_reward_ratio()
-        if (
-            risk_reward
-            and risk_reward < self._config.min_risk_reward_ratio
-        ):
+        if risk_reward and risk_reward < self._config.min_risk_reward_ratio:
             return {
                 "valid": False,
                 "reason": f"Risk-reward ratio too low: {risk_reward:.2f}",

@@ -84,7 +84,11 @@ class PositionSizingConfig:
         if self.method == PositionSizingMethod.KELLY_CRITERION:
             if any(
                 param is None
-                for param in [self.kelly_win_rate, self.kelly_avg_win, self.kelly_avg_loss]
+                for param in [
+                    self.kelly_win_rate,
+                    self.kelly_avg_win,
+                    self.kelly_avg_loss,
+                ]
             ):
                 raise InvalidPositionSizingConfigError(
                     "Kelly criterion requires win_rate, avg_win, and avg_loss parameters"
@@ -127,7 +131,9 @@ class PositionSizingResult:
         if self.entry_price <= 0:
             raise PositionSizingCalculationError("Entry price must be positive")
         if not 0.0 <= self.confidence <= 1.0:
-            raise PositionSizingCalculationError("Confidence must be between 0.0 and 1.0")
+            raise PositionSizingCalculationError(
+                "Confidence must be between 0.0 and 1.0"
+            )
 
 
 class IPositionSizer(ABC):
@@ -208,7 +214,9 @@ class PositionSizer(IPositionSizer):
         self._logger = get_module_logger("position_sizer")
         self._calculations_count = 0
 
-        self._logger.info(f"Initialized position sizer with method: {config.method.value}")
+        self._logger.info(
+            f"Initialized position sizer with method: {config.method.value}"
+        )
 
     def calculate_position_size(
         self,
@@ -261,7 +269,9 @@ class PositionSizer(IPositionSizer):
 
         except Exception as e:
             self._logger.error(f"Error calculating position size: {e}")
-            raise PositionSizingCalculationError(f"Position size calculation failed: {e}")
+            raise PositionSizingCalculationError(
+                f"Position size calculation failed: {e}"
+            )
 
     def update_config(self, config: PositionSizingConfig) -> None:
         """Update position sizing configuration.

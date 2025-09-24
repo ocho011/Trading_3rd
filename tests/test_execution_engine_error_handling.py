@@ -11,15 +11,9 @@ This test module validates all aspects of error handling in the ExecutionEngine:
 - Error recovery mechanisms
 """
 
-import asyncio
-import random
 import time
 import unittest
-from decimal import Decimal
-from unittest.mock import AsyncMock, Mock, patch
 
-from trading_bot.core.event_hub import EventHub, EventType
-from trading_bot.core.logger import get_module_logger
 from trading_bot.execution.execution_engine import (
     CircuitBreakerError,
     CircuitBreakerState,
@@ -45,8 +39,6 @@ from trading_bot.market_data.binance_client import (
     BinanceRateLimitError,
     IExchangeClient,
 )
-from trading_bot.risk_management.risk_manager import OrderRequest, OrderType
-from trading_bot.strategies.base_strategy import SignalType
 
 
 class TestErrorDetailsClass(unittest.TestCase):
@@ -80,7 +72,9 @@ class TestErrorDetailsClass(unittest.TestCase):
         self.assertEqual(error_details.symbol, "BTCUSDT")
         self.assertEqual(error_details.error_type, "ConnectionError")
         self.assertEqual(error_details.stack_trace, "Mock stack trace")
-        self.assertEqual(error_details.recovery_suggestion, "Check network connectivity")
+        self.assertEqual(
+            error_details.recovery_suggestion, "Check network connectivity"
+        )
         self.assertEqual(error_details.metadata["additional_info"], "test")
 
     def test_error_details_to_dict(self) -> None:
@@ -284,7 +278,9 @@ class TestExecutionEngineErrorClassification(unittest.TestCase):
         self.assertEqual(error_details.severity, ErrorSeverity.CRITICAL)
         self.assertIn("Circuit breaker is open", error_details.message)
         self.assertEqual(error_details.error_type, "CircuitBreakerError")
-        self.assertIn("Wait for circuit breaker to reset", error_details.recovery_suggestion)
+        self.assertIn(
+            "Wait for circuit breaker to reset", error_details.recovery_suggestion
+        )
 
     def test_classify_order_timeout_error(self) -> None:
         """Test classification of order timeout errors."""
@@ -595,7 +591,9 @@ class TestExecutionEngineErrorHandling(unittest.IsolatedAsyncioTestCase):
         for i in range(3):
             error_details = ErrorDetails(
                 error_id=f"ERR{i:03d}",
-                category=ErrorCategory.NETWORK if i % 2 == 0 else ErrorCategory.RATE_LIMIT,
+                category=(
+                    ErrorCategory.NETWORK if i % 2 == 0 else ErrorCategory.RATE_LIMIT
+                ),
                 severity=ErrorSeverity.HIGH if i < 2 else ErrorSeverity.MEDIUM,
                 message=f"Test error {i}",
                 timestamp=int(time.time()) - (3600 * i),  # Spread over time
@@ -653,12 +651,15 @@ class TestExecutionEngineErrorHandling(unittest.IsolatedAsyncioTestCase):
         # Verify error history was handled (could be cleared or cleaned)
         # The actual behavior depends on implementation details
         error_ids_in_history = [err.error_id for err in self.engine._error_history]
-        self.assertTrue(result["error_history_cleared"] or "OLD001" not in error_ids_in_history)
+        self.assertTrue(
+            result["error_history_cleared"] or "OLD001" not in error_ids_in_history
+        )
 
 
 if __name__ == "__main__":
     # Configure logging for tests
     import logging
+
     logging.basicConfig(level=logging.DEBUG)
 
     # Run tests

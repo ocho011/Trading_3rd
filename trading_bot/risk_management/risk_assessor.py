@@ -271,9 +271,7 @@ class RiskAssessor(IRiskAssessor):
             InvalidRiskConfigError: If configuration is invalid
         """
         if not isinstance(config, RiskAssessmentConfig):
-            raise InvalidRiskConfigError(
-                "Config must be RiskAssessmentConfig instance"
-            )
+            raise InvalidRiskConfigError("Config must be RiskAssessmentConfig instance")
 
         self._config = config
         self._event_hub = event_hub
@@ -365,9 +363,7 @@ class RiskAssessor(IRiskAssessor):
             InvalidRiskConfigError: If configuration is invalid
         """
         if not isinstance(config, RiskAssessmentConfig):
-            raise InvalidRiskConfigError(
-                "Config must be RiskAssessmentConfig instance"
-            )
+            raise InvalidRiskConfigError("Config must be RiskAssessmentConfig instance")
 
         self._config = config
         self._logger.info("Updated risk assessment configuration")
@@ -562,14 +558,18 @@ class RiskAssessor(IRiskAssessor):
 
         symbol_exposure = current_positions.get(signal.symbol, {})
         current_value = symbol_exposure.get("value", 0.0)
-        concentration = current_value / total_portfolio_value if total_portfolio_value > 0 else 0.0
+        concentration = (
+            current_value / total_portfolio_value if total_portfolio_value > 0 else 0.0
+        )
 
         metadata["current_concentration"] = concentration
         metadata["max_allowed"] = self._config.max_position_concentration
 
         # Calculate risk score based on concentration
         if concentration > self._config.max_position_concentration:
-            risk_score = min(1.0, concentration / self._config.max_position_concentration)
+            risk_score = min(
+                1.0, concentration / self._config.max_position_concentration
+            )
             warnings.append(
                 f"High position concentration: {concentration:.2%} for {signal.symbol}"
             )
@@ -577,7 +577,9 @@ class RiskAssessor(IRiskAssessor):
             risk_score = concentration / self._config.max_position_concentration
 
         # Risk multiplier increases with concentration
-        concentration_multiplier = 1.0 + (concentration * self._config.concentration_penalty_factor)
+        concentration_multiplier = 1.0 + (
+            concentration * self._config.concentration_penalty_factor
+        )
 
         return RiskFactorResult(
             factor=RiskFactor.POSITION_CONCENTRATION,
@@ -601,7 +603,9 @@ class RiskAssessor(IRiskAssessor):
         metadata = {}
 
         current_time = time.time()
-        signal_time = signal.timestamp / 1000 if signal.timestamp > 1e10 else signal.timestamp
+        signal_time = (
+            signal.timestamp / 1000 if signal.timestamp > 1e10 else signal.timestamp
+        )
 
         # Check if signal is stale
         signal_age_minutes = (current_time - signal_time) / 60
@@ -667,7 +671,9 @@ class RiskAssessor(IRiskAssessor):
             metadata["performance_tier"] = "average"
 
         # Risk multiplier based on performance
-        performance_multiplier = 2.0 - (win_rate * 1.5)  # Better performance = lower multiplier
+        performance_multiplier = 2.0 - (
+            win_rate * 1.5
+        )  # Better performance = lower multiplier
         risk_multiplier = max(0.5, min(2.0, performance_multiplier))
 
         return RiskFactorResult(
@@ -704,9 +710,10 @@ class RiskAssessor(IRiskAssessor):
 
         # Calculate weighted average risk score
         total_weight = sum(result.confidence for result in factor_results)
-        weighted_risk_score = sum(
-            result.risk_score * result.confidence for result in factor_results
-        ) / total_weight
+        weighted_risk_score = (
+            sum(result.risk_score * result.confidence for result in factor_results)
+            / total_weight
+        )
 
         # Calculate combined risk multiplier
         combined_multiplier = 1.0
@@ -796,9 +803,13 @@ class RiskAssessor(IRiskAssessor):
                 if result.factor == RiskFactor.SIGNAL_QUALITY:
                     recommendations.append("Wait for higher confidence signal")
                 elif result.factor == RiskFactor.MARKET_VOLATILITY:
-                    recommendations.append("Use wider stop-losses due to high volatility")
+                    recommendations.append(
+                        "Use wider stop-losses due to high volatility"
+                    )
                 elif result.factor == RiskFactor.POSITION_CONCENTRATION:
-                    recommendations.append("Reduce position size to manage concentration risk")
+                    recommendations.append(
+                        "Reduce position size to manage concentration risk"
+                    )
 
         # Risk multiplier specific recommendations
         if risk_multiplier > 1.5:

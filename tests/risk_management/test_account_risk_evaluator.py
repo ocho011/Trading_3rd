@@ -8,9 +8,9 @@ including position evaluation, portfolio health checks, and margin validation.
 import time
 import unittest
 from decimal import Decimal
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-from trading_bot.core.event_hub import EventHub, EventType
+from trading_bot.core.event_hub import EventHub
 from trading_bot.risk_management.account_risk_evaluator import (
     AccountRiskEvaluator,
     AccountRiskConfig,
@@ -21,11 +21,14 @@ from trading_bot.risk_management.account_risk_evaluator import (
     AccountRiskLevel,
     AccountRiskError,
     InsufficientMarginError,
-    ExcessiveRiskError,
     InvalidAccountStateError,
     create_account_risk_evaluator,
 )
-from trading_bot.strategies.base_strategy import TradingSignal, SignalType, SignalStrength
+from trading_bot.strategies.base_strategy import (
+    TradingSignal,
+    SignalType,
+    SignalStrength,
+)
 
 
 class TestPositionInfo(unittest.TestCase):
@@ -35,17 +38,17 @@ class TestPositionInfo(unittest.TestCase):
         """Test creating valid PositionInfo instance."""
         position = PositionInfo(
             symbol="AAPL",
-            quantity=Decimal('100'),
-            average_price=Decimal('150.00'),
-            current_price=Decimal('155.00'),
-            market_value=Decimal('15500.00'),
-            unrealized_pnl=Decimal('500.00'),
+            quantity=Decimal("100"),
+            average_price=Decimal("150.00"),
+            current_price=Decimal("155.00"),
+            market_value=Decimal("15500.00"),
+            unrealized_pnl=Decimal("500.00"),
             position_type="long",
             entry_timestamp=int(time.time() * 1000),
         )
 
         self.assertEqual(position.symbol, "AAPL")
-        self.assertEqual(position.quantity, Decimal('100'))
+        self.assertEqual(position.quantity, Decimal("100"))
         self.assertEqual(position.position_type, "long")
 
     def test_position_info_validation(self) -> None:
@@ -54,11 +57,11 @@ class TestPositionInfo(unittest.TestCase):
         with self.assertRaises(InvalidAccountStateError):
             PositionInfo(
                 symbol="AAPL",
-                quantity=Decimal('-100'),  # Invalid negative quantity
-                average_price=Decimal('150.00'),
-                current_price=Decimal('155.00'),
-                market_value=Decimal('15500.00'),
-                unrealized_pnl=Decimal('500.00'),
+                quantity=Decimal("-100"),  # Invalid negative quantity
+                average_price=Decimal("150.00"),
+                current_price=Decimal("155.00"),
+                market_value=Decimal("15500.00"),
+                unrealized_pnl=Decimal("500.00"),
                 position_type="long",
                 entry_timestamp=int(time.time() * 1000),
             )
@@ -67,11 +70,11 @@ class TestPositionInfo(unittest.TestCase):
         with self.assertRaises(InvalidAccountStateError):
             PositionInfo(
                 symbol="AAPL",
-                quantity=Decimal('100'),
-                average_price=Decimal('150.00'),
-                current_price=Decimal('155.00'),
-                market_value=Decimal('15500.00'),
-                unrealized_pnl=Decimal('500.00'),
+                quantity=Decimal("100"),
+                average_price=Decimal("150.00"),
+                current_price=Decimal("155.00"),
+                market_value=Decimal("15500.00"),
+                unrealized_pnl=Decimal("500.00"),
                 position_type="invalid",  # Invalid position type
                 entry_timestamp=int(time.time() * 1000),
             )
@@ -81,32 +84,32 @@ class TestPositionInfo(unittest.TestCase):
         # Test long position with stop loss
         position = PositionInfo(
             symbol="AAPL",
-            quantity=Decimal('100'),
-            average_price=Decimal('150.00'),
-            current_price=Decimal('155.00'),
-            market_value=Decimal('15500.00'),
-            unrealized_pnl=Decimal('500.00'),
+            quantity=Decimal("100"),
+            average_price=Decimal("150.00"),
+            current_price=Decimal("155.00"),
+            market_value=Decimal("15500.00"),
+            unrealized_pnl=Decimal("500.00"),
             position_type="long",
             entry_timestamp=int(time.time() * 1000),
-            stop_loss_price=Decimal('145.00'),
+            stop_loss_price=Decimal("145.00"),
         )
 
-        expected_risk = (Decimal('150.00') - Decimal('145.00')) * Decimal('100')
+        expected_risk = (Decimal("150.00") - Decimal("145.00")) * Decimal("100")
         self.assertEqual(position.risk_amount, expected_risk)
 
         # Test position without stop loss (default 2% risk)
         position_no_stop = PositionInfo(
             symbol="AAPL",
-            quantity=Decimal('100'),
-            average_price=Decimal('150.00'),
-            current_price=Decimal('155.00'),
-            market_value=Decimal('15500.00'),
-            unrealized_pnl=Decimal('500.00'),
+            quantity=Decimal("100"),
+            average_price=Decimal("150.00"),
+            current_price=Decimal("155.00"),
+            market_value=Decimal("15500.00"),
+            unrealized_pnl=Decimal("500.00"),
             position_type="long",
             entry_timestamp=int(time.time() * 1000),
         )
 
-        expected_default_risk = abs(Decimal('15500.00')) * Decimal('0.02')
+        expected_default_risk = abs(Decimal("15500.00")) * Decimal("0.02")
         self.assertEqual(position_no_stop.risk_amount, expected_default_risk)
 
 
@@ -118,22 +121,22 @@ class TestAccountState(unittest.TestCase):
         positions = {
             "AAPL": PositionInfo(
                 symbol="AAPL",
-                quantity=Decimal('100'),
-                average_price=Decimal('150.00'),
-                current_price=Decimal('155.00'),
-                market_value=Decimal('15500.00'),
-                unrealized_pnl=Decimal('500.00'),
+                quantity=Decimal("100"),
+                average_price=Decimal("150.00"),
+                current_price=Decimal("155.00"),
+                market_value=Decimal("15500.00"),
+                unrealized_pnl=Decimal("500.00"),
                 position_type="long",
                 entry_timestamp=int(time.time() * 1000),
                 correlation_group="tech",
             ),
             "GOOGL": PositionInfo(
                 symbol="GOOGL",
-                quantity=Decimal('50'),
-                average_price=Decimal('2500.00'),
-                current_price=Decimal('2600.00'),
-                market_value=Decimal('130000.00'),
-                unrealized_pnl=Decimal('5000.00'),
+                quantity=Decimal("50"),
+                average_price=Decimal("2500.00"),
+                current_price=Decimal("2600.00"),
+                market_value=Decimal("130000.00"),
+                unrealized_pnl=Decimal("5000.00"),
                 position_type="long",
                 entry_timestamp=int(time.time() * 1000),
                 correlation_group="tech",
@@ -142,15 +145,15 @@ class TestAccountState(unittest.TestCase):
 
         return AccountState(
             account_id="test_account",
-            total_equity=Decimal('200000.00'),
-            available_cash=Decimal('50000.00'),
-            used_margin=Decimal('20000.00'),
-            available_margin=Decimal('30000.00'),
-            total_portfolio_value=Decimal('200000.00'),
-            unrealized_pnl=Decimal('5500.00'),
-            realized_pnl_today=Decimal('1000.00'),
+            total_equity=Decimal("200000.00"),
+            available_cash=Decimal("50000.00"),
+            used_margin=Decimal("20000.00"),
+            available_margin=Decimal("30000.00"),
+            total_portfolio_value=Decimal("200000.00"),
+            unrealized_pnl=Decimal("5500.00"),
+            realized_pnl_today=Decimal("1000.00"),
             positions=positions,
-            buying_power=Decimal('80000.00'),
+            buying_power=Decimal("80000.00"),
         )
 
     def test_account_state_creation(self) -> None:
@@ -158,7 +161,7 @@ class TestAccountState(unittest.TestCase):
         account_state = self.create_sample_account_state()
 
         self.assertEqual(account_state.account_id, "test_account")
-        self.assertEqual(account_state.total_equity, Decimal('200000.00'))
+        self.assertEqual(account_state.total_equity, Decimal("200000.00"))
         self.assertEqual(len(account_state.positions), 2)
 
     def test_leverage_ratio_calculation(self) -> None:
@@ -169,7 +172,9 @@ class TestAccountState(unittest.TestCase):
         # Total equity = 200000
         # Leverage = 145500 / 200000 = 0.7275
         expected_leverage = 145500.0 / 200000.0
-        self.assertAlmostEqual(account_state.leverage_ratio, expected_leverage, places=4)
+        self.assertAlmostEqual(
+            account_state.leverage_ratio, expected_leverage, places=4
+        )
 
     def test_margin_utilization(self) -> None:
         """Test margin utilization calculation."""
@@ -178,7 +183,9 @@ class TestAccountState(unittest.TestCase):
         # Used margin = 20000, Available margin = 30000
         # Total margin = 50000, Utilization = 20000/50000 = 0.4
         expected_utilization = 20000.0 / 50000.0
-        self.assertAlmostEqual(account_state.margin_utilization, expected_utilization, places=4)
+        self.assertAlmostEqual(
+            account_state.margin_utilization, expected_utilization, places=4
+        )
 
     def test_portfolio_concentration(self) -> None:
         """Test portfolio concentration calculation."""
@@ -259,11 +266,11 @@ class TestAccountRiskEvaluator(unittest.TestCase):
         positions = {
             "AAPL": PositionInfo(
                 symbol="AAPL",
-                quantity=Decimal('100'),
-                average_price=Decimal('150.00'),
-                current_price=Decimal('155.00'),
-                market_value=Decimal('15500.00'),
-                unrealized_pnl=Decimal('500.00'),
+                quantity=Decimal("100"),
+                average_price=Decimal("150.00"),
+                current_price=Decimal("155.00"),
+                market_value=Decimal("15500.00"),
+                unrealized_pnl=Decimal("500.00"),
                 position_type="long",
                 entry_timestamp=int(time.time() * 1000),
             ),
@@ -271,15 +278,15 @@ class TestAccountRiskEvaluator(unittest.TestCase):
 
         return AccountState(
             account_id="test_account",
-            total_equity=Decimal('100000.00'),
-            available_cash=Decimal('70000.00'),
-            used_margin=Decimal('10000.00'),
-            available_margin=Decimal('40000.00'),
-            total_portfolio_value=Decimal('100000.00'),
-            unrealized_pnl=Decimal('500.00'),
-            realized_pnl_today=Decimal('200.00'),
+            total_equity=Decimal("100000.00"),
+            available_cash=Decimal("70000.00"),
+            used_margin=Decimal("10000.00"),
+            available_margin=Decimal("40000.00"),
+            total_portfolio_value=Decimal("100000.00"),
+            unrealized_pnl=Decimal("500.00"),
+            realized_pnl_today=Decimal("200.00"),
             positions=positions,
-            buying_power=Decimal('110000.00'),
+            buying_power=Decimal("110000.00"),
         )
 
     def test_evaluator_initialization(self) -> None:
@@ -296,13 +303,13 @@ class TestAccountRiskEvaluator(unittest.TestCase):
     def test_get_max_position_size(self) -> None:
         """Test maximum position size calculation."""
         max_qty, max_value = self.evaluator.get_max_position_size(
-            "TSLA", Decimal('200.00'), self.account_state
+            "TSLA", Decimal("200.00"), self.account_state
         )
 
         # Max value should be constrained by concentration limit
         # 20% of 100,000 = 20,000
-        expected_max_value = Decimal('20000.00')
-        expected_max_qty = expected_max_value / Decimal('200.00')
+        expected_max_value = Decimal("20000.00")
+        expected_max_qty = expected_max_value / Decimal("200.00")
 
         self.assertEqual(max_value, expected_max_value)
         self.assertEqual(max_qty, expected_max_qty)
@@ -310,7 +317,7 @@ class TestAccountRiskEvaluator(unittest.TestCase):
     def test_validate_margin_requirements_sufficient(self) -> None:
         """Test margin validation with sufficient margin."""
         result = self.evaluator.validate_margin_requirements(
-            self.signal, Decimal('50'), self.account_state
+            self.signal, Decimal("50"), self.account_state
         )
 
         self.assertTrue(result)
@@ -320,20 +327,20 @@ class TestAccountRiskEvaluator(unittest.TestCase):
         # Create account state with low available margin
         low_margin_state = AccountState(
             account_id="test_account",
-            total_equity=Decimal('100000.00'),
-            available_cash=Decimal('5000.00'),
-            used_margin=Decimal('45000.00'),
-            available_margin=Decimal('1000.00'),  # Very low available margin
-            total_portfolio_value=Decimal('100000.00'),
-            unrealized_pnl=Decimal('500.00'),
-            realized_pnl_today=Decimal('200.00'),
+            total_equity=Decimal("100000.00"),
+            available_cash=Decimal("5000.00"),
+            used_margin=Decimal("45000.00"),
+            available_margin=Decimal("1000.00"),  # Very low available margin
+            total_portfolio_value=Decimal("100000.00"),
+            unrealized_pnl=Decimal("500.00"),
+            realized_pnl_today=Decimal("200.00"),
             positions={},
-            buying_power=Decimal('6000.00'),
+            buying_power=Decimal("6000.00"),
         )
 
         with self.assertRaises(InsufficientMarginError):
             self.evaluator.validate_margin_requirements(
-                self.signal, Decimal('1000'), low_margin_state  # Large position
+                self.signal, Decimal("1000"), low_margin_state  # Large position
             )
 
     def test_evaluate_new_position_safe(self) -> None:
@@ -341,18 +348,20 @@ class TestAccountRiskEvaluator(unittest.TestCase):
         # Use a smaller position size to avoid critical position size risk
         # 20 shares * $200 = $4000, which is 4% of $100k equity (reasonable)
         result = self.evaluator.evaluate_new_position(
-            self.signal, self.account_state, Decimal('20')
+            self.signal, self.account_state, Decimal("20")
         )
 
         self.assertIsInstance(result, AccountRiskResult)
         self.assertEqual(result.account_id, "test_account")
         self.assertTrue(result.can_add_position)
-        self.assertLessEqual(result.overall_risk_score, 0.6)  # Should be reasonable risk
+        self.assertLessEqual(
+            result.overall_risk_score, 0.6
+        )  # Should be reasonable risk
 
     def test_evaluate_new_position_high_concentration(self) -> None:
         """Test evaluating a position that would cause high concentration."""
         # Try to add a very large position
-        large_quantity = Decimal('2000')  # $400,000 worth at $200/share
+        large_quantity = Decimal("2000")  # $400,000 worth at $200/share
 
         result = self.evaluator.evaluate_new_position(
             self.signal, self.account_state, large_quantity
@@ -377,21 +386,21 @@ class TestAccountRiskEvaluator(unittest.TestCase):
         high_leverage_positions = {
             "AAPL": PositionInfo(
                 symbol="AAPL",
-                quantity=Decimal('1000'),
-                average_price=Decimal('150.00'),
-                current_price=Decimal('155.00'),
-                market_value=Decimal('155000.00'),  # Large position
-                unrealized_pnl=Decimal('5000.00'),
+                quantity=Decimal("1000"),
+                average_price=Decimal("150.00"),
+                current_price=Decimal("155.00"),
+                market_value=Decimal("155000.00"),  # Large position
+                unrealized_pnl=Decimal("5000.00"),
                 position_type="long",
                 entry_timestamp=int(time.time() * 1000),
             ),
             "GOOGL": PositionInfo(
                 symbol="GOOGL",
-                quantity=Decimal('100'),
-                average_price=Decimal('2500.00'),
-                current_price=Decimal('2600.00'),
-                market_value=Decimal('260000.00'),  # Another large position
-                unrealized_pnl=Decimal('10000.00'),
+                quantity=Decimal("100"),
+                average_price=Decimal("2500.00"),
+                current_price=Decimal("2600.00"),
+                market_value=Decimal("260000.00"),  # Another large position
+                unrealized_pnl=Decimal("10000.00"),
                 position_type="long",
                 entry_timestamp=int(time.time() * 1000),
             ),
@@ -399,15 +408,15 @@ class TestAccountRiskEvaluator(unittest.TestCase):
 
         high_leverage_state = AccountState(
             account_id="test_account",
-            total_equity=Decimal('100000.00'),  # Small equity base
-            available_cash=Decimal('10000.00'),
-            used_margin=Decimal('80000.00'),
-            available_margin=Decimal('10000.00'),
-            total_portfolio_value=Decimal('100000.00'),
-            unrealized_pnl=Decimal('15000.00'),
-            realized_pnl_today=Decimal('1000.00'),
+            total_equity=Decimal("100000.00"),  # Small equity base
+            available_cash=Decimal("10000.00"),
+            used_margin=Decimal("80000.00"),
+            available_margin=Decimal("10000.00"),
+            total_portfolio_value=Decimal("100000.00"),
+            unrealized_pnl=Decimal("15000.00"),
+            realized_pnl_today=Decimal("1000.00"),
             positions=high_leverage_positions,
-            buying_power=Decimal('20000.00'),
+            buying_power=Decimal("20000.00"),
         )
 
         leverage_risk = self.evaluator._assess_leverage_risk(high_leverage_state)
@@ -421,11 +430,11 @@ class TestAccountRiskEvaluator(unittest.TestCase):
         concentrated_position = {
             "AAPL": PositionInfo(
                 symbol="AAPL",
-                quantity=Decimal('500'),
-                average_price=Decimal('150.00'),
-                current_price=Decimal('155.00'),
-                market_value=Decimal('77500.00'),  # 77.5% of portfolio
-                unrealized_pnl=Decimal('2500.00'),
+                quantity=Decimal("500"),
+                average_price=Decimal("150.00"),
+                current_price=Decimal("155.00"),
+                market_value=Decimal("77500.00"),  # 77.5% of portfolio
+                unrealized_pnl=Decimal("2500.00"),
                 position_type="long",
                 entry_timestamp=int(time.time() * 1000),
             ),
@@ -433,18 +442,20 @@ class TestAccountRiskEvaluator(unittest.TestCase):
 
         concentrated_state = AccountState(
             account_id="test_account",
-            total_equity=Decimal('100000.00'),
-            available_cash=Decimal('22500.00'),
-            used_margin=Decimal('0.00'),
-            available_margin=Decimal('50000.00'),
-            total_portfolio_value=Decimal('100000.00'),
-            unrealized_pnl=Decimal('2500.00'),
-            realized_pnl_today=Decimal('0.00'),
+            total_equity=Decimal("100000.00"),
+            available_cash=Decimal("22500.00"),
+            used_margin=Decimal("0.00"),
+            available_margin=Decimal("50000.00"),
+            total_portfolio_value=Decimal("100000.00"),
+            unrealized_pnl=Decimal("2500.00"),
+            realized_pnl_today=Decimal("0.00"),
             positions=concentrated_position,
-            buying_power=Decimal('72500.00'),
+            buying_power=Decimal("72500.00"),
         )
 
-        concentration_risk = self.evaluator._assess_concentration_risk(concentrated_state)
+        concentration_risk = self.evaluator._assess_concentration_risk(
+            concentrated_state
+        )
 
         # Should detect high concentration (77.5% vs 20% limit)
         self.assertGreater(concentration_risk, 0.8)
@@ -452,7 +463,7 @@ class TestAccountRiskEvaluator(unittest.TestCase):
     def test_event_publishing(self) -> None:
         """Test event publishing during risk evaluation."""
         # Evaluate a risky position to trigger events
-        large_quantity = Decimal('1000')
+        large_quantity = Decimal("1000")
 
         result = self.evaluator.evaluate_new_position(
             self.signal, self.account_state, large_quantity
@@ -475,8 +486,12 @@ class TestAccountRiskEvaluator(unittest.TestCase):
     def test_statistics_tracking(self) -> None:
         """Test evaluation statistics tracking."""
         # Perform a few evaluations
-        self.evaluator.evaluate_new_position(self.signal, self.account_state, Decimal('50'))
-        self.evaluator.evaluate_new_position(self.signal, self.account_state, Decimal('75'))
+        self.evaluator.evaluate_new_position(
+            self.signal, self.account_state, Decimal("50")
+        )
+        self.evaluator.evaluate_new_position(
+            self.signal, self.account_state, Decimal("75")
+        )
 
         stats = self.evaluator.get_evaluation_statistics()
 
@@ -490,13 +505,13 @@ class TestAccountRiskEvaluator(unittest.TestCase):
         old_timestamp = int((time.time() - 30 * 60) * 1000)  # 30 minutes ago
         stale_account_state = AccountState(
             account_id="test_account",
-            total_equity=Decimal('100000.00'),
-            available_cash=Decimal('70000.00'),
-            used_margin=Decimal('10000.00'),
-            available_margin=Decimal('40000.00'),
-            total_portfolio_value=Decimal('100000.00'),
-            unrealized_pnl=Decimal('500.00'),
-            realized_pnl_today=Decimal('200.00'),
+            total_equity=Decimal("100000.00"),
+            available_cash=Decimal("70000.00"),
+            used_margin=Decimal("10000.00"),
+            available_margin=Decimal("40000.00"),
+            total_portfolio_value=Decimal("100000.00"),
+            unrealized_pnl=Decimal("500.00"),
+            realized_pnl_today=Decimal("200.00"),
             positions={},
             last_updated=old_timestamp,
         )
@@ -513,26 +528,32 @@ class TestCreateAccountRiskEvaluator(unittest.TestCase):
         evaluator = create_account_risk_evaluator()
 
         self.assertIsInstance(evaluator, AccountRiskEvaluator)
-        self.assertEqual(evaluator._config.max_leverage_ratio, RiskProfile.MODERATE.max_leverage)
+        self.assertEqual(
+            evaluator._config.max_leverage_ratio, RiskProfile.MODERATE.max_leverage
+        )
 
     def test_factory_function_conservative(self) -> None:
         """Test factory function with conservative risk profile."""
         evaluator = create_account_risk_evaluator(risk_profile=RiskProfile.CONSERVATIVE)
 
-        self.assertEqual(evaluator._config.max_leverage_ratio, RiskProfile.CONSERVATIVE.max_leverage)
+        self.assertEqual(
+            evaluator._config.max_leverage_ratio, RiskProfile.CONSERVATIVE.max_leverage
+        )
         self.assertEqual(
             evaluator._config.max_position_concentration,
-            RiskProfile.CONSERVATIVE.max_position_size
+            RiskProfile.CONSERVATIVE.max_position_size,
         )
 
     def test_factory_function_aggressive(self) -> None:
         """Test factory function with aggressive risk profile."""
         evaluator = create_account_risk_evaluator(risk_profile=RiskProfile.AGGRESSIVE)
 
-        self.assertEqual(evaluator._config.max_leverage_ratio, RiskProfile.AGGRESSIVE.max_leverage)
+        self.assertEqual(
+            evaluator._config.max_leverage_ratio, RiskProfile.AGGRESSIVE.max_leverage
+        )
         self.assertEqual(
             evaluator._config.max_position_concentration,
-            RiskProfile.AGGRESSIVE.max_position_size
+            RiskProfile.AGGRESSIVE.max_position_size,
         )
 
     def test_factory_function_custom_params(self) -> None:
@@ -601,10 +622,10 @@ class TestAccountRiskResult(unittest.TestCase):
             risk_level=AccountRiskLevel.SAFE,
             overall_risk_score=0.25,
             can_add_position=True,
-            max_new_position_value=Decimal('20000.00'),
-            max_new_position_quantity=Decimal('100'),
-            margin_requirement=Decimal('10000.00'),
-            available_buying_power=Decimal('50000.00'),
+            max_new_position_value=Decimal("20000.00"),
+            max_new_position_quantity=Decimal("100"),
+            margin_requirement=Decimal("10000.00"),
+            available_buying_power=Decimal("50000.00"),
             risk_factors={"leverage_risk": 0.2, "concentration_risk": 0.3},
             concentration_analysis={"AAPL": 0.15, "GOOGL": 0.20},
             correlation_analysis={"tech": 0.35},

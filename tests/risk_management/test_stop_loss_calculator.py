@@ -7,8 +7,6 @@ and integration with the event system.
 
 import pytest
 import time
-from typing import Dict, Any
-from unittest.mock import Mock, patch
 
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.risk_management.stop_loss_calculator import (
@@ -42,26 +40,38 @@ class TestStopLossConfig:
 
     def test_invalid_risk_reward_ratio(self) -> None:
         """Test validation of invalid risk reward ratio."""
-        with pytest.raises(InvalidStopLossConfigError, match="Risk reward ratio must be positive"):
+        with pytest.raises(
+            InvalidStopLossConfigError, match="Risk reward ratio must be positive"
+        ):
             StopLossConfig(risk_reward_ratio=0.0)
 
-        with pytest.raises(InvalidStopLossConfigError, match="Risk reward ratio must be positive"):
+        with pytest.raises(
+            InvalidStopLossConfigError, match="Risk reward ratio must be positive"
+        ):
             StopLossConfig(risk_reward_ratio=-1.0)
 
     def test_invalid_stop_loss_percentage(self) -> None:
         """Test validation of invalid stop loss percentage."""
-        with pytest.raises(InvalidStopLossConfigError, match="Stop loss percentage must be between"):
+        with pytest.raises(
+            InvalidStopLossConfigError, match="Stop loss percentage must be between"
+        ):
             StopLossConfig(stop_loss_percentage=0.0)
 
-        with pytest.raises(InvalidStopLossConfigError, match="Stop loss percentage must be between"):
+        with pytest.raises(
+            InvalidStopLossConfigError, match="Stop loss percentage must be between"
+        ):
             StopLossConfig(stop_loss_percentage=51.0)
 
     def test_invalid_take_profit_percentage(self) -> None:
         """Test validation of invalid take profit percentage."""
-        with pytest.raises(InvalidStopLossConfigError, match="Take profit percentage must be between"):
+        with pytest.raises(
+            InvalidStopLossConfigError, match="Take profit percentage must be between"
+        ):
             StopLossConfig(take_profit_percentage=0.0)
 
-        with pytest.raises(InvalidStopLossConfigError, match="Take profit percentage must be between"):
+        with pytest.raises(
+            InvalidStopLossConfigError, match="Take profit percentage must be between"
+        ):
             StopLossConfig(take_profit_percentage=101.0)
 
     def test_atr_method_requires_atr(self) -> None:
@@ -77,13 +87,14 @@ class TestStopLossConfig:
 
     def test_support_resistance_method_requires_levels(self) -> None:
         """Test support/resistance method validation."""
-        with pytest.raises(InvalidStopLossConfigError, match="Support/resistance method requires"):
+        with pytest.raises(
+            InvalidStopLossConfigError, match="Support/resistance method requires"
+        ):
             StopLossConfig(method=StopLossMethod.SUPPORT_RESISTANCE)
 
         # Should not raise with support level provided
         config = StopLossConfig(
-            method=StopLossMethod.SUPPORT_RESISTANCE,
-            support_level=100.0
+            method=StopLossMethod.SUPPORT_RESISTANCE, support_level=100.0
         )
         assert config.support_level == 100.0
 
@@ -96,8 +107,7 @@ class TestStopLossConfig:
 
         # Should also not raise with volatility provided
         config = StopLossConfig(
-            method=StopLossMethod.VOLATILITY_ADJUSTED,
-            current_volatility=0.02
+            method=StopLossMethod.VOLATILITY_ADJUSTED, current_volatility=0.02
         )
         assert config.current_volatility == 0.02
 
@@ -132,7 +142,9 @@ class TestStopLossLevel:
 
     def test_invalid_distance(self) -> None:
         """Test validation of invalid distance."""
-        with pytest.raises(InvalidPriceLevelError, match="Distance from entry cannot be negative"):
+        with pytest.raises(
+            InvalidPriceLevelError, match="Distance from entry cannot be negative"
+        ):
             StopLossLevel(
                 price=95.0,
                 percentage_from_entry=5.0,
@@ -289,8 +301,12 @@ class TestStopLossCalculator:
             "risk_reward_ratio": 2.0,
             "stop_loss_percentage": 2.0,
             "current_atr": 0.5 if method == StopLossMethod.ATR_BASED else None,
-            "support_level": 95.0 if method == StopLossMethod.SUPPORT_RESISTANCE else None,
-            "current_volatility": 0.02 if method == StopLossMethod.VOLATILITY_ADJUSTED else None,
+            "support_level": (
+                95.0 if method == StopLossMethod.SUPPORT_RESISTANCE else None
+            ),
+            "current_volatility": (
+                0.02 if method == StopLossMethod.VOLATILITY_ADJUSTED else None
+            ),
         }
         defaults.update(kwargs)
         return StopLossConfig(**defaults)
@@ -305,7 +321,9 @@ class TestStopLossCalculator:
 
     def test_invalid_config_initialization(self) -> None:
         """Test initialization with invalid config."""
-        with pytest.raises(InvalidStopLossConfigError, match="Config must be StopLossConfig"):
+        with pytest.raises(
+            InvalidStopLossConfigError, match="Config must be StopLossConfig"
+        ):
             StopLossCalculator("invalid_config")  # type: ignore
 
     def test_fixed_percentage_long_calculation(self) -> None:
@@ -364,8 +382,7 @@ class TestStopLossCalculator:
     def test_atr_from_market_data(self) -> None:
         """Test ATR calculation from market data."""
         config = self.create_test_config(
-            method=StopLossMethod.ATR_BASED,
-            current_atr=None  # Force using market data
+            method=StopLossMethod.ATR_BASED, current_atr=None  # Force using market data
         )
         calculator = StopLossCalculator(config)
 
@@ -440,23 +457,30 @@ class TestStopLossCalculator:
         calculator = StopLossCalculator(config)
 
         # Test invalid entry price
-        with pytest.raises(StopLossCalculationError, match="Entry price must be positive"):
+        with pytest.raises(
+            StopLossCalculationError, match="Entry price must be positive"
+        ):
             calculator.calculate_levels(0.0, PositionType.LONG)
 
         # Test invalid position type
-        with pytest.raises(StopLossCalculationError, match="Position type must be PositionType"):
+        with pytest.raises(
+            StopLossCalculationError, match="Position type must be PositionType"
+        ):
             calculator.calculate_levels(100.0, "long")  # type: ignore
 
     def test_missing_required_data(self) -> None:
         """Test calculation with missing required data."""
         config = self.create_test_config(
-            method=StopLossMethod.ATR_BASED,
-            current_atr=None  # No ATR in config
+            method=StopLossMethod.ATR_BASED, current_atr=None  # No ATR in config
         )
         calculator = StopLossCalculator(config)
 
-        with pytest.raises(StopLossCalculationError, match="ATR-based method requires ATR data"):
-            calculator.calculate_levels(100.0, PositionType.LONG)  # No market data either
+        with pytest.raises(
+            StopLossCalculationError, match="ATR-based method requires ATR data"
+        ):
+            calculator.calculate_levels(
+                100.0, PositionType.LONG
+            )  # No market data either
 
     def test_event_publishing(self) -> None:
         """Test event publishing functionality."""
@@ -486,7 +510,9 @@ class TestStopLossCalculator:
         config = self.create_test_config()
         calculator = StopLossCalculator(config)
 
-        with pytest.raises(InvalidStopLossConfigError, match="Config must be StopLossConfig"):
+        with pytest.raises(
+            InvalidStopLossConfigError, match="Config must be StopLossConfig"
+        ):
             calculator.update_config("invalid")  # type: ignore
 
     def test_calculation_statistics(self) -> None:
@@ -632,7 +658,9 @@ class TestIntegrationScenarios:
         short_result = calculator.calculate_levels(100.0, PositionType.SHORT)
         assert short_result.stop_loss_level is not None
         # May be capped by safety limits, so just check it's at or above resistance
-        assert short_result.stop_loss_level.price >= 105.0  # Should be at least entry + 5%
+        assert (
+            short_result.stop_loss_level.price >= 105.0
+        )  # Should be at least entry + 5%
 
 
 if __name__ == "__main__":

@@ -15,7 +15,6 @@ from trading_bot.risk_management.position_sizer import (
     PositionSizingConfig,
     PositionSizingResult,
     PositionSizingMethod,
-    PositionSizingError,
     InvalidPositionSizingConfigError,
     PositionSizingCalculationError,
     create_position_sizer,
@@ -41,7 +40,9 @@ class TestPositionSizingConfig:
 
     def test_invalid_account_balance(self):
         """Test validation with invalid account balance."""
-        with pytest.raises(InvalidPositionSizingConfigError, match="Account balance must be positive"):
+        with pytest.raises(
+            InvalidPositionSizingConfigError, match="Account balance must be positive"
+        ):
             PositionSizingConfig(
                 account_balance=-1000.0,
                 risk_percentage=2.0,
@@ -49,7 +50,9 @@ class TestPositionSizingConfig:
 
     def test_invalid_risk_percentage_negative(self):
         """Test validation with negative risk percentage."""
-        with pytest.raises(InvalidPositionSizingConfigError, match="Risk percentage must be between"):
+        with pytest.raises(
+            InvalidPositionSizingConfigError, match="Risk percentage must be between"
+        ):
             PositionSizingConfig(
                 account_balance=10000.0,
                 risk_percentage=-1.0,
@@ -57,7 +60,9 @@ class TestPositionSizingConfig:
 
     def test_invalid_risk_percentage_too_high(self):
         """Test validation with risk percentage over 100."""
-        with pytest.raises(InvalidPositionSizingConfigError, match="Risk percentage must be between"):
+        with pytest.raises(
+            InvalidPositionSizingConfigError, match="Risk percentage must be between"
+        ):
             PositionSizingConfig(
                 account_balance=10000.0,
                 risk_percentage=101.0,
@@ -65,7 +70,10 @@ class TestPositionSizingConfig:
 
     def test_invalid_position_size_limits(self):
         """Test validation with invalid position size limits."""
-        with pytest.raises(InvalidPositionSizingConfigError, match="Min position size cannot exceed max"):
+        with pytest.raises(
+            InvalidPositionSizingConfigError,
+            match="Min position size cannot exceed max",
+        ):
             PositionSizingConfig(
                 account_balance=10000.0,
                 risk_percentage=2.0,
@@ -75,7 +83,9 @@ class TestPositionSizingConfig:
 
     def test_kelly_criterion_missing_parameters(self):
         """Test Kelly criterion validation with missing parameters."""
-        with pytest.raises(InvalidPositionSizingConfigError, match="Kelly criterion requires"):
+        with pytest.raises(
+            InvalidPositionSizingConfigError, match="Kelly criterion requires"
+        ):
             PositionSizingConfig(
                 account_balance=10000.0,
                 risk_percentage=2.0,
@@ -84,7 +94,10 @@ class TestPositionSizingConfig:
 
     def test_volatility_adjusted_missing_factor(self):
         """Test volatility adjusted validation with missing factor."""
-        with pytest.raises(InvalidPositionSizingConfigError, match="Volatility adjusted method requires"):
+        with pytest.raises(
+            InvalidPositionSizingConfigError,
+            match="Volatility adjusted method requires",
+        ):
             PositionSizingConfig(
                 account_balance=10000.0,
                 risk_percentage=2.0,
@@ -114,7 +127,9 @@ class TestPositionSizingResult:
 
     def test_invalid_negative_position_size(self):
         """Test validation with negative position size."""
-        with pytest.raises(PositionSizingCalculationError, match="Position size cannot be negative"):
+        with pytest.raises(
+            PositionSizingCalculationError, match="Position size cannot be negative"
+        ):
             PositionSizingResult(
                 position_size=-0.5,
                 risk_amount=200.0,
@@ -128,7 +143,9 @@ class TestPositionSizingResult:
 
     def test_invalid_confidence_range(self):
         """Test validation with invalid confidence."""
-        with pytest.raises(PositionSizingCalculationError, match="Confidence must be between"):
+        with pytest.raises(
+            PositionSizingCalculationError, match="Confidence must be between"
+        ):
             PositionSizingResult(
                 position_size=0.5,
                 risk_amount=200.0,
@@ -165,7 +182,10 @@ class TestPositionSizer:
 
     def test_invalid_config_type(self):
         """Test initialization with invalid config type."""
-        with pytest.raises(InvalidPositionSizingConfigError, match="Config must be PositionSizingConfig instance"):
+        with pytest.raises(
+            InvalidPositionSizingConfigError,
+            match="Config must be PositionSizingConfig instance",
+        ):
             PositionSizer({"invalid": "config"})
 
     def test_fixed_percentage_calculation_with_stop_loss(self):
@@ -278,12 +298,16 @@ class TestPositionSizer:
 
     def test_invalid_entry_price(self):
         """Test calculation with invalid entry price."""
-        with pytest.raises(PositionSizingCalculationError, match="Entry price must be positive"):
+        with pytest.raises(
+            PositionSizingCalculationError, match="Entry price must be positive"
+        ):
             self.position_sizer.calculate_position_size(entry_price=-100.0)
 
     def test_invalid_stop_loss_price(self):
         """Test calculation with invalid stop loss price."""
-        with pytest.raises(PositionSizingCalculationError, match="Stop loss price must be positive"):
+        with pytest.raises(
+            PositionSizingCalculationError, match="Stop loss price must be positive"
+        ):
             self.position_sizer.calculate_position_size(
                 entry_price=100.0,
                 stop_loss_price=-50.0,
@@ -291,7 +315,10 @@ class TestPositionSizer:
 
     def test_stop_loss_above_entry_price(self):
         """Test calculation with stop loss above entry price."""
-        with pytest.raises(PositionSizingCalculationError, match="Stop loss price must be less than entry price"):
+        with pytest.raises(
+            PositionSizingCalculationError,
+            match="Stop loss price must be less than entry price",
+        ):
             self.position_sizer.calculate_position_size(
                 entry_price=100.0,
                 stop_loss_price=105.0,
@@ -336,7 +363,10 @@ class TestPositionSizer:
 
     def test_config_update_invalid_type(self):
         """Test configuration update with invalid type."""
-        with pytest.raises(InvalidPositionSizingConfigError, match="Config must be PositionSizingConfig instance"):
+        with pytest.raises(
+            InvalidPositionSizingConfigError,
+            match="Config must be PositionSizingConfig instance",
+        ):
             self.position_sizer.update_config({"invalid": "config"})
 
 
