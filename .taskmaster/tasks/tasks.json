@@ -616,7 +616,7 @@
           8,
           9
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -624,7 +624,7 @@
             "description": "ConfigManager, EventHub, Logger를 올바른 순서로 초기화하고 기본 설정을 로드하는 로직을 구현합니다.",
             "dependencies": [],
             "details": "main.py에서 시스템의 핵심 컴포넌트들을 안전한 순서로 초기화합니다. ConfigManager를 먼저 초기화하여 설정을 로드하고, EventHub를 생성한 후 Logger를 설정합니다. 각 초기화 단계에서 발생할 수 있는 예외를 처리하고 적절한 로깅을 구현합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -635,7 +635,7 @@
               "10.1"
             ],
             "details": "초기화된 코어 컴포넌트들을 사용하여 모든 트레이딩 관련 모듈들을 인스턴스화합니다. 각 모듈에 필요한 의존성(EventHub, ConfigManager 등)을 올바르게 주입하고, 모듈 간의 참조 관계를 설정합니다. 모듈 생성 실패 시 적절한 에러 처리를 구현합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -646,7 +646,7 @@
               "10.2"
             ],
             "details": "DataProcessor, ICTStrategy, RiskManager, ExecutionEngine, PortfolioManager, DiscordNotifier를 EventHub의 적절한 이벤트 토픽에 구독자로 등록합니다. 이벤트 플로우가 올바르게 연결되도록 구독 순서를 관리하고, 구독 등록 실패 시 에러 처리를 구현합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -657,7 +657,7 @@
               "10.3"
             ],
             "details": "asyncio를 사용하여 메인 이벤트 루프를 설정하고, WebSocketManager의 연결을 시작합니다. 시스템이 안정적으로 실행되도록 태스크 스케줄링을 관리하고, 비동기 작업들의 생명주기를 제어합니다. 연결 실패나 예외 발생 시 적절한 복구 로직을 구현합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           },
           {
@@ -668,7 +668,7 @@
               "10.4"
             ],
             "details": "SIGINT, SIGTERM 신호 처리를 통한 graceful shutdown을 구현합니다. 시스템 종료 시 모든 연결을 안전하게 닫고 리소스를 정리합니다. Binance Testnet을 사용하여 전체 파이프라인이 정상 작동하는지 검증하고, 로그 및 Discord 알림이 올바르게 작동하는지 확인합니다.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": ""
           }
         ]
@@ -676,7 +676,7 @@
     ],
     "metadata": {
       "created": "2025-09-21T14:07:37.892Z",
-      "updated": "2025-09-25T10:02:57.908Z",
+      "updated": "2025-09-25T22:00:11.186Z",
       "description": "Tasks for master context"
     }
   }
