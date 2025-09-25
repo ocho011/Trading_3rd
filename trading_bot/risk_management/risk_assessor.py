@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.core.logger import get_module_logger
 from trading_bot.market_data.data_processor import MarketData
-from trading_bot.strategies.base_strategy import TradingSignal, SignalStrength
+from trading_bot.strategies.base_strategy import SignalStrength, TradingSignal
 
 
 class RiskAssessmentError(Exception):

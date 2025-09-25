@@ -29,8 +29,8 @@ from trading_bot.risk_management.position_sizer import (
     create_position_sizer,
 )
 from trading_bot.risk_management.risk_assessor import (
-    RiskAssessor,
     RiskAssessmentResult,
+    RiskAssessor,
     create_risk_assessor,
 )
 from trading_bot.risk_management.stop_loss_calculator import (

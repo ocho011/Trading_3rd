@@ -17,7 +17,8 @@
       "Bash(python -m pytest tests/test_position_sizer.py -v)",
       "mcp__task-master-ai__update_subtask",
       "Bash(python:*)",
-      "Bash(PYTHONPATH=/Users/osangwon/github/thirdtry python3 dev-files/test_execution_engine_integration.py)"
+      "Bash(PYTHONPATH=/Users/osangwon/github/thirdtry python3 dev-files/test_execution_engine_integration.py)",
+      "Bash(PYTHONPATH=. python3 dev-files/message_formatters_demo.py)"
     ]
   },
   "enableAllProjectMcpServers": true,
