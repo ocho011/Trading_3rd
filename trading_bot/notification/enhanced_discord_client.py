@@ -11,17 +11,23 @@ import json
 import logging
 import time
 from typing import Any, Callable, Dict, Optional
-from urllib.parse import parse_qs, urlparse
 
 import aiohttp
 import requests
 from requests.adapters import HTTPAdapter
 
-from trading_bot.notification.circuit_breaker import CircuitBreakerError, ICircuitBreaker, create_circuit_breaker
-from trading_bot.notification.discord_notifier import DiscordNotificationError, IHttpClient
-from trading_bot.notification.message_queue import MessagePriority, MessageQueue, create_message_queue
-from trading_bot.notification.retry_policies import IRetryPolicy, RetryExecutor, create_discord_retry_policy
-from trading_bot.notification.webhook_health import WebhookHealthMonitor, create_health_monitor
+from trading_bot.notification.circuit_breaker import (CircuitBreakerError,
+                                                      ICircuitBreaker,
+                                                      create_circuit_breaker)
+from trading_bot.notification.discord_notifier import (
+    DiscordNotificationError, IHttpClient)
+from trading_bot.notification.message_queue import (MessagePriority,
+                                                    MessageQueue,
+                                                    create_message_queue)
+from trading_bot.notification.retry_policies import (
+    IRetryPolicy, RetryExecutor, create_discord_retry_policy)
+from trading_bot.notification.webhook_health import (WebhookHealthMonitor,
+                                                     create_health_monitor)
 
 
 class RateLimitInfo:
@@ -66,7 +72,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
         health_monitor: Optional[WebhookHealthMonitor] = None,
         enable_fallback_queue: bool = True,
         max_rate_limit_wait: float = 300.0,  # 5 minutes max wait for rate limits
-        backup_notification_callback: Optional[Callable[[str, Dict[str, Any]], None]] = None
+        backup_notification_callback: Optional[
+            Callable[[str, Dict[str, Any]], None]
+        ] = None,
     ) -> None:
         """
         Initialize enhanced Discord HTTP client.
@@ -105,7 +113,7 @@ class EnhancedDiscordHttpClient(IHttpClient):
         self._requests_session = requests.Session()
         self._setup_requests_session()
 
-        self._logger.info(f"Enhanced Discord HTTP client initialized for webhook")
+        self._logger.info("Enhanced Discord HTTP client initialized for webhook")
 
     def _setup_requests_session(self) -> None:
         """Setup requests session with basic retry configuration."""
@@ -136,8 +144,12 @@ class EnhancedDiscordHttpClient(IHttpClient):
             wait_time = self._rate_limit_info.time_until_reset()
             if wait_time > self._max_rate_limit_wait:
                 # Rate limit wait too long, queue message instead
-                await self._handle_fallback_async(target_url, data, "Rate limit wait too long")
-                raise DiscordNotificationError(f"Rate limited for {wait_time:.1f}s, message queued")
+                await self._handle_fallback_async(
+                    target_url, data, "Rate limit wait too long"
+                )
+                raise DiscordNotificationError(
+                    f"Rate limited for {wait_time:.1f}s, message queued"
+                )
 
             self._logger.info(f"Rate limited, waiting {wait_time:.1f}s")
             await asyncio.sleep(wait_time)
@@ -148,17 +160,21 @@ class EnhancedDiscordHttpClient(IHttpClient):
                 self._retry_executor.execute_async,
                 self._send_request_async,
                 target_url,
-                data
+                data,
             )
 
         except CircuitBreakerError as e:
             # Circuit breaker is open, handle fallback
-            await self._handle_fallback_async(target_url, data, f"Circuit breaker open: {e}")
+            await self._handle_fallback_async(
+                target_url, data, f"Circuit breaker open: {e}"
+            )
             raise DiscordNotificationError(f"Circuit breaker open, message queued: {e}")
 
         except Exception as e:
             # All retries failed, handle fallback
-            await self._handle_fallback_async(target_url, data, f"All retries failed: {e}")
+            await self._handle_fallback_async(
+                target_url, data, f"All retries failed: {e}"
+            )
             raise
 
     def post_sync(self, url: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -184,7 +200,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
             if wait_time > self._max_rate_limit_wait:
                 # Rate limit wait too long, queue message instead
                 self._handle_fallback_sync(target_url, data, "Rate limit wait too long")
-                raise DiscordNotificationError(f"Rate limited for {wait_time:.1f}s, message queued")
+                raise DiscordNotificationError(
+                    f"Rate limited for {wait_time:.1f}s, message queued"
+                )
 
             self._logger.info(f"Rate limited, waiting {wait_time:.1f}s")
             time.sleep(wait_time)
@@ -195,7 +213,7 @@ class EnhancedDiscordHttpClient(IHttpClient):
                 self._retry_executor.execute_sync,
                 self._send_request_sync,
                 target_url,
-                data
+                data,
             )
 
         except CircuitBreakerError as e:
@@ -208,7 +226,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
             self._handle_fallback_sync(target_url, data, f"All retries failed: {e}")
             raise
 
-    async def _send_request_async(self, url: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _send_request_async(
+        self, url: str, data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Internal async request method with health monitoring.
 
@@ -231,9 +251,7 @@ class EnhancedDiscordHttpClient(IHttpClient):
 
         try:
             async with self._session.post(
-                url,
-                json=data,
-                headers={"Content-Type": "application/json"}
+                url, json=data, headers={"Content-Type": "application/json"}
             ) as response:
                 # Handle different response scenarios
                 if response.status == 204:
@@ -244,7 +262,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
                 elif response.status == 429:
                     # Rate limited - extract rate limit info
                     retry_after = float(response.headers.get("Retry-After", "1"))
-                    reset_after = float(response.headers.get("X-RateLimit-Reset-After", retry_after))
+                    reset_after = float(
+                        response.headers.get("X-RateLimit-Reset-After", retry_after)
+                    )
 
                     self._rate_limit_info = RateLimitInfo(retry_after, reset_after)
                     self._health_monitor.record_request_failure(
@@ -257,7 +277,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
                 elif response.status >= 400:
                     # HTTP error
                     error_text = await response.text()
-                    self._health_monitor.record_request_failure(start_time, f"http_{response.status}")
+                    self._health_monitor.record_request_failure(
+                        start_time, f"http_{response.status}"
+                    )
 
                     error_msg = f"Discord API error {response.status}: {error_text}"
                     raise DiscordNotificationError(error_msg)
@@ -276,7 +298,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
             raise DiscordNotificationError(f"HTTP client error: {e}")
 
         except asyncio.TimeoutError:
-            self._health_monitor.record_request_failure(start_time, "timeout", is_timeout=True)
+            self._health_monitor.record_request_failure(
+                start_time, "timeout", is_timeout=True
+            )
             raise DiscordNotificationError(f"Request timeout after {self._timeout}s")
 
         except Exception as e:
@@ -304,7 +328,7 @@ class EnhancedDiscordHttpClient(IHttpClient):
                 url,
                 json=data,
                 timeout=self._timeout,
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
 
             # Handle different response scenarios
@@ -316,7 +340,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
             elif response.status_code == 429:
                 # Rate limited - extract rate limit info
                 retry_after = float(response.headers.get("Retry-After", "1"))
-                reset_after = float(response.headers.get("X-RateLimit-Reset-After", retry_after))
+                reset_after = float(
+                    response.headers.get("X-RateLimit-Reset-After", retry_after)
+                )
 
                 self._rate_limit_info = RateLimitInfo(retry_after, reset_after)
                 self._health_monitor.record_request_failure(
@@ -328,7 +354,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
 
             elif response.status_code >= 400:
                 # HTTP error
-                self._health_monitor.record_request_failure(start_time, f"http_{response.status_code}")
+                self._health_monitor.record_request_failure(
+                    start_time, f"http_{response.status_code}"
+                )
 
                 error_msg = f"Discord API error {response.status_code}: {response.text}"
                 raise DiscordNotificationError(error_msg)
@@ -342,7 +370,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
                     return {"status": "success", "status_code": response.status_code}
 
         except requests.exceptions.Timeout:
-            self._health_monitor.record_request_failure(start_time, "timeout", is_timeout=True)
+            self._health_monitor.record_request_failure(
+                start_time, "timeout", is_timeout=True
+            )
             raise DiscordNotificationError(f"Request timeout after {self._timeout}s")
 
         except requests.exceptions.ConnectionError as e:
@@ -357,7 +387,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
             self._health_monitor.record_request_failure(start_time, "unexpected")
             raise DiscordNotificationError(f"Unexpected error: {e}")
 
-    async def _handle_fallback_async(self, url: str, data: Dict[str, Any], reason: str) -> None:
+    async def _handle_fallback_async(
+        self, url: str, data: Dict[str, Any], reason: str
+    ) -> None:
         """
         Handle fallback when primary delivery fails.
 
@@ -385,13 +417,15 @@ class EnhancedDiscordHttpClient(IHttpClient):
                     content=data,
                     webhook_url=url,
                     priority=MessagePriority.HIGH,  # Failed messages get high priority
-                    max_attempts=5  # More attempts for queued messages
+                    max_attempts=5,  # More attempts for queued messages
                 )
                 self._logger.info("Successfully queued failed Discord message")
             except Exception as e:
                 self._logger.error(f"Failed to queue message: {e}")
 
-    def _handle_fallback_sync(self, url: str, data: Dict[str, Any], reason: str) -> None:
+    def _handle_fallback_sync(
+        self, url: str, data: Dict[str, Any], reason: str
+    ) -> None:
         """
         Handle fallback when primary delivery fails (sync version).
 
@@ -414,7 +448,9 @@ class EnhancedDiscordHttpClient(IHttpClient):
 
         # For sync version, we can't easily queue async, so just log
         if self._message_queue:
-            self._logger.warning("Message queuing requires async context, message not queued")
+            self._logger.warning(
+                "Message queuing requires async context, message not queued"
+            )
 
     async def test_connection_async(self) -> bool:
         """
@@ -426,7 +462,7 @@ class EnhancedDiscordHttpClient(IHttpClient):
         try:
             test_data = {
                 "content": "🔔 Enhanced Discord client connection test",
-                "username": "Trading Bot Health Check"
+                "username": "Trading Bot Health Check",
             }
 
             await self.post_async(self._webhook_url, test_data)
@@ -447,7 +483,7 @@ class EnhancedDiscordHttpClient(IHttpClient):
         try:
             test_data = {
                 "content": "🔔 Enhanced Discord client connection test",
-                "username": "Trading Bot Health Check"
+                "username": "Trading Bot Health Check",
             }
 
             self.post_sync(self._webhook_url, test_data)
@@ -469,14 +505,21 @@ class EnhancedDiscordHttpClient(IHttpClient):
         return {
             **metrics.to_dict(),
             "circuit_breaker_state": self._circuit_breaker.get_state().value,
-            "rate_limited": self._rate_limit_info.is_rate_limited() if self._rate_limit_info else False,
+            "rate_limited": (
+                self._rate_limit_info.is_rate_limited()
+                if self._rate_limit_info
+                else False
+            ),
             "rate_limit_reset_time": (
-                self._rate_limit_info.time_until_reset() if self._rate_limit_info else 0.0
+                self._rate_limit_info.time_until_reset()
+                if self._rate_limit_info
+                else 0.0
             ),
             "queue_size": (
                 self._message_queue.get_queue_stats()["total_messages"]
-                if self._message_queue else 0
-            )
+                if self._message_queue
+                else 0
+            ),
         }
 
     def get_active_alerts(self) -> list:
@@ -514,7 +557,7 @@ def create_enhanced_discord_client(
     timeout: int = 10,
     max_retries: int = 5,
     enable_queue: bool = True,
-    backup_callback: Optional[Callable[[str, Dict[str, Any]], None]] = None
+    backup_callback: Optional[Callable[[str, Dict[str, Any]], None]] = None,
 ) -> EnhancedDiscordHttpClient:
     """
     Factory function to create enhanced Discord HTTP client.
@@ -544,5 +587,5 @@ def create_enhanced_discord_client(
         message_queue=message_queue,
         health_monitor=health_monitor,
         enable_fallback_queue=enable_queue,
-        backup_notification_callback=backup_callback
+        backup_notification_callback=backup_callback,
     )

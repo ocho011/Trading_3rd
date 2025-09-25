@@ -11,21 +11,17 @@ from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
 from trading_bot.core.event_hub import EventType
-from trading_bot.execution.execution_engine import ExecutionResult, FillDetail, OrderStatus
+from trading_bot.execution.execution_engine import (ExecutionResult,
+                                                    FillDetail, OrderStatus)
 from trading_bot.notification.message_formatters import (
-    ConnectionEventMessageFormatter,
-    DiscordColor,
-    ErrorOccurredMessageFormatter,
-    FormatterNotFoundError,
-    FormatterUtils,
-    InvalidEventDataError,
-    MessageFormatterFactory,
-    OrderFilledMessageFormatter,
-    RiskLimitExceededMessageFormatter,
-    TradingSignalMessageFormatter,
-)
+    ConnectionEventMessageFormatter, DiscordColor,
+    ErrorOccurredMessageFormatter, FormatterNotFoundError, FormatterUtils,
+    InvalidEventDataError, MessageFormatterFactory,
+    OrderFilledMessageFormatter, RiskLimitExceededMessageFormatter,
+    TradingSignalMessageFormatter)
 from trading_bot.risk_management.risk_manager import OrderRequest, OrderType
-from trading_bot.strategies.base_strategy import SignalStrength, SignalType, TradingSignal
+from trading_bot.strategies.base_strategy import (SignalStrength, SignalType,
+                                                  TradingSignal)
 
 
 class TestFormatterUtils(unittest.TestCase):
@@ -41,7 +37,9 @@ class TestFormatterUtils(unittest.TestCase):
         """Test quantity formatting with trailing zero removal."""
         self.assertEqual(FormatterUtils.format_quantity(123.456789), "123.456789")
         self.assertEqual(FormatterUtils.format_quantity(123.0), "123")
-        self.assertEqual(FormatterUtils.format_quantity(Decimal("123.45000000")), "123.45")
+        self.assertEqual(
+            FormatterUtils.format_quantity(Decimal("123.45000000")), "123.45"
+        )
 
     def test_format_percentage(self):
         """Test percentage formatting with sign."""
@@ -68,18 +66,37 @@ class TestFormatterUtils(unittest.TestCase):
 
     def test_get_signal_color(self):
         """Test signal color mapping."""
-        self.assertEqual(FormatterUtils.get_signal_color(SignalType.BUY), DiscordColor.GREEN)
-        self.assertEqual(FormatterUtils.get_signal_color(SignalType.STRONG_BUY), DiscordColor.GREEN)
-        self.assertEqual(FormatterUtils.get_signal_color(SignalType.SELL), DiscordColor.RED)
-        self.assertEqual(FormatterUtils.get_signal_color(SignalType.STRONG_SELL), DiscordColor.RED)
-        self.assertEqual(FormatterUtils.get_signal_color(SignalType.HOLD), DiscordColor.YELLOW)
+        self.assertEqual(
+            FormatterUtils.get_signal_color(SignalType.BUY), DiscordColor.GREEN
+        )
+        self.assertEqual(
+            FormatterUtils.get_signal_color(SignalType.STRONG_BUY), DiscordColor.GREEN
+        )
+        self.assertEqual(
+            FormatterUtils.get_signal_color(SignalType.SELL), DiscordColor.RED
+        )
+        self.assertEqual(
+            FormatterUtils.get_signal_color(SignalType.STRONG_SELL), DiscordColor.RED
+        )
+        self.assertEqual(
+            FormatterUtils.get_signal_color(SignalType.HOLD), DiscordColor.YELLOW
+        )
 
     def test_get_status_color(self):
         """Test order status color mapping."""
-        self.assertEqual(FormatterUtils.get_status_color(OrderStatus.EXECUTED), DiscordColor.GREEN)
-        self.assertEqual(FormatterUtils.get_status_color(OrderStatus.CANCELLED), DiscordColor.RED)
-        self.assertEqual(FormatterUtils.get_status_color(OrderStatus.PENDING_EXECUTION), DiscordColor.BLUE)
-        self.assertEqual(FormatterUtils.get_status_color(OrderStatus.EXECUTING), DiscordColor.ORANGE)
+        self.assertEqual(
+            FormatterUtils.get_status_color(OrderStatus.EXECUTED), DiscordColor.GREEN
+        )
+        self.assertEqual(
+            FormatterUtils.get_status_color(OrderStatus.CANCELLED), DiscordColor.RED
+        )
+        self.assertEqual(
+            FormatterUtils.get_status_color(OrderStatus.PENDING_EXECUTION),
+            DiscordColor.BLUE,
+        )
+        self.assertEqual(
+            FormatterUtils.get_status_color(OrderStatus.EXECUTING), DiscordColor.ORANGE
+        )
 
 
 class TestOrderFilledMessageFormatter(unittest.TestCase):
@@ -98,7 +115,7 @@ class TestOrderFilledMessageFormatter(unittest.TestCase):
             timestamp=int(time.time()),
             strategy_name="TestStrategy",
             confidence=0.85,
-            reasoning="Strong buy signal detected"
+            reasoning="Strong buy signal detected",
         )
 
         # Create mock OrderRequest
@@ -118,7 +135,7 @@ class TestOrderFilledMessageFormatter(unittest.TestCase):
             commission_amount=0.001,
             commission_asset="BNB",
             slippage_percentage=0.05,
-            exchange_order_id="12345"
+            exchange_order_id="12345",
         )
 
     def test_format_message_success(self):
@@ -183,10 +200,10 @@ class TestErrorOccurredMessageFormatter(unittest.TestCase):
                 "message": "Connection timeout",
                 "type": "NetworkError",
                 "severity": "high",
-                "recovery_suggestion": "Check network connection"
+                "recovery_suggestion": "Check network connection",
             },
             "component": "ExchangeClient",
-            "timestamp": int(time.time() * 1000)
+            "timestamp": int(time.time() * 1000),
         }
 
         result = self.formatter.format_message(event_data)
@@ -234,7 +251,7 @@ class TestConnectionEventMessageFormatter(unittest.TestCase):
             "event_type": EventType.CONNECTION_LOST,
             "service": "Binance",
             "timestamp": int(time.time() * 1000),
-            "details": "WebSocket connection timeout"
+            "details": "WebSocket connection timeout",
         }
 
         result = self.formatter.format_message(event_data)
@@ -249,7 +266,7 @@ class TestConnectionEventMessageFormatter(unittest.TestCase):
         event_data = {
             "event_type": EventType.CONNECTION_RESTORED,
             "service": "Binance",
-            "timestamp": int(time.time() * 1000)
+            "timestamp": int(time.time() * 1000),
         }
 
         result = self.formatter.format_message(event_data)
@@ -296,7 +313,7 @@ class TestTradingSignalMessageFormatter(unittest.TestCase):
             reasoning="Strong bullish momentum detected with high volume",
             target_price=3200.0,
             stop_loss=2800.0,
-            take_profit=3500.0
+            take_profit=3500.0,
         )
 
     def test_format_message_complete_signal(self):
@@ -325,7 +342,7 @@ class TestTradingSignalMessageFormatter(unittest.TestCase):
             price=45000.0,
             timestamp=int(time.time()),
             strategy_name="TestStrategy",
-            confidence=0.5
+            confidence=0.5,
         )
 
         event_data = {"trading_signal": minimal_signal}
@@ -362,12 +379,12 @@ class TestRiskLimitExceededMessageFormatter(unittest.TestCase):
             "risk_info": {
                 "limit_type": "Position Size",
                 "current_value": 15000.0,
-                "limit_value": 10000.0
+                "limit_value": 10000.0,
             },
             "symbol": "BTCUSDT",
             "action_taken": "Order rejected",
             "details": "Position size exceeds maximum allowed",
-            "timestamp": int(time.time() * 1000)
+            "timestamp": int(time.time() * 1000),
         }
 
         result = self.formatter.format_message(event_data)
@@ -413,7 +430,7 @@ class TestMessageFormatterFactory(unittest.TestCase):
             EventType.CONNECTION_LOST,
             EventType.CONNECTION_RESTORED,
             EventType.TRADING_SIGNAL_GENERATED,
-            EventType.RISK_LIMIT_EXCEEDED
+            EventType.RISK_LIMIT_EXCEEDED,
         ]
 
         for event_type in supported_types:
@@ -437,7 +454,7 @@ class TestMessageFormatterFactory(unittest.TestCase):
             EventType.CONNECTION_LOST,
             EventType.CONNECTION_RESTORED,
             EventType.TRADING_SIGNAL_GENERATED,
-            EventType.RISK_LIMIT_EXCEEDED
+            EventType.RISK_LIMIT_EXCEEDED,
         ]
 
         for event_type in expected_types:
@@ -453,7 +470,7 @@ class TestMessageFormatterFactory(unittest.TestCase):
             price=45000.0,
             timestamp=int(time.time()),
             strategy_name="TestStrategy",
-            confidence=0.75
+            confidence=0.75,
         )
 
         event_data = {"trading_signal": mock_signal}
@@ -489,12 +506,20 @@ class TestDiscordEmbedDataClass(unittest.TestCase):
             fields=[{"name": "Field", "value": "Value", "inline": True}],
             timestamp="2022-01-01T00:00:00",
             footer={"text": "Footer"},
-            thumbnail={"url": "https://example.com/image.png"}
+            thumbnail={"url": "https://example.com/image.png"},
         )
 
         result = embed.to_dict()
 
-        expected_keys = ["title", "description", "color", "fields", "timestamp", "footer", "thumbnail"]
+        expected_keys = [
+            "title",
+            "description",
+            "color",
+            "fields",
+            "timestamp",
+            "footer",
+            "thumbnail",
+        ]
         for key in expected_keys:
             self.assertIn(key, result)
 
@@ -507,10 +532,7 @@ class TestDiscordEmbedDataClass(unittest.TestCase):
         from trading_bot.notification.message_formatters import DiscordEmbed
 
         embed = DiscordEmbed(
-            title="Test",
-            description="Test",
-            color=DiscordColor.GREEN,
-            fields=[]
+            title="Test", description="Test", color=DiscordColor.GREEN, fields=[]
         )
 
         result = embed.to_dict()

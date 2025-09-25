@@ -8,22 +8,17 @@ and cleanup mechanisms for Discord webhook message queue system.
 import asyncio
 import os
 import tempfile
-import pytest
 import time
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 
 from trading_bot.notification.message_queue import (
-    QueuedMessage,
-    MessagePriority,
-    MessageQueue,
-    QueueConfig,
-    SqliteMessageStorage,
-    InMemoryMessageStorage,
-    MessageQueueManager,
-    create_message_queue_manager
-)
+    InMemoryMessageStorage, MessagePriority, MessageQueue, MessageQueueManager,
+    QueueConfig, QueuedMessage, SqliteMessageStorage,
+    create_message_queue_manager)
 
 
 class TestQueuedMessage:
@@ -34,7 +29,7 @@ class TestQueuedMessage:
         message = QueuedMessage(
             content="Test message",
             webhook_url="https://discord.com/api/webhooks/test",
-            priority=MessagePriority.HIGH
+            priority=MessagePriority.HIGH,
         )
 
         assert message.content == "Test message"
@@ -51,7 +46,7 @@ class TestQueuedMessage:
             content="Test",
             webhook_url="https://discord.com/test",
             priority=MessagePriority.NORMAL,
-            retry_count=2
+            retry_count=2,
         )
 
         # Convert to dict
@@ -69,10 +64,7 @@ class TestQueuedMessage:
 
     def test_message_retry_increment(self):
         """Test incrementing retry count and scheduling."""
-        message = QueuedMessage(
-            content="Test",
-            webhook_url="https://discord.com/test"
-        )
+        message = QueuedMessage(content="Test", webhook_url="https://discord.com/test")
 
         # Calculate next retry time (exponential backoff)
         delay_seconds = 2 ** (message.retry_count + 1)  # 2 seconds for first retry
@@ -88,9 +80,7 @@ class TestQueuedMessage:
     def test_message_can_retry(self):
         """Test retry eligibility logic."""
         message = QueuedMessage(
-            content="Test",
-            webhook_url="https://discord.com/test",
-            max_retries=2
+            content="Test", webhook_url="https://discord.com/test", max_retries=2
         )
 
         # Should be able to retry initially
@@ -102,10 +92,7 @@ class TestQueuedMessage:
 
     def test_message_is_ready_for_retry(self):
         """Test retry timing logic."""
-        message = QueuedMessage(
-            content="Test",
-            webhook_url="https://discord.com/test"
-        )
+        message = QueuedMessage(content="Test", webhook_url="https://discord.com/test")
 
         # Initially ready (no next_retry set)
         assert message.is_ready_for_retry()
@@ -130,7 +117,7 @@ class TestQueueConfig:
             max_size=2000,
             persistence_enabled=True,
             cleanup_interval=3600,
-            max_age_hours=48
+            max_age_hours=48,
         )
 
         assert config.max_size == 2000
@@ -165,10 +152,7 @@ class TestInMemoryMessageStorage:
     def test_store_message(self):
         """Test storing a message."""
         storage = InMemoryMessageStorage()
-        message = QueuedMessage(
-            content="Test",
-            webhook_url="https://discord.com/test"
-        )
+        message = QueuedMessage(content="Test", webhook_url="https://discord.com/test")
 
         message_id = storage.store_message(message)
         assert isinstance(message_id, str)
@@ -185,8 +169,12 @@ class TestInMemoryMessageStorage:
 
         # Store messages with different priorities
         low_msg = QueuedMessage("Low", "https://discord.com/test", MessagePriority.LOW)
-        high_msg = QueuedMessage("High", "https://discord.com/test", MessagePriority.HIGH)
-        normal_msg = QueuedMessage("Normal", "https://discord.com/test", MessagePriority.NORMAL)
+        high_msg = QueuedMessage(
+            "High", "https://discord.com/test", MessagePriority.HIGH
+        )
+        normal_msg = QueuedMessage(
+            "Normal", "https://discord.com/test", MessagePriority.NORMAL
+        )
 
         storage.store_message(low_msg)
         storage.store_message(high_msg)
@@ -278,7 +266,7 @@ class TestSqliteMessageStorage:
             message = QueuedMessage(
                 content="Test SQLite",
                 webhook_url="https://discord.com/test",
-                priority=MessagePriority.HIGH
+                priority=MessagePriority.HIGH,
             )
 
             message_id = storage.store_message(message)
@@ -406,7 +394,9 @@ class TestMessageQueue:
 
         # Enqueue messages with different priorities
         low_msg = QueuedMessage("Low", "https://discord.com/test", MessagePriority.LOW)
-        high_msg = QueuedMessage("High", "https://discord.com/test", MessagePriority.HIGH)
+        high_msg = QueuedMessage(
+            "High", "https://discord.com/test", MessagePriority.HIGH
+        )
 
         await queue.enqueue(low_msg)
         await queue.enqueue(high_msg)
@@ -590,8 +580,8 @@ class TestMessageQueueManager:
         enqueue_callback = Mock()
         dequeue_callback = Mock()
 
-        manager.register_callback('message_enqueued', enqueue_callback)
-        manager.register_callback('message_dequeued', dequeue_callback)
+        manager.register_callback("message_enqueued", enqueue_callback)
+        manager.register_callback("message_dequeued", dequeue_callback)
 
         await manager.start()
 

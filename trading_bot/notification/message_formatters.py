@@ -19,16 +19,19 @@ from trading_bot.strategies.base_strategy import SignalType, TradingSignal
 
 class MessageFormatterError(Exception):
     """Base exception for message formatter errors."""
+
     pass
 
 
 class InvalidEventDataError(MessageFormatterError):
     """Exception raised when event data is malformed or missing required fields."""
+
     pass
 
 
 class FormatterNotFoundError(MessageFormatterError):
     """Exception raised when no formatter is found for event type."""
+
     pass
 
 
@@ -66,13 +69,13 @@ class DiscordEmbed:
 class DiscordColor:
     """Discord embed color constants."""
 
-    GREEN = 0x00ff00      # Success, buy signals
-    RED = 0xff0000        # Error, sell signals, cancellations
-    BLUE = 0x0066cc       # System, connection events
-    ORANGE = 0xff6600     # Warnings, risk events
-    YELLOW = 0xffff00     # Hold signals, neutral events
-    PURPLE = 0x9932cc     # Analysis, insights
-    GRAY = 0x808080       # Information, logs
+    GREEN = 0x00FF00  # Success, buy signals
+    RED = 0xFF0000  # Error, sell signals, cancellations
+    BLUE = 0x0066CC  # System, connection events
+    ORANGE = 0xFF6600  # Warnings, risk events
+    YELLOW = 0xFFFF00  # Hold signals, neutral events
+    PURPLE = 0x9932CC  # Analysis, insights
+    GRAY = 0x808080  # Information, logs
 
 
 class IMessageFormatter(ABC):
@@ -124,7 +127,7 @@ class FormatterUtils:
         """Format quantity with appropriate decimal places."""
         if isinstance(quantity, Decimal):
             quantity = float(quantity)
-        return f"{quantity:,.{decimals}f}".rstrip('0').rstrip('.')
+        return f"{quantity:,.{decimals}f}".rstrip("0").rstrip(".")
 
     @staticmethod
     def format_percentage(value: float, decimals: int = 2) -> str:
@@ -141,6 +144,7 @@ class FormatterUtils:
 
         # Convert to ISO format for Discord
         import datetime
+
         return datetime.datetime.fromtimestamp(timestamp).isoformat()
 
     @staticmethod
@@ -194,95 +198,103 @@ class OrderFilledMessageFormatter(IMessageFormatter):
 
         # Create embed fields
         fields = [
-            {
-                "name": "📊 Trading Pair",
-                "value": signal.symbol,
-                "inline": True
-            },
+            {"name": "📊 Trading Pair", "value": signal.symbol, "inline": True},
             {
                 "name": "📈 Signal Type",
                 "value": signal.signal_type.value.upper(),
-                "inline": True
+                "inline": True,
             },
             {
                 "name": "🎯 Status",
                 "value": execution_result.execution_status.value.upper(),
-                "inline": True
+                "inline": True,
             },
             {
                 "name": "💰 Filled Quantity",
                 "value": FormatterUtils.format_quantity(
                     execution_result.filled_quantity
                 ),
-                "inline": True
+                "inline": True,
             },
             {
                 "name": "💵 Average Price",
                 "value": FormatterUtils.format_price(
-                    execution_result.average_fill_price or
-                    execution_result.filled_price or 0
+                    execution_result.average_fill_price
+                    or execution_result.filled_price
+                    or 0
                 ),
-                "inline": True
+                "inline": True,
             },
             {
                 "name": "💸 Total Value",
                 "value": FormatterUtils.format_price(
-                    float(execution_result.filled_quantity) *
-                    (execution_result.average_fill_price or
-                     execution_result.filled_price or 0)
+                    float(execution_result.filled_quantity)
+                    * (
+                        execution_result.average_fill_price
+                        or execution_result.filled_price
+                        or 0
+                    )
                 ),
-                "inline": True
-            }
+                "inline": True,
+            },
         ]
 
         # Add commission information if available
         if execution_result.commission_amount > 0:
-            fields.append({
-                "name": "🏷️ Commission",
-                "value": (f"{execution_result.commission_amount:.6f} "
-                          f"{execution_result.commission_asset}"),
-                "inline": True
-            })
+            fields.append(
+                {
+                    "name": "🏷️ Commission",
+                    "value": (
+                        f"{execution_result.commission_amount:.6f} "
+                        f"{execution_result.commission_asset}"
+                    ),
+                    "inline": True,
+                }
+            )
 
         # Add slippage if available
         if execution_result.slippage_percentage is not None:
-            fields.append({
-                "name": "📉 Slippage",
-                "value": FormatterUtils.format_percentage(
-                    execution_result.slippage_percentage
-                ),
-                "inline": True
-            })
+            fields.append(
+                {
+                    "name": "📉 Slippage",
+                    "value": FormatterUtils.format_percentage(
+                        execution_result.slippage_percentage
+                    ),
+                    "inline": True,
+                }
+            )
 
         # Add strategy and confidence
-        fields.extend([
-            {
-                "name": "🤖 Strategy",
-                "value": signal.strategy_name,
-                "inline": True
-            },
-            {
-                "name": "🎯 Confidence",
-                "value": f"{signal.confidence:.1%}",
-                "inline": True
-            }
-        ])
+        fields.extend(
+            [
+                {"name": "🤖 Strategy", "value": signal.strategy_name, "inline": True},
+                {
+                    "name": "🎯 Confidence",
+                    "value": f"{signal.confidence:.1%}",
+                    "inline": True,
+                },
+            ]
+        )
 
         # Add order IDs if available
         if execution_result.exchange_order_id:
-            fields.append({
-                "name": "🔗 Order ID",
-                "value": execution_result.exchange_order_id,
-                "inline": False
-            })
+            fields.append(
+                {
+                    "name": "🔗 Order ID",
+                    "value": execution_result.exchange_order_id,
+                    "inline": False,
+                }
+            )
 
         embed = DiscordEmbed(
             title=f"🎉 Order {execution_result.execution_status.value.replace('_', ' ').title()}",
             description=f"**{signal.signal_type.value.upper()}** order for {signal.symbol}",
             color=color,
             fields=fields,
-            timestamp=FormatterUtils.format_timestamp(execution_result.execution_timestamp),
-            footer={"text": "Trading Bot Execution Engine"}
+            timestamp=FormatterUtils.format_timestamp(
+                execution_result.execution_timestamp
+            ),
+            footer={"text": "Trading Bot Execution Engine"},
         )
 
         return {"embeds": [embed.to_dict()]}
@@ -290,11 +302,15 @@ class OrderFilledMessageFormatter(IMessageFormatter):
     def validate_event_data(self, event_data: Dict[str, Any]) -> bool:
         """Validate ORDER_FILLED event data."""
         if "execution_result" not in event_data:
-            raise InvalidEventDataError("Missing 'execution_result' in ORDER_FILLED event")
+            raise InvalidEventDataError(
+                "Missing 'execution_result' in ORDER_FILLED event"
+            )
 
         execution_result = event_data["execution_result"]
         if not isinstance(execution_result, ExecutionResult):
-            raise InvalidEventDataError("Invalid ExecutionResult type in ORDER_FILLED event")
+            raise InvalidEventDataError(
+                "Invalid ExecutionResult type in ORDER_FILLED event"
+            )
 
         return True
 
@@ -317,41 +333,32 @@ class ErrorOccurredMessageFormatter(IMessageFormatter):
         timestamp = event_data.get("timestamp", int(time.time() * 1000))
 
         fields = [
-            {
-                "name": "🚨 Error Type",
-                "value": error_type,
-                "inline": True
-            },
-            {
-                "name": "🔧 Component",
-                "value": component,
-                "inline": True
-            },
+            {"name": "🚨 Error Type", "value": error_type, "inline": True},
+            {"name": "🔧 Component", "value": component, "inline": True},
             {
                 "name": "📝 Details",
-                "value": (error_message[:1000] + "..." if len(error_message) > 1000
-                          else error_message),
-                "inline": False
-            }
+                "value": (
+                    error_message[:1000] + "..."
+                    if len(error_message) > 1000
+                    else error_message
+                ),
+                "inline": False,
+            },
         ]
 
         # Add severity if available
         severity = error_info.get("severity")
         if severity:
-            fields.insert(0, {
-                "name": "⚠️ Severity",
-                "value": severity.upper(),
-                "inline": True
-            })
+            fields.insert(
+                0, {"name": "⚠️ Severity", "value": severity.upper(), "inline": True}
+            )
 
         # Add recovery suggestion if available
         recovery = error_info.get("recovery_suggestion")
         if recovery:
-            fields.append({
-                "name": "💡 Suggested Action",
-                "value": recovery,
-                "inline": False
-            })
+            fields.append(
+                {"name": "💡 Suggested Action", "value": recovery, "inline": False}
+            )
 
         embed = DiscordEmbed(
             title="🚨 System Error Occurred",
@@ -359,7 +366,7 @@ class ErrorOccurredMessageFormatter(IMessageFormatter):
             color=DiscordColor.RED,
             fields=fields,
             timestamp=FormatterUtils.format_timestamp(timestamp),
-            footer={"text": "Trading Bot Error Handler"}
+            footer={"text": "Trading Bot Error Handler"},
         )
 
         return {"embeds": [embed.to_dict()]}
@@ -367,7 +374,9 @@ class ErrorOccurredMessageFormatter(IMessageFormatter):
     def validate_event_data(self, event_data: Dict[str, Any]) -> bool:
         """Validate ERROR_OCCURRED event data."""
         if "error" not in event_data and "message" not in event_data:
-            raise InvalidEventDataError("Missing error information in ERROR_OCCURRED event")
+            raise InvalidEventDataError(
+                "Missing error information in ERROR_OCCURRED event"
+            )
 
         return True
 
@@ -399,29 +408,22 @@ class ConnectionEventMessageFormatter(IMessageFormatter):
             icon = "✅"
 
         fields = [
-            {
-                "name": "🌐 Service",
-                "value": service,
-                "inline": True
-            },
+            {"name": "🌐 Service", "value": service, "inline": True},
             {
                 "name": "📊 Status",
-                "value": icon + " " + (
-                    "Offline" if event_type == EventType.CONNECTION_LOST
-                    else "Online"
-                ),
-                "inline": True
-            }
+                "value": icon
+                + " "
+                + ("Offline" if event_type == EventType.CONNECTION_LOST else "Online"),
+                "inline": True,
+            },
         ]
 
         # Add additional connection details if available
         details = event_data.get("details")
         if details:
-            fields.append({
-                "name": "📋 Details",
-                "value": str(details)[:500],
-                "inline": False
-            })
+            fields.append(
+                {"name": "📋 Details", "value": str(details)[:500], "inline": False}
+            )
 
         embed = DiscordEmbed(
             title=title,
@@ -429,7 +431,7 @@ class ConnectionEventMessageFormatter(IMessageFormatter):
             color=color,
             fields=fields,
             timestamp=FormatterUtils.format_timestamp(timestamp),
-            footer={"text": "Trading Bot Connection Monitor"}
+            footer={"text": "Trading Bot Connection Monitor"},
         )
 
         return {"embeds": [embed.to_dict()]}
@@ -471,85 +473,89 @@ class TradingSignalMessageFormatter(IMessageFormatter):
             SignalType.STRONG_BUY: "🚀",
             SignalType.SELL: "📉",
             SignalType.STRONG_SELL: "💥",
-            SignalType.HOLD: "⏸️"
+            SignalType.HOLD: "⏸️",
         }.get(trading_signal.signal_type, "📊")
 
         fields = [
-            {
-                "name": "📊 Trading Pair",
-                "value": trading_signal.symbol,
-                "inline": True
-            },
+            {"name": "📊 Trading Pair", "value": trading_signal.symbol, "inline": True},
             {
                 "name": "📈 Signal Type",
                 "value": f"{signal_emoji} {trading_signal.signal_type.value.upper()}",
-                "inline": True
+                "inline": True,
             },
             {
                 "name": "💪 Strength",
                 "value": trading_signal.strength.value.upper(),
-                "inline": True
+                "inline": True,
             },
             {
                 "name": "💰 Price",
                 "value": FormatterUtils.format_price(trading_signal.price),
-                "inline": True
+                "inline": True,
             },
             {
                 "name": "🎯 Confidence",
                 "value": f"{trading_signal.confidence:.1%}",
-                "inline": True
+                "inline": True,
             },
             {
                 "name": "🤖 Strategy",
                 "value": trading_signal.strategy_name,
-                "inline": True
-            }
+                "inline": True,
+            },
         ]
 
         # Add target price if available
         if trading_signal.target_price:
-            fields.append({
-                "name": "🎯 Target Price",
-                "value": FormatterUtils.format_price(trading_signal.target_price),
-                "inline": True
-            })
+            fields.append(
+                {
+                    "name": "🎯 Target Price",
+                    "value": FormatterUtils.format_price(trading_signal.target_price),
+                    "inline": True,
+                }
+            )
 
         # Add stop loss if available
         if trading_signal.stop_loss:
-            fields.append({
-                "name": "🛑 Stop Loss",
-                "value": FormatterUtils.format_price(trading_signal.stop_loss),
-                "inline": True
-            })
+            fields.append(
+                {
+                    "name": "🛑 Stop Loss",
+                    "value": FormatterUtils.format_price(trading_signal.stop_loss),
+                    "inline": True,
+                }
+            )
 
         # Add take profit if available
         if trading_signal.take_profit:
-            fields.append({
-                "name": "💰 Take Profit",
-                "value": FormatterUtils.format_price(trading_signal.take_profit),
-                "inline": True
-            })
+            fields.append(
+                {
+                    "name": "💰 Take Profit",
+                    "value": FormatterUtils.format_price(trading_signal.take_profit),
+                    "inline": True,
+                }
+            )
 
         # Add reasoning if available
         if trading_signal.reasoning:
-            reasoning_text = (trading_signal.reasoning[:500] + "..."
-                              if len(trading_signal.reasoning) > 500
-                              else trading_signal.reasoning)
-            fields.append({
-                "name": "🧠 Analysis",
-                "value": reasoning_text,
-                "inline": False
-            })
+            reasoning_text = (
+                trading_signal.reasoning[:500] + "..."
+                if len(trading_signal.reasoning) > 500
+                else trading_signal.reasoning
+            )
+            fields.append(
+                {"name": "🧠 Analysis", "value": reasoning_text, "inline": False}
+            )
 
         embed = DiscordEmbed(
             title=f"{signal_emoji} Trading Signal Generated",
-            description=(f"**{trading_signal.signal_type.value.upper()}** "
-                         f"signal for {trading_signal.symbol}"),
+            description=(
+                f"**{trading_signal.signal_type.value.upper()}** "
+                f"signal for {trading_signal.symbol}"
+            ),
             color=color,
             fields=fields,
             timestamp=FormatterUtils.format_timestamp(trading_signal.timestamp),
-            footer={"text": f"Generated by {trading_signal.strategy_name}"}
+            footer={"text": f"Generated by {trading_signal.strategy_name}"},
         )
 
         return {"embeds": [embed.to_dict()]}
@@ -589,26 +595,10 @@ class RiskLimitExceededMessageFormatter(IMessageFormatter):
         timestamp = event_data.get("timestamp", int(time.time() * 1000))
 
         fields = [
-            {
-                "name": "⚠️ Limit Type",
-                "value": limit_type,
-                "inline": True
-            },
-            {
-                "name": "📊 Symbol",
-                "value": symbol,
-                "inline": True
-            },
-            {
-                "name": "📈 Current Value",
-                "value": str(current_value),
-                "inline": True
-            },
-            {
-                "name": "🚫 Limit Value",
-                "value": str(limit_value),
-                "inline": True
-            }
+            {"name": "⚠️ Limit Type", "value": limit_type, "inline": True},
+            {"name": "📊 Symbol", "value": symbol, "inline": True},
+            {"name": "📈 Current Value", "value": str(current_value), "inline": True},
+            {"name": "🚫 Limit Value", "value": str(limit_value), "inline": True},
         ]
 
         # Add percentage if both values are numeric
@@ -617,31 +607,27 @@ class RiskLimitExceededMessageFormatter(IMessageFormatter):
             limit_num = float(limit_value)
             if limit_num != 0:
                 percentage = (current_num / limit_num) * 100
-                fields.append({
-                    "name": "📊 Percentage",
-                    "value": f"{percentage:.1f}%",
-                    "inline": True
-                })
+                fields.append(
+                    {
+                        "name": "📊 Percentage",
+                        "value": f"{percentage:.1f}%",
+                        "inline": True,
+                    }
+                )
         except (ValueError, TypeError):
             pass
 
         # Add action taken if available
         action = event_data.get("action_taken")
         if action:
-            fields.append({
-                "name": "⚡ Action Taken",
-                "value": action,
-                "inline": False
-            })
+            fields.append({"name": "⚡ Action Taken", "value": action, "inline": False})
 
         # Add risk details if available
         details = event_data.get("details")
         if details:
-            fields.append({
-                "name": "📋 Details",
-                "value": str(details)[:500],
-                "inline": False
-            })
+            fields.append(
+                {"name": "📋 Details", "value": str(details)[:500], "inline": False}
+            )
 
         embed = DiscordEmbed(
             title="⚠️ Risk Limit Exceeded",
@@ -649,7 +635,7 @@ class RiskLimitExceededMessageFormatter(IMessageFormatter):
             color=DiscordColor.ORANGE,
             fields=fields,
             timestamp=FormatterUtils.format_timestamp(timestamp),
-            footer={"text": "Trading Bot Risk Manager"}
+            footer={"text": "Trading Bot Risk Manager"},
         )
 
         return {"embeds": [embed.to_dict()]}
@@ -688,7 +674,9 @@ class MessageFormatterFactory:
 
         formatter = cls._formatters.get(event_type)
         if formatter is None:
-            raise FormatterNotFoundError(f"No formatter found for event type: {event_type}")
+            raise FormatterNotFoundError(
+                f"No formatter found for event type: {event_type}"
+            )
 
         return formatter
 
@@ -716,7 +704,9 @@ class MessageFormatterFactory:
         return list(cls._formatters.keys())
 
     @classmethod
-    def format_event_message(cls, event_type: str, event_data: Dict[str, Any]) -> Dict[str, Any]:
+    def format_event_message(
+        cls, event_type: str, event_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Convenience method to format event message.
 

@@ -6,22 +6,22 @@ health monitoring, and fallback strategies for Discord webhook client.
 """
 
 import asyncio
-import pytest
-import time
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from datetime import datetime, timedelta
+from datetime import timedelta
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-from trading_bot.notification.enhanced_discord_client import (
-    EnhancedDiscordHttpClient,
-    DiscordRateLimitInfo,
-    create_enhanced_discord_client
-)
-from trading_bot.notification.retry_policies import RetryConfig, RetryPolicy
-from trading_bot.notification.circuit_breaker import CircuitBreakerConfig, CircuitBreaker
-from trading_bot.notification.webhook_health import HealthThresholds, WebhookHealthMonitor
-from trading_bot.notification.message_queue import QueueConfig, MessageQueue
-from trading_bot.notification.webhook_config import WebhookReliabilityConfig
+import pytest
+
+from trading_bot.notification.circuit_breaker import (CircuitBreaker,
+                                                      CircuitBreakerConfig)
 from trading_bot.notification.discord_notifier import DiscordNotificationError
+from trading_bot.notification.enhanced_discord_client import (
+    DiscordRateLimitInfo, EnhancedDiscordHttpClient,
+    create_enhanced_discord_client)
+from trading_bot.notification.message_queue import MessageQueue, QueueConfig
+from trading_bot.notification.retry_policies import RetryConfig, RetryPolicy
+from trading_bot.notification.webhook_config import WebhookReliabilityConfig
+from trading_bot.notification.webhook_health import (HealthThresholds,
+                                                     WebhookHealthMonitor)
 
 
 class TestDiscordRateLimitInfo:
@@ -30,12 +30,12 @@ class TestDiscordRateLimitInfo:
     def test_rate_limit_info_creation(self):
         """Test creating rate limit info from headers."""
         headers = {
-            'x-ratelimit-limit': '5',
-            'x-ratelimit-remaining': '3',
-            'x-ratelimit-reset': '1640995200',  # Unix timestamp
-            'x-ratelimit-reset-after': '10.5',
-            'retry-after': '15',
-            'x-ratelimit-scope': 'webhook'
+            "x-ratelimit-limit": "5",
+            "x-ratelimit-remaining": "3",
+            "x-ratelimit-reset": "1640995200",  # Unix timestamp
+            "x-ratelimit-reset-after": "10.5",
+            "retry-after": "15",
+            "x-ratelimit-scope": "webhook",
         }
 
         rate_limit = DiscordRateLimitInfo.from_headers(headers)
@@ -45,13 +45,11 @@ class TestDiscordRateLimitInfo:
         assert rate_limit.reset_timestamp == 1640995200
         assert rate_limit.reset_after == 10.5
         assert rate_limit.retry_after == 15
-        assert rate_limit.scope == 'webhook'
+        assert rate_limit.scope == "webhook"
 
     def test_rate_limit_info_with_missing_headers(self):
         """Test creating rate limit info with missing headers."""
-        headers = {
-            'x-ratelimit-remaining': '2'
-        }
+        headers = {"x-ratelimit-remaining": "2"}
 
         rate_limit = DiscordRateLimitInfo.from_headers(headers)
 
@@ -110,7 +108,9 @@ class TestEnhancedDiscordHttpClient:
         """Test client initialization with components."""
         client = self.create_test_client()
 
-        assert client._config.webhook_url == "https://discord.com/api/webhooks/test/token"
+        assert (
+            client._config.webhook_url == "https://discord.com/api/webhooks/test/token"
+        )
         assert client._retry_policy is not None
         assert client._circuit_breaker is not None
         assert client._health_monitor is not None
@@ -124,10 +124,12 @@ class TestEnhancedDiscordHttpClient:
         # Mock successful HTTP response
         mock_response = Mock()
         mock_response.status = 200
-        mock_response.headers = {'x-ratelimit-remaining': '5'}
+        mock_response.headers = {"x-ratelimit-remaining": "5"}
         mock_response.text = AsyncMock(return_value='{"success": true}')
 
-        with patch('aiohttp.ClientSession.post', return_value=mock_response) as mock_post:
+        with patch(
+            "aiohttp.ClientSession.post", return_value=mock_response
+        ) as mock_post:
             result = await client.send_webhook({"content": "Test message"})
 
             assert result is True
@@ -147,17 +149,20 @@ class TestEnhancedDiscordHttpClient:
         rate_limited_response = Mock()
         rate_limited_response.status = 429
         rate_limited_response.headers = {
-            'x-ratelimit-remaining': '0',
-            'retry-after': '2'
+            "x-ratelimit-remaining": "0",
+            "retry-after": "2",
         }
 
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '5'}
+        success_response.headers = {"x-ratelimit-remaining": "5"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
-        with patch('aiohttp.ClientSession.post', side_effect=[rate_limited_response, success_response]) as mock_post:
-            with patch('asyncio.sleep') as mock_sleep:
+        with patch(
+            "aiohttp.ClientSession.post",
+            side_effect=[rate_limited_response, success_response],
+        ) as mock_post:
+            with patch("asyncio.sleep") as mock_sleep:
                 result = await client.send_webhook({"content": "Test message"})
 
                 assert result is True
@@ -173,11 +178,11 @@ class TestEnhancedDiscordHttpClient:
         rate_limited_response = Mock()
         rate_limited_response.status = 429
         rate_limited_response.headers = {
-            'x-ratelimit-remaining': '0',
-            'retry-after': '10'  # Exceeds max_rate_limit_wait
+            "x-ratelimit-remaining": "0",
+            "retry-after": "10",  # Exceeds max_rate_limit_wait
         }
 
-        with patch('aiohttp.ClientSession.post', return_value=rate_limited_response):
+        with patch("aiohttp.ClientSession.post", return_value=rate_limited_response):
             with pytest.raises(DiscordNotificationError, match="Rate limit wait time"):
                 await client.send_webhook({"content": "Test message"})
 
@@ -189,15 +194,18 @@ class TestEnhancedDiscordHttpClient:
         # Mock failed response then success
         failed_response = Mock()
         failed_response.status = 500
-        failed_response.text = AsyncMock(return_value='Internal Server Error')
+        failed_response.text = AsyncMock(return_value="Internal Server Error")
 
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '5'}
+        success_response.headers = {"x-ratelimit-remaining": "5"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
-        with patch('aiohttp.ClientSession.post', side_effect=[failed_response, success_response]) as mock_post:
-            with patch('asyncio.sleep'):  # Mock retry delay
+        with patch(
+            "aiohttp.ClientSession.post",
+            side_effect=[failed_response, success_response],
+        ) as mock_post:
+            with patch("asyncio.sleep"):  # Mock retry delay
                 result = await client.send_webhook({"content": "Test message"})
 
                 assert result is True
@@ -218,7 +226,7 @@ class TestEnhancedDiscordHttpClient:
         client._circuit_breaker._record_failure()
 
         # Should raise CircuitBreakerError without making HTTP request
-        with patch('aiohttp.ClientSession.post') as mock_post:
+        with patch("aiohttp.ClientSession.post") as mock_post:
             with pytest.raises(DiscordNotificationError, match="Circuit breaker"):
                 await client.send_webhook({"content": "Test message"})
 
@@ -232,10 +240,10 @@ class TestEnhancedDiscordHttpClient:
         # Mock all retries failing
         failed_response = Mock()
         failed_response.status = 500
-        failed_response.text = AsyncMock(return_value='Server Error')
+        failed_response.text = AsyncMock(return_value="Server Error")
 
-        with patch('aiohttp.ClientSession.post', return_value=failed_response):
-            with patch('asyncio.sleep'):  # Mock retry delays
+        with patch("aiohttp.ClientSession.post", return_value=failed_response):
+            with patch("asyncio.sleep"):  # Mock retry delays
                 # Should eventually queue the message
                 result = await client.send_webhook({"content": "Test message"})
 
@@ -251,21 +259,23 @@ class TestEnhancedDiscordHttpClient:
         client = self.create_test_client()
 
         # Add message to queue
-        from trading_bot.notification.message_queue import QueuedMessage, MessagePriority
+        from trading_bot.notification.message_queue import (MessagePriority,
+                                                            QueuedMessage)
+
         message = QueuedMessage(
             content='{"content": "Queued message"}',
             webhook_url="https://discord.com/api/webhooks/test/token",
-            priority=MessagePriority.NORMAL
+            priority=MessagePriority.NORMAL,
         )
         await client._message_queue.enqueue(message)
 
         # Mock successful response for queue processing
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '5'}
+        success_response.headers = {"x-ratelimit-remaining": "5"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
-        with patch('aiohttp.ClientSession.post', return_value=success_response):
+        with patch("aiohttp.ClientSession.post", return_value=success_response):
             # Start queue processing
             await client.start_queue_processing()
 
@@ -286,20 +296,23 @@ class TestEnhancedDiscordHttpClient:
         # Mock successful response
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '5'}
+        success_response.headers = {"x-ratelimit-remaining": "5"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
         # Mock failed response
         failed_response = Mock()
         failed_response.status = 500
-        failed_response.text = AsyncMock(return_value='Server Error')
+        failed_response.text = AsyncMock(return_value="Server Error")
 
-        with patch('aiohttp.ClientSession.post', side_effect=[success_response, failed_response]):
+        with patch(
+            "aiohttp.ClientSession.post",
+            side_effect=[success_response, failed_response],
+        ):
             # Send successful request
             await client.send_webhook({"content": "Success"})
 
             # Send failed request (should queue after retries)
-            with patch('asyncio.sleep'):
+            with patch("asyncio.sleep"):
                 await client.send_webhook({"content": "Failure"})
 
             # Check health metrics
@@ -332,8 +345,11 @@ class TestEnhancedDiscordHttpClient:
         client = self.create_test_client()
 
         # Mock connection error
-        with patch('aiohttp.ClientSession.post', side_effect=ConnectionError("Connection failed")):
-            with patch('asyncio.sleep'):  # Mock retry delays
+        with patch(
+            "aiohttp.ClientSession.post",
+            side_effect=ConnectionError("Connection failed"),
+        ):
+            with patch("asyncio.sleep"):  # Mock retry delays
                 result = await client.send_webhook({"content": "Test message"})
 
                 # Should fail and queue message
@@ -350,8 +366,11 @@ class TestEnhancedDiscordHttpClient:
         client = self.create_test_client()
 
         # Mock timeout error
-        with patch('aiohttp.ClientSession.post', side_effect=asyncio.TimeoutError("Request timed out")):
-            with patch('asyncio.sleep'):  # Mock retry delays
+        with patch(
+            "aiohttp.ClientSession.post",
+            side_effect=asyncio.TimeoutError("Request timed out"),
+        ):
+            with patch("asyncio.sleep"):  # Mock retry delays
                 result = await client.send_webhook({"content": "Test message"})
 
                 # Should fail and queue message
@@ -412,7 +431,10 @@ class TestEnhancedDiscordHttpClient:
         await client.stop()
 
         # Verify cleanup
-        assert client._queue_processing_task is None or client._queue_processing_task.done()
+        assert (
+            client._queue_processing_task is None
+            or client._queue_processing_task.done()
+        )
 
     @pytest.mark.asyncio
     async def test_webhook_url_validation(self):
@@ -427,7 +449,9 @@ class TestEnhancedDiscordHttpClient:
             webhook_url="https://discord.com/api/webhooks/123/token"
         )
         client = EnhancedDiscordHttpClient(config)
-        assert client._config.webhook_url.startswith("https://discord.com/api/webhooks/")
+        assert client._config.webhook_url.startswith(
+            "https://discord.com/api/webhooks/"
+        )
 
     @pytest.mark.asyncio
     async def test_payload_validation(self):
@@ -437,7 +461,12 @@ class TestEnhancedDiscordHttpClient:
         # Valid payload should work
         valid_payload = {"content": "Test message"}
         # This would normally make HTTP request, we just test it doesn't raise
-        with patch('aiohttp.ClientSession.post', return_value=Mock(status=200, headers={}, text=AsyncMock(return_value='{}'))):
+        with patch(
+            "aiohttp.ClientSession.post",
+            return_value=Mock(
+                status=200, headers={}, text=AsyncMock(return_value="{}")
+            ),
+        ):
             result = await client.send_webhook(valid_payload)
             assert result is True
 
@@ -460,7 +489,7 @@ class TestEnhancedClientIntegration:
         config = WebhookReliabilityConfig(
             webhook_url="https://discord.com/api/webhooks/test/token",
             timeout=5,
-            max_rate_limit_wait=10.0
+            max_rate_limit_wait=10.0,
         )
         config.retry_config.max_attempts = 3
         config.circuit_breaker_config.failure_threshold = 5
@@ -470,17 +499,31 @@ class TestEnhancedClientIntegration:
         # Mock various response scenarios
         responses = [
             # First request - success
-            Mock(status=200, headers={'x-ratelimit-remaining': '5'}, text=AsyncMock(return_value='{}')),
+            Mock(
+                status=200,
+                headers={"x-ratelimit-remaining": "5"},
+                text=AsyncMock(return_value="{}"),
+            ),
             # Second request - rate limited, then success
-            Mock(status=429, headers={'retry-after': '1', 'x-ratelimit-remaining': '0'}),
-            Mock(status=200, headers={'x-ratelimit-remaining': '4'}, text=AsyncMock(return_value='{}')),
+            Mock(
+                status=429, headers={"retry-after": "1", "x-ratelimit-remaining": "0"}
+            ),
+            Mock(
+                status=200,
+                headers={"x-ratelimit-remaining": "4"},
+                text=AsyncMock(return_value="{}"),
+            ),
             # Third request - server error, then success on retry
-            Mock(status=500, text=AsyncMock(return_value='Server Error')),
-            Mock(status=200, headers={'x-ratelimit-remaining': '3'}, text=AsyncMock(return_value='{}'))
+            Mock(status=500, text=AsyncMock(return_value="Server Error")),
+            Mock(
+                status=200,
+                headers={"x-ratelimit-remaining": "3"},
+                text=AsyncMock(return_value="{}"),
+            ),
         ]
 
-        with patch('aiohttp.ClientSession.post', side_effect=responses):
-            with patch('asyncio.sleep'):  # Mock delays
+        with patch("aiohttp.ClientSession.post", side_effect=responses):
+            with patch("asyncio.sleep"):  # Mock delays
                 # Start client
                 await client.start()
 
@@ -516,11 +559,18 @@ class TestEnhancedClientIntegration:
         client = EnhancedDiscordHttpClient(config)
 
         # Mock failures to trigger circuit breaker
-        failed_response = Mock(status=500, text=AsyncMock(return_value='Server Error'))
-        success_response = Mock(status=200, headers={'x-ratelimit-remaining': '5'}, text=AsyncMock(return_value='{}'))
+        failed_response = Mock(status=500, text=AsyncMock(return_value="Server Error"))
+        success_response = Mock(
+            status=200,
+            headers={"x-ratelimit-remaining": "5"},
+            text=AsyncMock(return_value="{}"),
+        )
 
-        with patch('aiohttp.ClientSession.post', side_effect=[failed_response, failed_response, success_response]):
-            with patch('asyncio.sleep'):
+        with patch(
+            "aiohttp.ClientSession.post",
+            side_effect=[failed_response, failed_response, success_response],
+        ):
+            with patch("asyncio.sleep"):
                 # First two requests should fail and open circuit
                 result1 = await client.send_webhook({"content": "Message 1"})
                 result2 = await client.send_webhook({"content": "Message 2"})
@@ -546,8 +596,7 @@ class TestFactoryFunction:
     def test_create_with_config_object(self):
         """Test creating client with WebhookReliabilityConfig object."""
         config = WebhookReliabilityConfig(
-            webhook_url="https://discord.com/api/webhooks/test/token",
-            timeout=15
+            webhook_url="https://discord.com/api/webhooks/test/token", timeout=15
         )
         client = create_enhanced_discord_client(config)
 

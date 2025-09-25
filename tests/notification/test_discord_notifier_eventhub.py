@@ -6,33 +6,32 @@ integration scenarios, error handling, and end-to-end EventHub communication.
 """
 
 import asyncio
-import pytest
 import time
 from decimal import Decimal
 from typing import Any, Dict
-from unittest.mock import AsyncMock, Mock, patch, MagicMock, call
+from unittest.mock import AsyncMock, Mock, call, patch
+
+import pytest
 
 from trading_bot.core.config_manager import ConfigManager, IConfigLoader
 from trading_bot.core.event_hub import EventHub, EventType
-from trading_bot.execution.execution_engine import ExecutionResult, OrderStatus, FillDetail
+from trading_bot.execution.execution_engine import (ExecutionResult,
+                                                    OrderStatus)
 from trading_bot.notification.discord_notifier import (
-    DiscordNotifier,
-    DiscordNotificationError,
-    IHttpClient,
-)
+    DiscordNotificationError, DiscordNotifier, IHttpClient)
 from trading_bot.notification.message_formatters import (
-    MessageFormatterFactory,
-    MessageFormatterError,
-    InvalidEventDataError,
-)
+    MessageFormatterError, MessageFormatterFactory)
 from trading_bot.risk_management.risk_manager import OrderRequest, OrderType
-from trading_bot.strategies.base_strategy import TradingSignal, SignalType, SignalStrength
+from trading_bot.strategies.base_strategy import (SignalStrength, SignalType,
+                                                  TradingSignal)
 
 
 class MockConfigLoader(IConfigLoader):
     """Mock config loader for testing."""
 
-    def __init__(self, webhook_url: str = "https://discord.com/api/webhooks/test") -> None:
+    def __init__(
+        self, webhook_url: str = "https://discord.com/api/webhooks/test"
+    ) -> None:
         self.webhook_url = webhook_url
 
     def load_config(self) -> Dict[str, Any]:
@@ -79,15 +78,19 @@ class MockMessageFormatterFactory(MessageFormatterFactory):
         """Get mock formatter."""
         mock_formatter = Mock()
         if self.should_fail:
-            mock_formatter.format_message.side_effect = MessageFormatterError("Mock formatter error")
+            mock_formatter.format_message.side_effect = MessageFormatterError(
+                "Mock formatter error"
+            )
         else:
             mock_formatter.format_message.return_value = {
                 "content": f"Formatted message for {event_type}",
-                "embeds": [{
-                    "title": f"Event: {event_type}",
-                    "description": "Mock formatted event",
-                    "color": 0x00ff00
-                }]
+                "embeds": [
+                    {
+                        "title": f"Event: {event_type}",
+                        "description": "Mock formatted event",
+                        "color": 0x00FF00,
+                    }
+                ],
             }
         self.format_calls.append(event_type)
         return mock_formatter
@@ -161,7 +164,7 @@ def sample_trading_signal():
         reasoning="Strong bullish momentum detected",
         target_price=47000.00,
         stop_loss=43000.00,
-        take_profit=46500.00
+        take_profit=46500.00,
     )
 
 
@@ -185,7 +188,7 @@ def sample_order_request(sample_trading_signal):
         account_risk_result=None,
         entry_price=45000.50,
         stop_loss_price=43000.00,
-        take_profit_price=46500.00
+        take_profit_price=46500.00,
     )
 
 
@@ -204,7 +207,7 @@ def sample_execution_result(sample_order_request):
         commission_asset="USDT",
         market_price_at_execution=45100.00,
         slippage_percentage=0.22,
-        execution_timestamp=int(time.time() * 1000)
+        execution_timestamp=int(time.time() * 1000),
     )
 
 
@@ -234,7 +237,9 @@ class TestEventHubSubscription:
         assert mock_event_hub.subscribe.call_count == len(expected_events)
 
         # Verify each event type was subscribed with correct handler
-        subscribed_events = [call.args[0] for call in mock_event_hub.subscribe.call_args_list]
+        subscribed_events = [
+            call.args[0] for call in mock_event_hub.subscribe.call_args_list
+        ]
         assert set(subscribed_events) == set(expected_events)
 
         # Verify subscription state
@@ -265,9 +270,11 @@ class TestEventHubSubscription:
         initial_call_count = mock_event_hub.subscribe.call_count
 
         # Second subscription attempt
-        with patch.object(notifier._logger, 'warning') as mock_warning:
+        with patch.object(notifier._logger, "warning") as mock_warning:
             notifier.subscribe_to_events()
-            mock_warning.assert_called_once_with("EventHub subscriptions already active")
+            mock_warning.assert_called_once_with(
+                "EventHub subscriptions already active"
+            )
 
         # Verify no additional subscriptions were made
         assert mock_event_hub.subscribe.call_count == initial_call_count
@@ -318,9 +325,11 @@ class TestEventHubSubscription:
             config_manager, mock_http_client, mock_event_hub, mock_message_formatter
         )
 
-        with patch.object(notifier._logger, 'debug') as mock_debug:
+        with patch.object(notifier._logger, "debug") as mock_debug:
             notifier.unsubscribe_from_events()
-            mock_debug.assert_called_once_with("No active EventHub subscriptions to remove")
+            mock_debug.assert_called_once_with(
+                "No active EventHub subscriptions to remove"
+            )
 
     def test_unsubscribe_from_events_without_eventhub(
         self, config_manager, mock_http_client
@@ -328,9 +337,11 @@ class TestEventHubSubscription:
         """Test unsubscribing without EventHub."""
         notifier = DiscordNotifier(config_manager, mock_http_client)
 
-        with patch.object(notifier._logger, 'debug') as mock_debug:
+        with patch.object(notifier._logger, "debug") as mock_debug:
             notifier.unsubscribe_from_events()
-            mock_debug.assert_called_once_with("No active EventHub subscriptions to remove")
+            mock_debug.assert_called_once_with(
+                "No active EventHub subscriptions to remove"
+            )
 
     def test_unsubscribe_handles_keyerror(
         self, config_manager, mock_http_client, mock_event_hub, mock_message_formatter
@@ -350,7 +361,7 @@ class TestEventHubSubscription:
 
         mock_event_hub.unsubscribe.side_effect = side_effect
 
-        with patch.object(notifier._logger, 'warning') as mock_warning:
+        with patch.object(notifier._logger, "warning") as mock_warning:
             notifier.unsubscribe_from_events()
             mock_warning.assert_called()
 
@@ -368,7 +379,7 @@ class TestEventHubSubscription:
         # Mock unsubscribe to raise general exception
         mock_event_hub.unsubscribe.side_effect = Exception("General error")
 
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             notifier.unsubscribe_from_events()
             mock_error.assert_called()
 
@@ -378,7 +389,11 @@ class TestEventHandlers:
 
     @pytest.mark.asyncio
     async def test_handle_order_filled_async_success(
-        self, config_manager, mock_http_client, mock_message_formatter, sample_execution_result
+        self,
+        config_manager,
+        mock_http_client,
+        mock_message_formatter,
+        sample_execution_result,
     ):
         """Test successful ORDER_FILLED event handling."""
         notifier = DiscordNotifier(
@@ -394,12 +409,19 @@ class TestEventHandlers:
         # Verify Discord message was sent
         assert len(mock_http_client.post_async_calls) == 1
         call_data = mock_http_client.post_async_calls[0]
-        assert call_data["data"]["content"] == f"Formatted message for {EventType.ORDER_FILLED}"
+        assert (
+            call_data["data"]["content"]
+            == f"Formatted message for {EventType.ORDER_FILLED}"
+        )
         assert len(call_data["data"]["embeds"]) == 1
 
     @pytest.mark.asyncio
     async def test_handle_order_filled_async_formatter_error(
-        self, config_manager, mock_http_client, failing_message_formatter, sample_execution_result
+        self,
+        config_manager,
+        mock_http_client,
+        failing_message_formatter,
+        sample_execution_result,
     ):
         """Test ORDER_FILLED event handling with formatter error."""
         notifier = DiscordNotifier(
@@ -408,7 +430,7 @@ class TestEventHandlers:
 
         event_data = {"execution_result": sample_execution_result}
 
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             await notifier._handle_order_filled_async(event_data)
             mock_error.assert_called()
 
@@ -425,10 +447,10 @@ class TestEventHandlers:
             "error": {
                 "message": "Database connection failed",
                 "type": "ConnectionError",
-                "severity": "high"
+                "severity": "high",
             },
             "component": "DatabaseManager",
-            "timestamp": int(time.time() * 1000)
+            "timestamp": int(time.time() * 1000),
         }
 
         await notifier._handle_error_occurred_async(event_data)
@@ -452,7 +474,7 @@ class TestEventHandlers:
             "event_type": EventType.CONNECTION_LOST,
             "service": "Binance",
             "timestamp": int(time.time() * 1000),
-            "details": "WebSocket connection timeout"
+            "details": "WebSocket connection timeout",
         }
 
         await notifier._handle_connection_event_async(event_data)
@@ -472,18 +494,21 @@ class TestEventHandlers:
             config_manager, mock_http_client, None, mock_message_formatter
         )
 
-        event_data = {
-            "service": "Binance",
-            "timestamp": int(time.time() * 1000)
-        }
+        event_data = {"service": "Binance", "timestamp": int(time.time() * 1000)}
 
-        with patch.object(notifier._logger, 'warning') as mock_warning:
+        with patch.object(notifier._logger, "warning") as mock_warning:
             await notifier._handle_connection_event_async(event_data)
-            mock_warning.assert_called_once_with("Connection event missing event_type field")
+            mock_warning.assert_called_once_with(
+                "Connection event missing event_type field"
+            )
 
     @pytest.mark.asyncio
     async def test_handle_trading_signal_async_success(
-        self, config_manager, mock_http_client, mock_message_formatter, sample_trading_signal
+        self,
+        config_manager,
+        mock_http_client,
+        mock_message_formatter,
+        sample_trading_signal,
     ):
         """Test successful TRADING_SIGNAL_GENERATED event handling."""
         notifier = DiscordNotifier(
@@ -512,11 +537,11 @@ class TestEventHandlers:
             "risk_info": {
                 "limit_type": "Max Position Size",
                 "current_value": 1.5,
-                "limit_value": 1.0
+                "limit_value": 1.0,
             },
             "symbol": "BTCUSDT",
             "timestamp": int(time.time() * 1000),
-            "action_taken": "Order rejected"
+            "action_taken": "Order rejected",
         }
 
         await notifier._handle_risk_limit_exceeded_async(event_data)
@@ -534,11 +559,9 @@ class TestEventHandlers:
         """Test sending formatted message with content."""
         notifier = DiscordNotifier(config_manager, mock_http_client)
 
-        embeds = [{"title": "Test Embed", "description": "Test", "color": 0x00ff00}]
+        embeds = [{"title": "Test Embed", "description": "Test", "color": 0x00FF00}]
         result = await notifier._send_formatted_message_async(
-            content="Test content",
-            embeds=embeds,
-            username="Test Bot"
+            content="Test content", embeds=embeds, username="Test Bot"
         )
 
         assert result is True
@@ -555,7 +578,7 @@ class TestEventHandlers:
         """Test sending formatted message with embeds only."""
         notifier = DiscordNotifier(config_manager, mock_http_client)
 
-        embeds = [{"title": "Test Embed", "description": "Test", "color": 0x00ff00}]
+        embeds = [{"title": "Test Embed", "description": "Test", "color": 0x00FF00}]
         result = await notifier._send_formatted_message_async(embeds=embeds)
 
         assert result is True
@@ -582,7 +605,7 @@ class TestEventHandlers:
         """Test sending formatted message handles errors."""
         notifier = DiscordNotifier(config_manager, failing_http_client)
 
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             result = await notifier._send_formatted_message_async(content="Test")
             assert result is False
             mock_error.assert_called()
@@ -658,8 +681,12 @@ class TestLifecycleManagement:
         )
 
         # Mock unsubscribe to raise exception
-        with patch.object(notifier, 'unsubscribe_from_events', side_effect=Exception("Unsubscribe failed")):
-            with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(
+            notifier,
+            "unsubscribe_from_events",
+            side_effect=Exception("Unsubscribe failed"),
+        ):
+            with patch.object(notifier._logger, "error") as mock_error:
                 notifier.shutdown_notifications()
                 mock_error.assert_called()
 
@@ -709,8 +736,12 @@ class TestIntegrationScenarios:
 
     @pytest.mark.asyncio
     async def test_eventhub_publishes_order_filled_notifier_handles(
-        self, config_manager, mock_http_client, real_event_hub,
-        mock_message_formatter, sample_execution_result
+        self,
+        config_manager,
+        mock_http_client,
+        real_event_hub,
+        mock_message_formatter,
+        sample_execution_result,
     ):
         """Test EventHub publishing ORDER_FILLED event and DiscordNotifier handling it."""
         notifier = DiscordNotifier(
@@ -746,7 +777,7 @@ class TestIntegrationScenarios:
         # Publish error event
         error_data = {
             "error": {"message": "Test error", "type": "TestError"},
-            "component": "TestComponent"
+            "component": "TestComponent",
         }
         real_event_hub.publish(EventType.ERROR_OCCURRED, error_data)
 
@@ -759,8 +790,12 @@ class TestIntegrationScenarios:
 
     @pytest.mark.asyncio
     async def test_eventhub_publishes_trading_signal_notifier_handles(
-        self, config_manager, mock_http_client, real_event_hub,
-        mock_message_formatter, sample_trading_signal
+        self,
+        config_manager,
+        mock_http_client,
+        real_event_hub,
+        mock_message_formatter,
+        sample_trading_signal,
     ):
         """Test EventHub publishing TRADING_SIGNAL_GENERATED event and DiscordNotifier handling it."""
         notifier = DiscordNotifier(
@@ -783,8 +818,13 @@ class TestIntegrationScenarios:
 
     @pytest.mark.asyncio
     async def test_multiple_event_types_handling(
-        self, config_manager, mock_http_client, real_event_hub,
-        mock_message_formatter, sample_execution_result, sample_trading_signal
+        self,
+        config_manager,
+        mock_http_client,
+        real_event_hub,
+        mock_message_formatter,
+        sample_execution_result,
+        sample_trading_signal,
     ):
         """Test handling multiple different event types."""
         notifier = DiscordNotifier(
@@ -797,9 +837,24 @@ class TestIntegrationScenarios:
         # Publish multiple events
         events = [
             (EventType.ORDER_FILLED, {"execution_result": sample_execution_result}),
-            (EventType.TRADING_SIGNAL_GENERATED, {"trading_signal": sample_trading_signal}),
-            (EventType.CONNECTION_LOST, {"event_type": EventType.CONNECTION_LOST, "service": "Binance"}),
-            (EventType.RISK_LIMIT_EXCEEDED, {"risk_info": {"limit_type": "test", "current_value": 1, "limit_value": 0.5}})
+            (
+                EventType.TRADING_SIGNAL_GENERATED,
+                {"trading_signal": sample_trading_signal},
+            ),
+            (
+                EventType.CONNECTION_LOST,
+                {"event_type": EventType.CONNECTION_LOST, "service": "Binance"},
+            ),
+            (
+                EventType.RISK_LIMIT_EXCEEDED,
+                {
+                    "risk_info": {
+                        "limit_type": "test",
+                        "current_value": 1,
+                        "limit_value": 0.5,
+                    }
+                },
+            ),
         ]
 
         for event_type, event_data in events:
@@ -816,8 +871,12 @@ class TestIntegrationScenarios:
         assert len(mock_http_client.post_async_calls) == len(events)
 
     def test_unsubscribe_stops_event_handling(
-        self, config_manager, mock_http_client, real_event_hub,
-        mock_message_formatter, sample_execution_result
+        self,
+        config_manager,
+        mock_http_client,
+        real_event_hub,
+        mock_message_formatter,
+        sample_execution_result,
     ):
         """Test unsubscribing stops event handling."""
         notifier = DiscordNotifier(
@@ -855,7 +914,7 @@ class TestErrorHandling:
         event_data = {"execution_result": "not_an_execution_result"}
 
         # This should not raise an exception but should handle the error gracefully
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             await notifier._handle_order_filled_async(event_data)
             # The event handler catches all exceptions, so error should be logged
             assert mock_error.call_count > 0
@@ -872,14 +931,18 @@ class TestErrorHandling:
         # Create malformed event data
         event_data = {"trading_signal": {"symbol": "INVALID"}}
 
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             await notifier._handle_trading_signal_async(event_data)
             # The event handler catches all exceptions, so error should be logged
             assert mock_error.call_count > 0
 
     @pytest.mark.asyncio
     async def test_discord_api_failure_during_event_handling(
-        self, config_manager, failing_http_client, mock_message_formatter, sample_execution_result
+        self,
+        config_manager,
+        failing_http_client,
+        mock_message_formatter,
+        sample_execution_result,
     ):
         """Test handling Discord API failures during event processing."""
         notifier = DiscordNotifier(
@@ -888,13 +951,17 @@ class TestErrorHandling:
 
         event_data = {"execution_result": sample_execution_result}
 
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             await notifier._handle_order_filled_async(event_data)
             mock_error.assert_called()
 
     @pytest.mark.asyncio
     async def test_message_formatter_exception(
-        self, config_manager, mock_http_client, failing_message_formatter, sample_execution_result
+        self,
+        config_manager,
+        mock_http_client,
+        failing_message_formatter,
+        sample_execution_result,
     ):
         """Test handling message formatter exceptions."""
         notifier = DiscordNotifier(
@@ -903,7 +970,7 @@ class TestErrorHandling:
 
         event_data = {"execution_result": sample_execution_result}
 
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             await notifier._handle_order_filled_async(event_data)
             mock_error.assert_called()
 
@@ -919,12 +986,12 @@ class TestErrorHandling:
         # Test missing execution_result
         event_data = {}
 
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             await notifier._handle_order_filled_async(event_data)
             assert mock_error.call_count > 0
 
         # Test missing trading_signal
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             await notifier._handle_trading_signal_async(event_data)
             assert mock_error.call_count > 0
 
@@ -941,7 +1008,7 @@ class TestEdgeCasesAndBoundaryConditions:
             config_manager, mock_http_client, None, mock_message_formatter
         )
 
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             await notifier._handle_order_filled_async({})
             assert mock_error.call_count > 0
 
@@ -954,7 +1021,7 @@ class TestEdgeCasesAndBoundaryConditions:
             config_manager, mock_http_client, None, mock_message_formatter
         )
 
-        with patch.object(notifier._logger, 'error') as mock_error:
+        with patch.object(notifier._logger, "error") as mock_error:
             await notifier._handle_order_filled_async(None)
             assert mock_error.call_count > 0
 
@@ -1005,8 +1072,12 @@ class TestEdgeCasesAndBoundaryConditions:
 
     @pytest.mark.asyncio
     async def test_concurrent_event_handling(
-        self, config_manager, mock_http_client, real_event_hub,
-        mock_message_formatter, sample_execution_result
+        self,
+        config_manager,
+        mock_http_client,
+        real_event_hub,
+        mock_message_formatter,
+        sample_execution_result,
     ):
         """Test handling multiple concurrent events."""
         notifier = DiscordNotifier(
@@ -1048,13 +1119,15 @@ class TestEdgeCasesAndBoundaryConditions:
         notifier.initialize_notifications()
         assert notifier._subscriptions_active is True
 
-    def test_factory_function_with_eventhub_integration(self, config_manager, real_event_hub):
+    def test_factory_function_with_eventhub_integration(
+        self, config_manager, real_event_hub
+    ):
         """Test factory function creates DiscordNotifier with EventHub integration."""
-        from trading_bot.notification.discord_notifier import create_discord_notifier
+        from trading_bot.notification.discord_notifier import \
+            create_discord_notifier
 
         notifier = create_discord_notifier(
-            config_manager=config_manager,
-            event_hub=real_event_hub
+            config_manager=config_manager, event_hub=real_event_hub
         )
 
         assert isinstance(notifier, DiscordNotifier)

@@ -5,20 +5,18 @@ Tests circuit breaker states, failure detection, recovery mechanisms,
 and thread safety for Discord webhook circuit breaker.
 """
 
-import asyncio
-import pytest
 import threading
 import time
 from unittest.mock import Mock
 
-from trading_bot.notification.circuit_breaker import (
-    CircuitBreakerConfig,
-    CircuitBreaker,
-    CircuitBreakerError,
-    CircuitState,
-    DiscordCircuitBreaker,
-    create_circuit_breaker
-)
+import pytest
+
+from trading_bot.notification.circuit_breaker import (CircuitBreaker,
+                                                      CircuitBreakerConfig,
+                                                      CircuitBreakerError,
+                                                      CircuitState,
+                                                      DiscordCircuitBreaker,
+                                                      create_circuit_breaker)
 
 
 class TestCircuitBreakerConfig:
@@ -27,9 +25,7 @@ class TestCircuitBreakerConfig:
     def test_valid_config(self):
         """Test valid configuration creation."""
         config = CircuitBreakerConfig(
-            failure_threshold=5,
-            success_threshold=2,
-            timeout=60.0
+            failure_threshold=5, success_threshold=2, timeout=60.0
         )
         assert config.failure_threshold == 5
         assert config.success_threshold == 2
@@ -52,7 +48,9 @@ class TestCircuitBreakerConfig:
 
     def test_invalid_failure_rate_threshold(self):
         """Test invalid failure_rate_threshold validation."""
-        with pytest.raises(ValueError, match="failure_rate_threshold must be between 0 and 100"):
+        with pytest.raises(
+            ValueError, match="failure_rate_threshold must be between 0 and 100"
+        ):
             CircuitBreakerConfig(failure_rate_threshold=150.0)
 
 
@@ -95,9 +93,7 @@ class TestCircuitBreakerStates:
     def test_transition_to_closed_from_half_open(self):
         """Test circuit closes from half-open after successes."""
         config = CircuitBreakerConfig(
-            failure_threshold=1,
-            success_threshold=2,
-            timeout=0.1
+            failure_threshold=1, success_threshold=2, timeout=0.1
         )
         breaker = CircuitBreaker(config)
 
@@ -197,8 +193,7 @@ class TestCircuitBreakerExecution:
     async def test_async_call_failure_tracking(self):
         """Test async call failure tracking."""
         config = CircuitBreakerConfig(
-            failure_threshold=2,
-            expected_exception=(ValueError,)
+            failure_threshold=2, expected_exception=(ValueError,)
         )
         breaker = CircuitBreaker(config)
 
@@ -217,8 +212,7 @@ class TestCircuitBreakerExecution:
     def test_sync_call_failure_tracking(self):
         """Test sync call failure tracking."""
         config = CircuitBreakerConfig(
-            failure_threshold=2,
-            expected_exception=(ValueError,)
+            failure_threshold=2, expected_exception=(ValueError,)
         )
         breaker = CircuitBreaker(config)
 
@@ -237,8 +231,7 @@ class TestCircuitBreakerExecution:
     def test_non_expected_exception_not_tracked(self):
         """Test non-expected exceptions don't trigger circuit breaker."""
         config = CircuitBreakerConfig(
-            failure_threshold=1,
-            expected_exception=(ValueError,)
+            failure_threshold=1, expected_exception=(ValueError,)
         )
         breaker = CircuitBreaker(config)
 
@@ -331,7 +324,7 @@ class TestFailureRateThreshold:
         config = CircuitBreakerConfig(
             failure_threshold=10,  # High threshold for count-based
             failure_rate_threshold=60.0,  # 60% failure rate
-            minimum_requests=5
+            minimum_requests=5,
         )
         breaker = CircuitBreaker(config)
 
@@ -348,9 +341,7 @@ class TestFailureRateThreshold:
     def test_failure_rate_below_minimum_requests(self):
         """Test failure rate not applied below minimum requests."""
         config = CircuitBreakerConfig(
-            failure_threshold=10,
-            failure_rate_threshold=50.0,
-            minimum_requests=5
+            failure_threshold=10, failure_rate_threshold=50.0, minimum_requests=5
         )
         breaker = CircuitBreaker(config)
 
@@ -416,7 +407,9 @@ class TestDiscordCircuitBreaker:
         assert config.timeout >= 60.0  # Should allow time for recovery
 
         # Should handle Discord-specific exceptions
-        from trading_bot.notification.discord_notifier import DiscordNotificationError
+        from trading_bot.notification.discord_notifier import \
+            DiscordNotificationError
+
         expected_exceptions = config.expected_exception
         assert DiscordNotificationError in expected_exceptions
         assert ConnectionError in expected_exceptions
@@ -439,11 +432,7 @@ class TestFactoryFunction:
 
     def test_custom_parameters(self):
         """Test circuit breaker with custom parameters."""
-        breaker = create_circuit_breaker(
-            "default",
-            failure_threshold=10,
-            timeout=120.0
-        )
+        breaker = create_circuit_breaker("default", failure_threshold=10, timeout=120.0)
 
         config = breaker._config
         assert config.failure_threshold == 10

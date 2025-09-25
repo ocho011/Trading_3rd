@@ -6,7 +6,6 @@ for Discord webhook operations. Tracks success rates, response times,
 rate limiting events, and overall service health.
 """
 
-import asyncio
 import logging
 import threading
 import time
@@ -14,12 +13,13 @@ from collections import defaultdict, deque
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple
 from statistics import mean, median
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 class HealthStatus(Enum):
     """Health status levels."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -28,6 +28,7 @@ class HealthStatus(Enum):
 
 class AlertSeverity(Enum):
     """Alert severity levels."""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -61,6 +62,7 @@ class HealthMetrics:
         queue_size: Current message queue size
         processing_lag: Average processing lag in seconds
     """
+
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
@@ -71,7 +73,7 @@ class HealthMetrics:
     avg_response_time: float = 0.0
     median_response_time: float = 0.0
     min_response_time: float = 0.0
-    max_response_time: float = float('inf')
+    max_response_time: float = float("inf")
     requests_per_minute: float = 0.0
     health_status: HealthStatus = HealthStatus.HEALTHY
     last_success_time: Optional[float] = None
@@ -85,7 +87,7 @@ class HealthMetrics:
     def to_dict(self) -> Dict[str, Any]:
         """Convert metrics to dictionary."""
         data = asdict(self)
-        data['health_status'] = self.health_status.value
+        data["health_status"] = self.health_status.value
         return data
 
 
@@ -106,6 +108,7 @@ class HealthAlert:
         resolved: Whether alert has been resolved
         resolved_at: Timestamp when alert was resolved
     """
+
     id: str
     severity: AlertSeverity
     title: str
@@ -120,7 +123,7 @@ class HealthAlert:
     def to_dict(self) -> Dict[str, Any]:
         """Convert alert to dictionary."""
         data = asdict(self)
-        data['severity'] = self.severity.value
+        data["severity"] = self.severity.value
         return data
 
 
@@ -142,6 +145,7 @@ class HealthThresholds:
         processing_lag_warning: Processing lag for warning (seconds)
         processing_lag_critical: Processing lag for critical (seconds)
     """
+
     success_rate_warning: float = 85.0
     success_rate_critical: float = 70.0
     response_time_warning: float = 5.0
@@ -167,7 +171,7 @@ class WebhookHealthMonitor:
         self,
         thresholds: Optional[HealthThresholds] = None,
         monitoring_window_minutes: int = 60,
-        alert_callback: Optional[Callable[[HealthAlert], None]] = None
+        alert_callback: Optional[Callable[[HealthAlert], None]] = None,
     ) -> None:
         """
         Initialize health monitor.
@@ -217,7 +221,9 @@ class WebhookHealthMonitor:
         """
         return time.time()
 
-    def record_request_success(self, start_time: float, response_time: Optional[float] = None) -> None:
+    def record_request_success(
+        self, start_time: float, response_time: Optional[float] = None
+    ) -> None:
         """
         Record successful webhook request.
 
@@ -226,7 +232,9 @@ class WebhookHealthMonitor:
             response_time: Optional response time override
         """
         current_time = time.time()
-        duration = response_time if response_time is not None else current_time - start_time
+        duration = (
+            response_time if response_time is not None else current_time - start_time
+        )
 
         with self._lock:
             self._total_requests += 1
@@ -248,7 +256,7 @@ class WebhookHealthMonitor:
         start_time: float,
         error_type: str = "unknown",
         is_rate_limited: bool = False,
-        is_timeout: bool = False
+        is_timeout: bool = False,
     ) -> None:
         """
         Record failed webhook request.
@@ -343,7 +351,9 @@ class WebhookHealthMonitor:
             # Calculate requests per minute
             current_time = time.time()
             minute_ago = current_time - 60
-            recent_requests = [ts for ts, _, _ in self._request_history if ts >= minute_ago]
+            recent_requests = [
+                ts for ts, _, _ in self._request_history if ts >= minute_ago
+            ]
             requests_per_minute = len(recent_requests)
 
             # Calculate uptime
@@ -351,10 +361,14 @@ class WebhookHealthMonitor:
             uptime_percentage = self._calculate_uptime_percentage()
 
             # Calculate processing lag
-            processing_lag = mean(self._processing_times) if self._processing_times else 0.0
+            processing_lag = (
+                mean(self._processing_times) if self._processing_times else 0.0
+            )
 
             # Determine health status
-            health_status = self._determine_health_status(success_rate, avg_response_time)
+            health_status = self._determine_health_status(
+                success_rate, avg_response_time
+            )
 
             return HealthMetrics(
                 total_requests=self._total_requests,
@@ -376,7 +390,7 @@ class WebhookHealthMonitor:
                 uptime_percentage=uptime_percentage,
                 circuit_breaker_trips=self._circuit_breaker_trips,
                 queue_size=self._current_queue_size,
-                processing_lag=processing_lag
+                processing_lag=processing_lag,
             )
 
     def get_active_alerts(self) -> List[HealthAlert]:
@@ -387,7 +401,9 @@ class WebhookHealthMonitor:
             List[HealthAlert]: List of unresolved alerts
         """
         with self._lock:
-            return [alert for alert in self._active_alerts.values() if not alert.resolved]
+            return [
+                alert for alert in self._active_alerts.values() if not alert.resolved
+            ]
 
     def resolve_alert(self, alert_id: str) -> bool:
         """
@@ -441,7 +457,9 @@ class WebhookHealthMonitor:
         if not self._request_history:
             return 100.0
 
-        successful_requests = sum(1 for _, success, _ in self._request_history if success)
+        successful_requests = sum(
+            1 for _, success, _ in self._request_history if success
+        )
         total_requests = len(self._request_history)
 
         if total_requests == 0:
@@ -449,7 +467,9 @@ class WebhookHealthMonitor:
 
         return (successful_requests / total_requests) * 100
 
-    def _determine_health_status(self, success_rate: float, avg_response_time: float) -> HealthStatus:
+    def _determine_health_status(
+        self, success_rate: float, avg_response_time: float
+    ) -> HealthStatus:
         """
         Determine overall health status based on metrics.
 
@@ -461,20 +481,28 @@ class WebhookHealthMonitor:
             HealthStatus: Determined health status
         """
         # Critical conditions
-        if (success_rate < self._thresholds.success_rate_critical or
-            avg_response_time > self._thresholds.response_time_critical or
-            self._consecutive_failures >= self._thresholds.consecutive_failures_critical):
+        if (
+            success_rate < self._thresholds.success_rate_critical
+            or avg_response_time > self._thresholds.response_time_critical
+            or self._consecutive_failures
+            >= self._thresholds.consecutive_failures_critical
+        ):
             return HealthStatus.CRITICAL
 
         # Unhealthy conditions
-        if (success_rate < self._thresholds.success_rate_warning or
-            avg_response_time > self._thresholds.response_time_warning or
-            self._consecutive_failures >= self._thresholds.consecutive_failures_warning):
+        if (
+            success_rate < self._thresholds.success_rate_warning
+            or avg_response_time > self._thresholds.response_time_warning
+            or self._consecutive_failures
+            >= self._thresholds.consecutive_failures_warning
+        ):
             return HealthStatus.UNHEALTHY
 
         # Check for degraded performance
-        if (self._current_queue_size >= self._thresholds.queue_size_warning or
-            (self._processing_times and mean(self._processing_times) > self._thresholds.processing_lag_warning)):
+        if self._current_queue_size >= self._thresholds.queue_size_warning or (
+            self._processing_times
+            and mean(self._processing_times) > self._thresholds.processing_lag_warning
+        ):
             return HealthStatus.DEGRADED
 
         return HealthStatus.HEALTHY
@@ -491,7 +519,7 @@ class WebhookHealthMonitor:
                 f"Success rate dropped to {current_metrics.success_rate:.1f}%",
                 "success_rate",
                 current_metrics.success_rate,
-                self._thresholds.success_rate_critical
+                self._thresholds.success_rate_critical,
             )
         elif current_metrics.success_rate < self._thresholds.success_rate_warning:
             self._create_alert(
@@ -500,7 +528,7 @@ class WebhookHealthMonitor:
                 f"Success rate dropped to {current_metrics.success_rate:.1f}%",
                 "success_rate",
                 current_metrics.success_rate,
-                self._thresholds.success_rate_warning
+                self._thresholds.success_rate_warning,
             )
 
         # Response time alerts
@@ -511,7 +539,7 @@ class WebhookHealthMonitor:
                 f"Average response time is {current_metrics.avg_response_time:.2f}s",
                 "response_time",
                 current_metrics.avg_response_time,
-                self._thresholds.response_time_critical
+                self._thresholds.response_time_critical,
             )
         elif current_metrics.avg_response_time > self._thresholds.response_time_warning:
             self._create_alert(
@@ -520,7 +548,7 @@ class WebhookHealthMonitor:
                 f"Average response time is {current_metrics.avg_response_time:.2f}s",
                 "response_time",
                 current_metrics.avg_response_time,
-                self._thresholds.response_time_warning
+                self._thresholds.response_time_warning,
             )
 
         # Consecutive failures alerts
@@ -531,16 +559,18 @@ class WebhookHealthMonitor:
                 f"{self._consecutive_failures} consecutive failures detected",
                 "consecutive_failures",
                 self._consecutive_failures,
-                self._thresholds.consecutive_failures_critical
+                self._thresholds.consecutive_failures_critical,
             )
-        elif self._consecutive_failures >= self._thresholds.consecutive_failures_warning:
+        elif (
+            self._consecutive_failures >= self._thresholds.consecutive_failures_warning
+        ):
             self._create_alert(
                 AlertSeverity.WARNING,
                 "Multiple Consecutive Failures",
                 f"{self._consecutive_failures} consecutive failures detected",
                 "consecutive_failures",
                 self._consecutive_failures,
-                self._thresholds.consecutive_failures_warning
+                self._thresholds.consecutive_failures_warning,
             )
 
     def _check_queue_alerts(self) -> None:
@@ -552,7 +582,7 @@ class WebhookHealthMonitor:
                 f"Queue size has reached {self._current_queue_size} messages",
                 "queue_size",
                 self._current_queue_size,
-                self._thresholds.queue_size_critical
+                self._thresholds.queue_size_critical,
             )
         elif self._current_queue_size >= self._thresholds.queue_size_warning:
             self._create_alert(
@@ -561,7 +591,7 @@ class WebhookHealthMonitor:
                 f"Queue size has reached {self._current_queue_size} messages",
                 "queue_size",
                 self._current_queue_size,
-                self._thresholds.queue_size_warning
+                self._thresholds.queue_size_warning,
             )
 
     def _check_processing_lag_alerts(self) -> None:
@@ -578,7 +608,7 @@ class WebhookHealthMonitor:
                 f"Average processing time is {avg_processing_time:.2f}s",
                 "processing_lag",
                 avg_processing_time,
-                self._thresholds.processing_lag_critical
+                self._thresholds.processing_lag_critical,
             )
         elif avg_processing_time > self._thresholds.processing_lag_warning:
             self._create_alert(
@@ -587,7 +617,7 @@ class WebhookHealthMonitor:
                 f"Average processing time is {avg_processing_time:.2f}s",
                 "processing_lag",
                 avg_processing_time,
-                self._thresholds.processing_lag_warning
+                self._thresholds.processing_lag_warning,
             )
 
     def _check_resolved_alerts(self) -> None:
@@ -625,12 +655,15 @@ class WebhookHealthMonitor:
         message: str,
         metric_name: str,
         metric_value: float,
-        threshold: float
+        threshold: float,
     ) -> None:
         """Create new health alert."""
         # Check if similar alert already exists
         alert_key = f"{metric_name}_{severity.value}"
-        if alert_key in self._active_alerts and not self._active_alerts[alert_key].resolved:
+        if (
+            alert_key in self._active_alerts
+            and not self._active_alerts[alert_key].resolved
+        ):
             return  # Don't create duplicate alerts
 
         self._alert_counter += 1
@@ -642,7 +675,7 @@ class WebhookHealthMonitor:
             timestamp=time.time(),
             metric_name=metric_name,
             metric_value=metric_value,
-            threshold=threshold
+            threshold=threshold,
         )
 
         self._active_alerts[alert_key] = alert
@@ -660,7 +693,7 @@ class WebhookHealthMonitor:
 def create_health_monitor(
     success_rate_warning: float = 85.0,
     response_time_warning: float = 5.0,
-    alert_callback: Optional[Callable[[HealthAlert], None]] = None
+    alert_callback: Optional[Callable[[HealthAlert], None]] = None,
 ) -> WebhookHealthMonitor:
     """
     Factory function to create health monitor.
@@ -675,10 +708,7 @@ def create_health_monitor(
     """
     thresholds = HealthThresholds(
         success_rate_warning=success_rate_warning,
-        response_time_warning=response_time_warning
+        response_time_warning=response_time_warning,
     )
 
-    return WebhookHealthMonitor(
-        thresholds=thresholds,
-        alert_callback=alert_callback
-    )
+    return WebhookHealthMonitor(thresholds=thresholds, alert_callback=alert_callback)

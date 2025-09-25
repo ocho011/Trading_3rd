@@ -6,20 +6,14 @@ and execution logic for Discord webhook retry policies.
 """
 
 import asyncio
-import pytest
-import time
 from unittest.mock import Mock, patch
 
+import pytest
+
 from trading_bot.notification.retry_policies import (
-    BackoffType,
-    RetryConfig,
-    RetryPolicy,
-    ExponentialBackoffPolicy,
-    LinearBackoffPolicy,
-    FixedDelayPolicy,
-    RetryExecutor,
-    create_discord_retry_policy
-)
+    BackoffType, ExponentialBackoffPolicy, FixedDelayPolicy,
+    LinearBackoffPolicy, RetryConfig, RetryExecutor, RetryPolicy,
+    create_discord_retry_policy)
 
 
 class TestRetryConfig:
@@ -31,7 +25,7 @@ class TestRetryConfig:
             max_attempts=5,
             base_delay=1.0,
             max_delay=60.0,
-            backoff_type=BackoffType.EXPONENTIAL
+            backoff_type=BackoffType.EXPONENTIAL,
         )
         assert config.max_attempts == 5
         assert config.base_delay == 1.0
@@ -65,9 +59,7 @@ class TestRetryPolicy:
     def test_exponential_backoff_calculation(self):
         """Test exponential backoff delay calculation."""
         config = RetryConfig(
-            base_delay=1.0,
-            backoff_type=BackoffType.EXPONENTIAL,
-            jitter_enabled=False
+            base_delay=1.0, backoff_type=BackoffType.EXPONENTIAL, jitter_enabled=False
         )
         policy = RetryPolicy(config)
 
@@ -80,9 +72,7 @@ class TestRetryPolicy:
     def test_linear_backoff_calculation(self):
         """Test linear backoff delay calculation."""
         config = RetryConfig(
-            base_delay=2.0,
-            backoff_type=BackoffType.LINEAR,
-            jitter_enabled=False
+            base_delay=2.0, backoff_type=BackoffType.LINEAR, jitter_enabled=False
         )
         policy = RetryPolicy(config)
 
@@ -95,9 +85,7 @@ class TestRetryPolicy:
     def test_fixed_backoff_calculation(self):
         """Test fixed backoff delay calculation."""
         config = RetryConfig(
-            base_delay=5.0,
-            backoff_type=BackoffType.FIXED,
-            jitter_enabled=False
+            base_delay=5.0, backoff_type=BackoffType.FIXED, jitter_enabled=False
         )
         policy = RetryPolicy(config)
 
@@ -112,7 +100,7 @@ class TestRetryPolicy:
             base_delay=10.0,
             max_delay=15.0,
             backoff_type=BackoffType.EXPONENTIAL,
-            jitter_enabled=False
+            jitter_enabled=False,
         )
         policy = RetryPolicy(config)
 
@@ -123,11 +111,7 @@ class TestRetryPolicy:
 
     def test_jitter_application(self):
         """Test jitter is applied when enabled."""
-        config = RetryConfig(
-            base_delay=10.0,
-            jitter_enabled=True,
-            jitter_max=0.1
-        )
+        config = RetryConfig(base_delay=10.0, jitter_enabled=True, jitter_max=0.1)
         policy = RetryPolicy(config)
 
         # Calculate multiple delays to test jitter variance
@@ -145,7 +129,7 @@ class TestRetryPolicy:
         config = RetryConfig(
             max_attempts=3,
             retry_exceptions=(ValueError, ConnectionError),
-            stop_exceptions=(KeyboardInterrupt,)
+            stop_exceptions=(KeyboardInterrupt,),
         )
         policy = RetryPolicy(config)
 
@@ -164,11 +148,7 @@ class TestRetryPolicy:
 
     def test_timeout_calculation(self):
         """Test timeout calculation with multiplier."""
-        config = RetryConfig(
-            base_delay=1.0,
-            timeout_multiplier=2.0,
-            max_timeout=20.0
-        )
+        config = RetryConfig(base_delay=1.0, timeout_multiplier=2.0, max_timeout=20.0)
         policy = RetryPolicy(config)
 
         # Base timeout = base_delay * 10 = 10s
@@ -195,7 +175,7 @@ class TestSpecializedPolicies:
         policy = LinearBackoffPolicy(max_attempts=3)
 
         # Should use linear backoff
-        with patch('random.uniform', return_value=0):  # Disable jitter for test
+        with patch("random.uniform", return_value=0):  # Disable jitter for test
             delay1 = policy.calculate_delay(1)
             delay2 = policy.calculate_delay(2)
             delay3 = policy.calculate_delay(3)
@@ -233,15 +213,19 @@ class TestRetryExecutor:
     @pytest.mark.asyncio
     async def test_async_success_after_retries(self):
         """Test async execution succeeds after retries."""
-        policy = RetryPolicy(RetryConfig(
-            max_attempts=3,
-            base_delay=0.01,  # Short delay for testing
-            jitter_enabled=False
-        ))
+        policy = RetryPolicy(
+            RetryConfig(
+                max_attempts=3,
+                base_delay=0.01,  # Short delay for testing
+                jitter_enabled=False,
+            )
+        )
         executor = RetryExecutor(policy)
 
         # Mock function that fails twice then succeeds
-        mock_func = Mock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
+        mock_func = Mock(
+            side_effect=[ValueError("fail"), ValueError("fail"), "success"]
+        )
 
         result = await executor.execute_async(mock_func)
 
@@ -251,11 +235,9 @@ class TestRetryExecutor:
     @pytest.mark.asyncio
     async def test_async_all_attempts_fail(self):
         """Test async execution fails after all attempts."""
-        policy = RetryPolicy(RetryConfig(
-            max_attempts=2,
-            base_delay=0.01,
-            jitter_enabled=False
-        ))
+        policy = RetryPolicy(
+            RetryConfig(max_attempts=2, base_delay=0.01, jitter_enabled=False)
+        )
         executor = RetryExecutor(policy)
 
         mock_func = Mock(side_effect=ValueError("always fails"))
@@ -279,15 +261,15 @@ class TestRetryExecutor:
 
     def test_sync_success_after_retries(self):
         """Test sync execution succeeds after retries."""
-        policy = RetryPolicy(RetryConfig(
-            max_attempts=3,
-            base_delay=0.01,
-            jitter_enabled=False
-        ))
+        policy = RetryPolicy(
+            RetryConfig(max_attempts=3, base_delay=0.01, jitter_enabled=False)
+        )
         executor = RetryExecutor(policy)
 
         # Mock function that fails twice then succeeds
-        mock_func = Mock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
+        mock_func = Mock(
+            side_effect=[ValueError("fail"), ValueError("fail"), "success"]
+        )
 
         result = executor.execute_sync(mock_func)
 
@@ -305,17 +287,19 @@ class TestRetryExecutor:
             await asyncio.sleep(10)  # Longer than timeout
             return "success"
 
-        with patch.object(policy, 'calculate_timeout', return_value=0.1):
+        with patch.object(policy, "calculate_timeout", return_value=0.1):
             with pytest.raises(TimeoutError):
                 await executor.execute_async(slow_func)
 
     def test_non_retryable_exception(self):
         """Test non-retryable exception is not retried."""
-        policy = RetryPolicy(RetryConfig(
-            max_attempts=3,
-            retry_exceptions=(ValueError,),
-            stop_exceptions=(RuntimeError,)
-        ))
+        policy = RetryPolicy(
+            RetryConfig(
+                max_attempts=3,
+                retry_exceptions=(ValueError,),
+                stop_exceptions=(RuntimeError,),
+            )
+        )
         executor = RetryExecutor(policy)
 
         mock_func = Mock(side_effect=RuntimeError("don't retry"))

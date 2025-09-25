@@ -22,6 +22,7 @@ from trading_bot.notification.webhook_health import HealthThresholds
 
 class ConfigurationSource(Enum):
     """Configuration source types."""
+
     ENVIRONMENT = "environment"
     FILE = "file"
     RUNTIME = "runtime"
@@ -45,6 +46,7 @@ class WebhookReliabilityConfig:
         health_thresholds: Health monitoring thresholds
         logging_config: Logging configuration for webhook components
     """
+
     # Basic settings
     enabled: bool = True
     webhook_url: str = ""
@@ -54,56 +56,67 @@ class WebhookReliabilityConfig:
 
     # Component configurations
     retry_config: RetryConfig = field(default_factory=RetryConfig)
-    circuit_breaker_config: CircuitBreakerConfig = field(default_factory=CircuitBreakerConfig)
+    circuit_breaker_config: CircuitBreakerConfig = field(
+        default_factory=CircuitBreakerConfig
+    )
     queue_config: QueueConfig = field(default_factory=QueueConfig)
     health_thresholds: HealthThresholds = field(default_factory=HealthThresholds)
 
     # Logging configuration
-    logging_config: Dict[str, Any] = field(default_factory=lambda: {
-        "level": "INFO",
-        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        "webhook_logger": "trading_bot.notification",
-        "enable_file_logging": False,
-        "log_file_path": "logs/webhook_reliability.log"
-    })
+    logging_config: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "level": "INFO",
+            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            "webhook_logger": "trading_bot.notification",
+            "enable_file_logging": False,
+            "log_file_path": "logs/webhook_reliability.log",
+        }
+    )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
         config_dict = asdict(self)
 
         # Handle enum serialization
-        if 'retry_config' in config_dict and 'backoff_type' in config_dict['retry_config']:
-            config_dict['retry_config']['backoff_type'] = self.retry_config.backoff_type.value
+        if (
+            "retry_config" in config_dict
+            and "backoff_type" in config_dict["retry_config"]
+        ):
+            config_dict["retry_config"][
+                "backoff_type"
+            ] = self.retry_config.backoff_type.value
 
         return config_dict
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'WebhookReliabilityConfig':
+    def from_dict(cls, data: Dict[str, Any]) -> "WebhookReliabilityConfig":
         """Create configuration from dictionary."""
         # Handle nested configurations
         config_data = data.copy()
 
         # Handle retry config
-        if 'retry_config' in config_data:
-            retry_data = config_data['retry_config']
-            if 'backoff_type' in retry_data and isinstance(retry_data['backoff_type'], str):
-                retry_data['backoff_type'] = BackoffType(retry_data['backoff_type'])
-            config_data['retry_config'] = RetryConfig(**retry_data)
+        if "retry_config" in config_data:
+            retry_data = config_data["retry_config"]
+            if "backoff_type" in retry_data and isinstance(
+                retry_data["backoff_type"], str
+            ):
+                retry_data["backoff_type"] = BackoffType(retry_data["backoff_type"])
+            config_data["retry_config"] = RetryConfig(**retry_data)
 
         # Handle circuit breaker config
-        if 'circuit_breaker_config' in config_data:
-            cb_data = config_data['circuit_breaker_config']
-            config_data['circuit_breaker_config'] = CircuitBreakerConfig(**cb_data)
+        if "circuit_breaker_config" in config_data:
+            cb_data = config_data["circuit_breaker_config"]
+            config_data["circuit_breaker_config"] = CircuitBreakerConfig(**cb_data)
 
         # Handle queue config
-        if 'queue_config' in config_data:
-            queue_data = config_data['queue_config']
-            config_data['queue_config'] = QueueConfig(**queue_data)
+        if "queue_config" in config_data:
+            queue_data = config_data["queue_config"]
+            config_data["queue_config"] = QueueConfig(**queue_data)
 
         # Handle health thresholds
-        if 'health_thresholds' in config_data:
-            health_data = config_data['health_thresholds']
-            config_data['health_thresholds'] = HealthThresholds(**health_data)
+        if "health_thresholds" in config_data:
+            health_data = config_data["health_thresholds"]
+            config_data["health_thresholds"] = HealthThresholds(**health_data)
 
         return cls(**config_data)
 
@@ -153,8 +166,13 @@ class WebhookReliabilityConfig:
         if not 0 <= self.health_thresholds.success_rate_critical <= 100:
             errors.append("health_thresholds.success_rate_critical must be 0-100")
 
-        if self.health_thresholds.success_rate_critical > self.health_thresholds.success_rate_warning:
-            errors.append("health_thresholds.success_rate_critical must be <= success_rate_warning")
+        if (
+            self.health_thresholds.success_rate_critical
+            > self.health_thresholds.success_rate_warning
+        ):
+            errors.append(
+                "health_thresholds.success_rate_critical must be <= success_rate_warning"
+            )
 
         return errors
 
@@ -200,7 +218,9 @@ class WebhookConfigManager:
         if Path(self._config_file_path).exists():
             try:
                 config = self._load_from_file(self._config_file_path)
-                self._logger.info(f"Loaded configuration from file: {self._config_file_path}")
+                self._logger.info(
+                    f"Loaded configuration from file: {self._config_file_path}"
+                )
             except Exception as e:
                 self._logger.error(f"Failed to load config file: {e}")
 
@@ -220,46 +240,68 @@ class WebhookConfigManager:
 
     def _load_from_file(self, file_path: str) -> WebhookReliabilityConfig:
         """Load configuration from JSON file."""
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             data = json.load(f)
         return WebhookReliabilityConfig.from_dict(data)
 
-    def _load_from_environment(self, base_config: WebhookReliabilityConfig) -> WebhookReliabilityConfig:
+    def _load_from_environment(
+        self, base_config: WebhookReliabilityConfig
+    ) -> WebhookReliabilityConfig:
         """Load configuration from environment variables."""
         config_dict = base_config.to_dict()
 
         # Map of environment variables to config paths
         env_mappings = {
             # Basic settings
-            'DISCORD_WEBHOOK_RELIABILITY_ENABLED': ('enabled', bool),
-            'DISCORD_WEBHOOK_URL': ('webhook_url', str),
-            'DISCORD_WEBHOOK_TIMEOUT': ('timeout', int),
-            'DISCORD_WEBHOOK_MAX_RATE_LIMIT_WAIT': ('max_rate_limit_wait', float),
-            'DISCORD_BACKUP_NOTIFICATION_ENABLED': ('backup_notification_enabled', bool),
-
+            "DISCORD_WEBHOOK_RELIABILITY_ENABLED": ("enabled", bool),
+            "DISCORD_WEBHOOK_URL": ("webhook_url", str),
+            "DISCORD_WEBHOOK_TIMEOUT": ("timeout", int),
+            "DISCORD_WEBHOOK_MAX_RATE_LIMIT_WAIT": ("max_rate_limit_wait", float),
+            "DISCORD_BACKUP_NOTIFICATION_ENABLED": (
+                "backup_notification_enabled",
+                bool,
+            ),
             # Retry configuration
-            'DISCORD_RETRY_MAX_ATTEMPTS': ('retry_config.max_attempts', int),
-            'DISCORD_RETRY_BASE_DELAY': ('retry_config.base_delay', float),
-            'DISCORD_RETRY_MAX_DELAY': ('retry_config.max_delay', float),
-            'DISCORD_RETRY_BACKOFF_TYPE': ('retry_config.backoff_type', str),
-            'DISCORD_RETRY_JITTER_ENABLED': ('retry_config.jitter_enabled', bool),
-
+            "DISCORD_RETRY_MAX_ATTEMPTS": ("retry_config.max_attempts", int),
+            "DISCORD_RETRY_BASE_DELAY": ("retry_config.base_delay", float),
+            "DISCORD_RETRY_MAX_DELAY": ("retry_config.max_delay", float),
+            "DISCORD_RETRY_BACKOFF_TYPE": ("retry_config.backoff_type", str),
+            "DISCORD_RETRY_JITTER_ENABLED": ("retry_config.jitter_enabled", bool),
             # Circuit breaker configuration
-            'DISCORD_CB_FAILURE_THRESHOLD': ('circuit_breaker_config.failure_threshold', int),
-            'DISCORD_CB_SUCCESS_THRESHOLD': ('circuit_breaker_config.success_threshold', int),
-            'DISCORD_CB_TIMEOUT': ('circuit_breaker_config.timeout', float),
-
+            "DISCORD_CB_FAILURE_THRESHOLD": (
+                "circuit_breaker_config.failure_threshold",
+                int,
+            ),
+            "DISCORD_CB_SUCCESS_THRESHOLD": (
+                "circuit_breaker_config.success_threshold",
+                int,
+            ),
+            "DISCORD_CB_TIMEOUT": ("circuit_breaker_config.timeout", float),
             # Queue configuration
-            'DISCORD_QUEUE_MAX_SIZE': ('queue_config.max_size', int),
-            'DISCORD_QUEUE_RETENTION_HOURS': ('queue_config.retention_hours', int),
-            'DISCORD_QUEUE_PERSISTENCE_ENABLED': ('queue_config.persistence_enabled', bool),
-            'DISCORD_QUEUE_STORAGE_PATH': ('queue_config.storage_path', str),
-
+            "DISCORD_QUEUE_MAX_SIZE": ("queue_config.max_size", int),
+            "DISCORD_QUEUE_RETENTION_HOURS": ("queue_config.retention_hours", int),
+            "DISCORD_QUEUE_PERSISTENCE_ENABLED": (
+                "queue_config.persistence_enabled",
+                bool,
+            ),
+            "DISCORD_QUEUE_STORAGE_PATH": ("queue_config.storage_path", str),
             # Health monitoring
-            'DISCORD_HEALTH_SUCCESS_RATE_WARNING': ('health_thresholds.success_rate_warning', float),
-            'DISCORD_HEALTH_SUCCESS_RATE_CRITICAL': ('health_thresholds.success_rate_critical', float),
-            'DISCORD_HEALTH_RESPONSE_TIME_WARNING': ('health_thresholds.response_time_warning', float),
-            'DISCORD_HEALTH_CONSECUTIVE_FAILURES_WARNING': ('health_thresholds.consecutive_failures_warning', int),
+            "DISCORD_HEALTH_SUCCESS_RATE_WARNING": (
+                "health_thresholds.success_rate_warning",
+                float,
+            ),
+            "DISCORD_HEALTH_SUCCESS_RATE_CRITICAL": (
+                "health_thresholds.success_rate_critical",
+                float,
+            ),
+            "DISCORD_HEALTH_RESPONSE_TIME_WARNING": (
+                "health_thresholds.response_time_warning",
+                float,
+            ),
+            "DISCORD_HEALTH_CONSECUTIVE_FAILURES_WARNING": (
+                "health_thresholds.consecutive_failures_warning",
+                int,
+            ),
         }
 
         # Apply environment variable overrides
@@ -269,24 +311,37 @@ class WebhookConfigManager:
                 try:
                     # Convert value to appropriate type
                     if value_type == bool:
-                        converted_value = env_value.lower() in ('true', '1', 'yes', 'on')
-                    elif value_type == str and config_path == 'retry_config.backoff_type':
+                        converted_value = env_value.lower() in (
+                            "true",
+                            "1",
+                            "yes",
+                            "on",
+                        )
+                    elif (
+                        value_type == str and config_path == "retry_config.backoff_type"
+                    ):
                         converted_value = BackoffType(env_value)
                     else:
                         converted_value = value_type(env_value)
 
                     # Set nested configuration value
                     self._set_nested_value(config_dict, config_path, converted_value)
-                    self._logger.debug(f"Applied environment override: {env_var}={converted_value}")
+                    self._logger.debug(
+                        f"Applied environment override: {env_var}={converted_value}"
+                    )
 
                 except (ValueError, TypeError) as e:
-                    self._logger.warning(f"Invalid environment variable {env_var}={env_value}: {e}")
+                    self._logger.warning(
+                        f"Invalid environment variable {env_var}={env_value}: {e}"
+                    )
 
         return WebhookReliabilityConfig.from_dict(config_dict)
 
-    def _set_nested_value(self, config_dict: Dict[str, Any], path: str, value: Any) -> None:
+    def _set_nested_value(
+        self, config_dict: Dict[str, Any], path: str, value: Any
+    ) -> None:
         """Set nested dictionary value using dot notation."""
-        keys = path.split('.')
+        keys = path.split(".")
         current = config_dict
 
         # Navigate to the nested dictionary
@@ -298,7 +353,9 @@ class WebhookConfigManager:
         # Set the value
         current[keys[-1]] = value
 
-    def save_configuration(self, config: Optional[WebhookReliabilityConfig] = None) -> None:
+    def save_configuration(
+        self, config: Optional[WebhookReliabilityConfig] = None
+    ) -> None:
         """
         Save configuration to file.
 
@@ -316,7 +373,7 @@ class WebhookConfigManager:
         Path(self._config_file_path).parent.mkdir(parents=True, exist_ok=True)
 
         # Save to file
-        with open(self._config_file_path, 'w') as f:
+        with open(self._config_file_path, "w") as f:
             json.dump(config_to_save.to_dict(), f, indent=2)
 
         self._logger.info(f"Configuration saved to: {self._config_file_path}")
@@ -324,7 +381,7 @@ class WebhookConfigManager:
     def update_configuration(
         self,
         updates: Dict[str, Any],
-        source: ConfigurationSource = ConfigurationSource.RUNTIME
+        source: ConfigurationSource = ConfigurationSource.RUNTIME,
     ) -> WebhookReliabilityConfig:
         """
         Update configuration with new values.
@@ -348,7 +405,9 @@ class WebhookConfigManager:
         # Validate new configuration
         errors = new_config.validate()
         if errors:
-            raise ValueError(f"Configuration update failed validation: {', '.join(errors)}")
+            raise ValueError(
+                f"Configuration update failed validation: {', '.join(errors)}"
+            )
 
         # Update current configuration
         old_config = self._config
@@ -378,7 +437,7 @@ class WebhookConfigManager:
         self,
         old_config: WebhookReliabilityConfig,
         new_config: WebhookReliabilityConfig,
-        source: ConfigurationSource
+        source: ConfigurationSource,
     ) -> None:
         """Notify registered callbacks of configuration change."""
         for callback in self._change_callbacks:
@@ -395,12 +454,16 @@ class WebhookConfigManager:
             overwrite: Whether to overwrite existing file
         """
         if Path(self._config_file_path).exists() and not overwrite:
-            self._logger.info(f"Configuration file already exists: {self._config_file_path}")
+            self._logger.info(
+                f"Configuration file already exists: {self._config_file_path}"
+            )
             return
 
         default_config = WebhookReliabilityConfig()
         self.save_configuration(default_config)
-        self._logger.info(f"Created default configuration file: {self._config_file_path}")
+        self._logger.info(
+            f"Created default configuration file: {self._config_file_path}"
+        )
 
     def get_environment_template(self) -> str:
         """
@@ -446,7 +509,9 @@ DISCORD_HEALTH_CONSECUTIVE_FAILURES_WARNING=3
         return template
 
 
-def create_webhook_config_manager(config_file_path: Optional[str] = None) -> WebhookConfigManager:
+def create_webhook_config_manager(
+    config_file_path: Optional[str] = None,
+) -> WebhookConfigManager:
     """
     Factory function to create configuration manager.
 
@@ -459,7 +524,9 @@ def create_webhook_config_manager(config_file_path: Optional[str] = None) -> Web
     return WebhookConfigManager(config_file_path)
 
 
-def load_webhook_config(config_file_path: Optional[str] = None) -> WebhookReliabilityConfig:
+def load_webhook_config(
+    config_file_path: Optional[str] = None,
+) -> WebhookReliabilityConfig:
     """
     Convenience function to load webhook configuration.
 
@@ -486,24 +553,20 @@ class ConfigPresets:
                 base_delay=1.0,
                 max_delay=60.0,
                 backoff_type=BackoffType.EXPONENTIAL,
-                jitter_enabled=True
+                jitter_enabled=True,
             ),
             circuit_breaker_config=CircuitBreakerConfig(
-                failure_threshold=5,
-                success_threshold=3,
-                timeout=180.0
+                failure_threshold=5, success_threshold=3, timeout=180.0
             ),
             queue_config=QueueConfig(
-                max_size=2000,
-                retention_hours=48,
-                persistence_enabled=True
+                max_size=2000, retention_hours=48, persistence_enabled=True
             ),
             health_thresholds=HealthThresholds(
                 success_rate_warning=90.0,
                 success_rate_critical=80.0,
                 response_time_warning=3.0,
-                consecutive_failures_warning=2
-            )
+                consecutive_failures_warning=2,
+            ),
         )
 
     @staticmethod
@@ -516,41 +579,32 @@ class ConfigPresets:
                 max_attempts=3,
                 base_delay=0.5,
                 max_delay=5.0,
-                backoff_type=BackoffType.LINEAR
+                backoff_type=BackoffType.LINEAR,
             ),
             circuit_breaker_config=CircuitBreakerConfig(
-                failure_threshold=3,
-                timeout=60.0
+                failure_threshold=3, timeout=60.0
             ),
-            queue_config=QueueConfig(
-                max_size=500,
-                retention_hours=12
-            )
+            queue_config=QueueConfig(max_size=500, retention_hours=12),
         )
 
     @staticmethod
     def development() -> WebhookReliabilityConfig:
         """Configuration preset for development environment."""
         return WebhookReliabilityConfig(
-            retry_config=RetryConfig(
-                max_attempts=2,
-                base_delay=1.0,
-                max_delay=5.0
-            ),
+            retry_config=RetryConfig(max_attempts=2, base_delay=1.0, max_delay=5.0),
             circuit_breaker_config=CircuitBreakerConfig(
-                failure_threshold=5,
-                timeout=30.0
+                failure_threshold=5, timeout=30.0
             ),
             queue_config=QueueConfig(
                 max_size=100,
                 retention_hours=2,
-                persistence_enabled=False  # Use in-memory for dev
+                persistence_enabled=False,  # Use in-memory for dev
             ),
             logging_config={
                 "level": "DEBUG",
                 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
                 "webhook_logger": "trading_bot.notification",
                 "enable_file_logging": True,
-                "log_file_path": "logs/webhook_dev.log"
-            }
+                "log_file_path": "logs/webhook_dev.log",
+            },
         )

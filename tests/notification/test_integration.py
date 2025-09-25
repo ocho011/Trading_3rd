@@ -7,24 +7,20 @@ monitoring, and enhanced HTTP client.
 """
 
 import asyncio
-import json
 import os
 import tempfile
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
 
-from trading_bot.notification.enhanced_discord_client import (
-    EnhancedDiscordHttpClient,
-    create_enhanced_discord_client
-)
-from trading_bot.notification.webhook_config import (
-    WebhookReliabilityConfig,
-    WebhookConfigManager,
-    ConfigPresets
-)
+import pytest
+
 from trading_bot.notification.discord_notifier import DiscordNotifier
+from trading_bot.notification.enhanced_discord_client import (
+    EnhancedDiscordHttpClient, create_enhanced_discord_client)
 from trading_bot.notification.message_queue import MessagePriority
+from trading_bot.notification.webhook_config import (ConfigPresets,
+                                                     WebhookConfigManager,
+                                                     WebhookReliabilityConfig)
 
 
 class TestEnhancedSystemIntegration:
@@ -43,21 +39,27 @@ class TestEnhancedSystemIntegration:
         # Mock successful Discord API responses
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '5'}
+        success_response.headers = {"x-ratelimit-remaining": "5"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
-        with patch('aiohttp.ClientSession.post', return_value=success_response) as mock_post:
+        with patch(
+            "aiohttp.ClientSession.post", return_value=success_response
+        ) as mock_post:
             await client.start()
 
             try:
                 # Send webhook message
-                result = await client.send_webhook({
-                    "content": "Integration test message",
-                    "embeds": [{
-                        "title": "Test Embed",
-                        "description": "Testing enhanced Discord webhook system"
-                    }]
-                })
+                result = await client.send_webhook(
+                    {
+                        "content": "Integration test message",
+                        "embeds": [
+                            {
+                                "title": "Test Embed",
+                                "description": "Testing enhanced Discord webhook system",
+                            }
+                        ],
+                    }
+                )
 
                 assert result is True
                 mock_post.assert_called_once()
@@ -85,20 +87,20 @@ class TestEnhancedSystemIntegration:
         rate_limited_response = Mock()
         rate_limited_response.status = 429
         rate_limited_response.headers = {
-            'x-ratelimit-remaining': '0',
-            'retry-after': '2',
-            'x-ratelimit-reset-after': '2.5'
+            "x-ratelimit-remaining": "0",
+            "retry-after": "2",
+            "x-ratelimit-reset-after": "2.5",
         }
 
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '4'}
+        success_response.headers = {"x-ratelimit-remaining": "4"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
         responses = [rate_limited_response, success_response]
 
-        with patch('aiohttp.ClientSession.post', side_effect=responses):
-            with patch('asyncio.sleep') as mock_sleep:
+        with patch("aiohttp.ClientSession.post", side_effect=responses):
+            with patch("asyncio.sleep") as mock_sleep:
                 await client.start()
 
                 try:
@@ -130,18 +132,21 @@ class TestEnhancedSystemIntegration:
         # Mock server errors to trigger circuit breaker
         server_error = Mock()
         server_error.status = 500
-        server_error.text = AsyncMock(return_value='Internal Server Error')
+        server_error.text = AsyncMock(return_value="Internal Server Error")
 
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '5'}
+        success_response.headers = {"x-ratelimit-remaining": "5"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
         error_responses = [server_error] * 6  # 3 messages × 2 attempts each
         recovery_responses = [success_response]
 
-        with patch('aiohttp.ClientSession.post', side_effect=error_responses + recovery_responses):
-            with patch('asyncio.sleep'):  # Mock retry delays
+        with patch(
+            "aiohttp.ClientSession.post",
+            side_effect=error_responses + recovery_responses,
+        ):
+            with patch("asyncio.sleep"):  # Mock retry delays
                 await client.start()
 
                 try:
@@ -156,8 +161,12 @@ class TestEnhancedSystemIntegration:
                     assert result3 is False
 
                     # Circuit should be open - next request should be blocked
-                    from trading_bot.notification.discord_notifier import DiscordNotificationError
-                    with pytest.raises(DiscordNotificationError, match="Circuit breaker"):
+                    from trading_bot.notification.discord_notifier import \
+                        DiscordNotificationError
+
+                    with pytest.raises(
+                        DiscordNotificationError, match="Circuit breaker"
+                    ):
                         await client.send_webhook({"content": "Blocked message"})
 
                     # Messages should be in queue
@@ -167,7 +176,9 @@ class TestEnhancedSystemIntegration:
                     await asyncio.sleep(0.6)
 
                     # Next request should succeed and close circuit
-                    result_recovery = await client.send_webhook({"content": "Recovery message"})
+                    result_recovery = await client.send_webhook(
+                        {"content": "Recovery message"}
+                    )
                     assert result_recovery is True
 
                 finally:
@@ -187,25 +198,29 @@ class TestEnhancedSystemIntegration:
             # Mock initial failures to queue messages
             server_error = Mock()
             server_error.status = 503
-            server_error.text = AsyncMock(return_value='Service Unavailable')
+            server_error.text = AsyncMock(return_value="Service Unavailable")
 
             success_response = Mock()
             success_response.status = 200
-            success_response.headers = {'x-ratelimit-remaining': '5'}
+            success_response.headers = {"x-ratelimit-remaining": "5"}
             success_response.text = AsyncMock(return_value='{"success": true}')
 
             # First call fails (queues message), subsequent calls succeed
             responses = [server_error] * 3 + [success_response] * 10
 
-            with patch('aiohttp.ClientSession.post', side_effect=responses):
-                with patch('asyncio.sleep'):
+            with patch("aiohttp.ClientSession.post", side_effect=responses):
+                with patch("asyncio.sleep"):
                     await client.start()
 
                     try:
                         # Send messages that will initially fail and be queued
-                        await client.send_webhook({"content": "High priority", "priority": "high"})
+                        await client.send_webhook(
+                            {"content": "High priority", "priority": "high"}
+                        )
                         await client.send_webhook({"content": "Normal priority"})
-                        await client.send_webhook({"content": "Low priority", "priority": "low"})
+                        await client.send_webhook(
+                            {"content": "Low priority", "priority": "low"}
+                        )
 
                         # Verify messages are queued
                         initial_queue_size = client._message_queue.size()
@@ -235,28 +250,38 @@ class TestEnhancedSystemIntegration:
         # Mock responses with varying performance
         fast_success = Mock()
         fast_success.status = 200
-        fast_success.headers = {'x-ratelimit-remaining': '5'}
+        fast_success.headers = {"x-ratelimit-remaining": "5"}
         fast_success.text = AsyncMock(return_value='{"success": true}')
 
         slow_success = Mock()
         slow_success.status = 200
-        slow_success.headers = {'x-ratelimit-remaining': '4'}
+        slow_success.headers = {"x-ratelimit-remaining": "4"}
         slow_success.text = AsyncMock(return_value='{"success": true}')
 
         server_error = Mock()
         server_error.status = 500
-        server_error.text = AsyncMock(return_value='Server Error')
+        server_error.text = AsyncMock(return_value="Server Error")
 
         # Set up alert callback to track alerts
         alerts_received = []
+
         def alert_callback(alert):
             alerts_received.append(alert)
 
         client._health_monitor.register_alert_callback(alert_callback)
 
         # Simulate mixed performance to trigger alerts
-        with patch('aiohttp.ClientSession.post', side_effect=[fast_success, slow_success, server_error, fast_success, server_error]):
-            with patch('asyncio.sleep'):
+        with patch(
+            "aiohttp.ClientSession.post",
+            side_effect=[
+                fast_success,
+                slow_success,
+                server_error,
+                fast_success,
+                server_error,
+            ],
+        ):
+            with patch("asyncio.sleep"):
                 await client.start()
 
                 try:
@@ -267,7 +292,9 @@ class TestEnhancedSystemIntegration:
                     start_time = datetime.utcnow()
                     await client.send_webhook({"content": "Slow success"})
                     # Manually record slow response for testing
-                    client._health_monitor._current_metrics.record_success(response_time_ms=300)
+                    client._health_monitor._current_metrics.record_success(
+                        response_time_ms=300
+                    )
 
                     await client.send_webhook({"content": "Will fail"})
                     await client.send_webhook({"content": "Fast success 2"})
@@ -313,10 +340,7 @@ class TestEnhancedSystemIntegration:
             assert client._config.timeout == initial_config.timeout
 
             # Test configuration updates
-            updates = {
-                "timeout": 25,
-                "retry_config.max_attempts": 5
-            }
+            updates = {"timeout": 25, "retry_config.max_attempts": 5}
 
             updated_config = config_manager.update_configuration(updates)
 
@@ -335,17 +359,16 @@ class TestEnhancedSystemIntegration:
 
         # Create DiscordNotifier with enhanced client
         notifier = DiscordNotifier(
-            webhook_url=config.webhook_url,
-            http_client=enhanced_client
+            webhook_url=config.webhook_url, http_client=enhanced_client
         )
 
         # Mock successful response
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '5'}
+        success_response.headers = {"x-ratelimit-remaining": "5"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
-        with patch('aiohttp.ClientSession.post', return_value=success_response):
+        with patch("aiohttp.ClientSession.post", return_value=success_response):
             await enhanced_client.start()
 
             try:
@@ -380,11 +403,11 @@ class TestEnhancedSystemIntegration:
         timeout_error = asyncio.TimeoutError("Request timed out")
         server_error = Mock()
         server_error.status = 503
-        server_error.text = AsyncMock(return_value='Service Unavailable')
+        server_error.text = AsyncMock(return_value="Service Unavailable")
 
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '5'}
+        success_response.headers = {"x-ratelimit-remaining": "5"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
         # Mix of failures followed by success for recovery
@@ -392,16 +415,18 @@ class TestEnhancedSystemIntegration:
             connection_error,
             timeout_error,
             server_error,
-            success_response  # Recovery
+            success_response,  # Recovery
         ]
 
-        with patch('aiohttp.ClientSession.post', side_effect=failure_sequence * 5):
-            with patch('asyncio.sleep'):
+        with patch("aiohttp.ClientSession.post", side_effect=failure_sequence * 5):
+            with patch("asyncio.sleep"):
                 await client.start()
 
                 try:
                     # Send message that will go through failure/recovery cycle
-                    result = await client.send_webhook({"content": "Recovery test message"})
+                    result = await client.send_webhook(
+                        {"content": "Recovery test message"}
+                    )
 
                     # Should eventually succeed or be queued
                     # (Result depends on exact retry/circuit breaker interaction)
@@ -429,23 +454,22 @@ class TestEnhancedSystemIntegration:
         # Mock responses with some delays to test concurrency
         success_response = Mock()
         success_response.status = 200
-        success_response.headers = {'x-ratelimit-remaining': '5'}
+        success_response.headers = {"x-ratelimit-remaining": "5"}
         success_response.text = AsyncMock(return_value='{"success": true}')
 
-        with patch('aiohttp.ClientSession.post', return_value=success_response):
+        with patch("aiohttp.ClientSession.post", return_value=success_response):
             await client.start()
 
             try:
                 # Send multiple concurrent requests
                 tasks = []
                 for i in range(10):
-                    task = client.send_webhook({
-                        "content": f"Concurrent message {i}",
-                        "embeds": [{
-                            "title": f"Message {i}",
-                            "color": 0x00ff00
-                        }]
-                    })
+                    task = client.send_webhook(
+                        {
+                            "content": f"Concurrent message {i}",
+                            "embeds": [{"title": f"Message {i}", "color": 0x00FF00}],
+                        }
+                    )
                     tasks.append(task)
 
                 # Wait for all requests to complete
@@ -468,7 +492,7 @@ class TestEnhancedSystemIntegration:
         presets = [
             ConfigPresets.high_reliability(),
             ConfigPresets.fast_response(),
-            ConfigPresets.development()
+            ConfigPresets.development(),
         ]
 
         for config in presets:
@@ -496,16 +520,20 @@ class TestEnhancedSystemIntegration:
         # Mock complete Discord API failure
         api_error = Mock()
         api_error.status = 502
-        api_error.text = AsyncMock(return_value='Bad Gateway')
+        api_error.text = AsyncMock(return_value="Bad Gateway")
 
-        with patch('aiohttp.ClientSession.post', return_value=api_error):
-            with patch('asyncio.sleep'):
+        with patch("aiohttp.ClientSession.post", return_value=api_error):
+            with patch("asyncio.sleep"):
                 await client.start()
 
                 try:
                     # Send messages that will fail at API level
-                    result1 = await client.send_webhook({"content": "Message during outage 1"})
-                    result2 = await client.send_webhook({"content": "Message during outage 2"})
+                    result1 = await client.send_webhook(
+                        {"content": "Message during outage 1"}
+                    )
+                    result2 = await client.send_webhook(
+                        {"content": "Message during outage 2"}
+                    )
 
                     # Should gracefully handle failures (queue or backup notification)
                     assert result1 is False  # Direct sending failed

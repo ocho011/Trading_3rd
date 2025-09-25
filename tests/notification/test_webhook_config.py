@@ -8,21 +8,18 @@ and configuration updates for Discord webhook reliability features.
 import json
 import os
 import tempfile
-import pytest
 from pathlib import Path
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
-from trading_bot.notification.webhook_config import (
-    WebhookReliabilityConfig,
-    WebhookConfigManager,
-    ConfigurationSource,
-    ConfigPresets,
-    create_webhook_config_manager,
-    load_webhook_config
-)
-from trading_bot.notification.retry_policies import BackoffType, RetryConfig
+import pytest
+
 from trading_bot.notification.circuit_breaker import CircuitBreakerConfig
 from trading_bot.notification.message_queue import QueueConfig
+from trading_bot.notification.retry_policies import BackoffType, RetryConfig
+from trading_bot.notification.webhook_config import (
+    ConfigPresets, ConfigurationSource, WebhookConfigManager,
+    WebhookReliabilityConfig, create_webhook_config_manager,
+    load_webhook_config)
 from trading_bot.notification.webhook_health import HealthThresholds
 
 
@@ -48,8 +45,7 @@ class TestWebhookReliabilityConfig:
     def test_to_dict_conversion(self):
         """Test configuration to dictionary conversion."""
         config = WebhookReliabilityConfig(
-            webhook_url="https://discord.com/api/webhooks/test",
-            timeout=15
+            webhook_url="https://discord.com/api/webhooks/test", timeout=15
         )
 
         config_dict = config.to_dict()
@@ -67,19 +63,10 @@ class TestWebhookReliabilityConfig:
         config_dict = {
             "webhook_url": "https://discord.com/api/webhooks/test",
             "timeout": 15,
-            "retry_config": {
-                "max_attempts": 7,
-                "backoff_type": "linear"
-            },
-            "circuit_breaker_config": {
-                "failure_threshold": 5
-            },
-            "queue_config": {
-                "max_size": 2000
-            },
-            "health_thresholds": {
-                "success_rate_warning": 90.0
-            }
+            "retry_config": {"max_attempts": 7, "backoff_type": "linear"},
+            "circuit_breaker_config": {"failure_threshold": 5},
+            "queue_config": {"max_size": 2000},
+            "health_thresholds": {"success_rate_warning": 90.0},
         }
 
         config = WebhookReliabilityConfig.from_dict(config_dict)
@@ -106,7 +93,7 @@ class TestWebhookReliabilityConfig:
         config = WebhookReliabilityConfig(
             webhook_url="",  # Missing webhook URL
             timeout=-5,  # Invalid timeout
-            max_rate_limit_wait=-1.0  # Invalid wait time
+            max_rate_limit_wait=-1.0,  # Invalid wait time
         )
 
         errors = config.validate()
@@ -114,7 +101,9 @@ class TestWebhookReliabilityConfig:
         assert len(errors) >= 3
         assert any("webhook_url is required" in error for error in errors)
         assert any("timeout must be positive" in error for error in errors)
-        assert any("max_rate_limit_wait must be non-negative" in error for error in errors)
+        assert any(
+            "max_rate_limit_wait must be non-negative" in error for error in errors
+        )
 
     def test_nested_validation_errors(self):
         """Test nested configuration validation errors."""
@@ -152,7 +141,9 @@ class TestWebhookConfigManager:
             manager = WebhookConfigManager(config_file)
 
             # Mock environment to provide webhook URL
-            with patch.dict(os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}):
+            with patch.dict(
+                os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}
+            ):
                 config = manager.load_configuration()
 
             assert isinstance(config, WebhookReliabilityConfig)
@@ -163,13 +154,10 @@ class TestWebhookConfigManager:
         config_data = {
             "webhook_url": "https://discord.com/api/webhooks/test",
             "timeout": 20,
-            "retry_config": {
-                "max_attempts": 5,
-                "backoff_type": "exponential"
-            }
+            "retry_config": {"max_attempts": 5, "backoff_type": "exponential"},
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(config_data, f)
             config_file = f.name
 
@@ -187,10 +175,10 @@ class TestWebhookConfigManager:
         """Test environment variable overrides."""
         config_data = {
             "webhook_url": "https://discord.com/api/webhooks/file",
-            "timeout": 10
+            "timeout": 10,
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(config_data, f)
             config_file = f.name
 
@@ -202,7 +190,7 @@ class TestWebhookConfigManager:
                 "DISCORD_WEBHOOK_URL": "https://discord.com/api/webhooks/env",
                 "DISCORD_WEBHOOK_TIMEOUT": "25",
                 "DISCORD_RETRY_MAX_ATTEMPTS": "7",
-                "DISCORD_CB_FAILURE_THRESHOLD": "10"
+                "DISCORD_CB_FAILURE_THRESHOLD": "10",
             }
 
             with patch.dict(os.environ, env_overrides):
@@ -228,7 +216,7 @@ class TestWebhookConfigManager:
                 "DISCORD_WEBHOOK_RELIABILITY_ENABLED": "true",
                 "DISCORD_RETRY_JITTER_ENABLED": "false",
                 "DISCORD_QUEUE_PERSISTENCE_ENABLED": "1",
-                "DISCORD_BACKUP_NOTIFICATION_ENABLED": "0"
+                "DISCORD_BACKUP_NOTIFICATION_ENABLED": "0",
             }
 
             with patch.dict(os.environ, env_vars):
@@ -248,12 +236,12 @@ class TestWebhookConfigManager:
             env_vars = {
                 "DISCORD_WEBHOOK_URL": "https://discord.com/test",
                 "DISCORD_WEBHOOK_TIMEOUT": "invalid_number",
-                "DISCORD_RETRY_MAX_ATTEMPTS": "not_a_number"
+                "DISCORD_RETRY_MAX_ATTEMPTS": "not_a_number",
             }
 
             with patch.dict(os.environ, env_vars):
                 # Should not raise exception, but log warnings
-                with patch.object(manager._logger, 'warning') as mock_warning:
+                with patch.object(manager._logger, "warning") as mock_warning:
                     config = manager.load_configuration()
 
                 # Should have logged warnings for invalid values
@@ -270,8 +258,7 @@ class TestWebhookConfigManager:
             manager = WebhookConfigManager(config_file)
 
             config = WebhookReliabilityConfig(
-                webhook_url="https://discord.com/api/webhooks/save_test",
-                timeout=30
+                webhook_url="https://discord.com/api/webhooks/save_test", timeout=30
             )
 
             manager.save_configuration(config)
@@ -279,10 +266,13 @@ class TestWebhookConfigManager:
             # Verify file was created and contains expected data
             assert os.path.exists(config_file)
 
-            with open(config_file, 'r') as f:
+            with open(config_file, "r") as f:
                 saved_data = json.load(f)
 
-            assert saved_data["webhook_url"] == "https://discord.com/api/webhooks/save_test"
+            assert (
+                saved_data["webhook_url"]
+                == "https://discord.com/api/webhooks/save_test"
+            )
             assert saved_data["timeout"] == 30
 
     def test_save_invalid_configuration(self):
@@ -293,8 +283,7 @@ class TestWebhookConfigManager:
 
             # Create invalid config
             config = WebhookReliabilityConfig(
-                webhook_url="",  # Missing required field
-                timeout=-5  # Invalid value
+                webhook_url="", timeout=-5  # Missing required field  # Invalid value
             )
 
             with pytest.raises(ValueError, match="Cannot save invalid configuration"):
@@ -307,16 +296,15 @@ class TestWebhookConfigManager:
             manager = WebhookConfigManager(config_file)
 
             # Load initial config
-            with patch.dict(os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}):
+            with patch.dict(
+                os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}
+            ):
                 initial_config = manager.load_configuration()
 
             assert initial_config.timeout == 10
 
             # Update configuration
-            updates = {
-                "timeout": 25,
-                "retry_config.max_attempts": 7
-            }
+            updates = {"timeout": 25, "retry_config.max_attempts": 7}
 
             updated_config = manager.update_configuration(updates)
 
@@ -331,13 +319,17 @@ class TestWebhookConfigManager:
             config_file = os.path.join(temp_dir, "update_test.json")
             manager = WebhookConfigManager(config_file)
 
-            with patch.dict(os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}):
+            with patch.dict(
+                os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}
+            ):
                 manager.load_configuration()
 
             # Try to update with invalid value
             updates = {"timeout": -10}
 
-            with pytest.raises(ValueError, match="Configuration update failed validation"):
+            with pytest.raises(
+                ValueError, match="Configuration update failed validation"
+            ):
                 manager.update_configuration(updates)
 
     def test_configuration_change_callbacks(self):
@@ -350,7 +342,9 @@ class TestWebhookConfigManager:
             manager.register_change_callback(callback_mock)
 
             # Load initial config
-            with patch.dict(os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}):
+            with patch.dict(
+                os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}
+            ):
                 manager.load_configuration()
 
             # Update configuration
@@ -379,7 +373,7 @@ class TestWebhookConfigManager:
             assert os.path.exists(config_file)
 
             # Verify file contains default configuration
-            with open(config_file, 'r') as f:
+            with open(config_file, "r") as f:
                 data = json.load(f)
 
             default_config = WebhookReliabilityConfig()
@@ -463,7 +457,9 @@ class TestFactoryFunctions:
 
     def test_load_webhook_config(self):
         """Test webhook config loading function."""
-        with patch.dict(os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}):
+        with patch.dict(
+            os.environ, {"DISCORD_WEBHOOK_URL": "https://discord.com/test"}
+        ):
             config = load_webhook_config()
 
         assert isinstance(config, WebhookReliabilityConfig)

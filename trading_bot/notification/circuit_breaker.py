@@ -6,20 +6,20 @@ webhooks become unreliable or unavailable. Follows SOLID principles with
 configurable failure thresholds and recovery mechanisms.
 """
 
-import asyncio
 import logging
 import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional
 
 
 class CircuitState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation
-    OPEN = "open"          # Circuit is open, requests are blocked
+
+    CLOSED = "closed"  # Normal operation
+    OPEN = "open"  # Circuit is open, requests are blocked
     HALF_OPEN = "half_open"  # Testing if service has recovered
 
 
@@ -37,6 +37,7 @@ class CircuitBreakerConfig:
         minimum_requests: Minimum requests in window before applying failure rate
         failure_rate_threshold: Failure rate percentage (0-100) to open circuit
     """
+
     failure_threshold: int = 5
     success_threshold: int = 2
     timeout: float = 60.0
@@ -76,6 +77,7 @@ class CircuitMetrics:
         consecutive_failures: Current consecutive failures
         consecutive_successes: Current consecutive successes
     """
+
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
@@ -107,7 +109,9 @@ class ICircuitBreaker(ABC):
     """Interface for circuit breaker implementations."""
 
     @abstractmethod
-    async def call_async(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    async def call_async(
+        self, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
         """
         Execute async function with circuit breaker protection.
 
@@ -187,7 +191,9 @@ class CircuitBreaker(ICircuitBreaker):
         # For failure rate monitoring
         self._recent_requests: list[tuple[float, bool]] = []  # (timestamp, success)
 
-    async def call_async(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    async def call_async(
+        self, func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
         """
         Execute async function with circuit breaker protection.
 
@@ -209,8 +215,7 @@ class CircuitBreaker(ICircuitBreaker):
             if current_state == CircuitState.OPEN:
                 self._metrics.total_requests += 1
                 raise CircuitBreakerError(
-                    "Circuit breaker is OPEN - requests are blocked",
-                    CircuitState.OPEN
+                    "Circuit breaker is OPEN - requests are blocked", CircuitState.OPEN
                 )
 
         # Execute the function
@@ -246,8 +251,7 @@ class CircuitBreaker(ICircuitBreaker):
             if current_state == CircuitState.OPEN:
                 self._metrics.total_requests += 1
                 raise CircuitBreakerError(
-                    "Circuit breaker is OPEN - requests are blocked",
-                    CircuitState.OPEN
+                    "Circuit breaker is OPEN - requests are blocked", CircuitState.OPEN
                 )
 
         # Execute the function
@@ -281,7 +285,7 @@ class CircuitBreaker(ICircuitBreaker):
                 current_state=self._state,
                 time_in_open=self._metrics.time_in_open,
                 consecutive_failures=self._failure_count,
-                consecutive_successes=self._success_count
+                consecutive_successes=self._success_count,
             )
             return metrics
 
@@ -306,7 +310,8 @@ class CircuitBreaker(ICircuitBreaker):
         # Clean up old requests for failure rate calculation
         cutoff_time = current_time - self._config.monitor_window
         self._recent_requests = [
-            (timestamp, success) for timestamp, success in self._recent_requests
+            (timestamp, success)
+            for timestamp, success in self._recent_requests
             if timestamp >= cutoff_time
         ]
 
@@ -334,7 +339,9 @@ class CircuitBreaker(ICircuitBreaker):
                 # This shouldn't happen, but handle gracefully
                 self._logger.warning("Success recorded while circuit is OPEN")
 
-            self._logger.debug(f"Circuit breaker recorded success (state: {self._state.value})")
+            self._logger.debug(
+                f"Circuit breaker recorded success (state: {self._state.value})"
+            )
 
     def _record_failure(self) -> None:
         """Record a failed operation."""
@@ -365,7 +372,9 @@ class CircuitBreaker(ICircuitBreaker):
 
             # Check failure rate threshold
             if len(self._recent_requests) >= self._config.minimum_requests:
-                failed_requests = sum(1 for _, success in self._recent_requests if not success)
+                failed_requests = sum(
+                    1 for _, success in self._recent_requests if not success
+                )
                 failure_rate = (failed_requests / len(self._recent_requests)) * 100
 
                 if failure_rate >= self._config.failure_rate_threshold:
@@ -378,7 +387,9 @@ class CircuitBreaker(ICircuitBreaker):
             if should_open and self._state != CircuitState.OPEN:
                 self._transition_to_open()
 
-            self._logger.debug(f"Circuit breaker recorded failure (state: {self._state.value})")
+            self._logger.debug(
+                f"Circuit breaker recorded failure (state: {self._state.value})"
+            )
 
     def _transition_to_closed(self) -> None:
         """Transition circuit to CLOSED state."""
@@ -429,7 +440,7 @@ class DiscordCircuitBreaker(CircuitBreaker):
         self,
         failure_threshold: int = 3,
         timeout: float = 120.0,
-        success_threshold: int = 2
+        success_threshold: int = 2,
     ) -> None:
         """
         Initialize Discord circuit breaker.
@@ -439,24 +450,27 @@ class DiscordCircuitBreaker(CircuitBreaker):
             timeout: Seconds to wait before trying half-open
             success_threshold: Successes needed to close from half-open
         """
-        from trading_bot.notification.discord_notifier import DiscordNotificationError
+        from trading_bot.notification.discord_notifier import \
+            DiscordNotificationError
 
         config = CircuitBreakerConfig(
             failure_threshold=failure_threshold,
             success_threshold=success_threshold,
             timeout=timeout,
-            expected_exception=(DiscordNotificationError, ConnectionError, TimeoutError),
+            expected_exception=(
+                DiscordNotificationError,
+                ConnectionError,
+                TimeoutError,
+            ),
             monitor_window=300.0,  # 5 minutes
             minimum_requests=5,
-            failure_rate_threshold=60.0  # 60% failure rate
+            failure_rate_threshold=60.0,  # 60% failure rate
         )
         super().__init__(config)
 
 
 def create_circuit_breaker(
-    name: str = "default",
-    failure_threshold: int = 5,
-    timeout: float = 60.0
+    name: str = "default", failure_threshold: int = 5, timeout: float = 60.0
 ) -> ICircuitBreaker:
     """
     Factory function to create circuit breaker.
@@ -471,12 +485,10 @@ def create_circuit_breaker(
     """
     if name.lower() == "discord":
         return DiscordCircuitBreaker(
-            failure_threshold=failure_threshold,
-            timeout=timeout
+            failure_threshold=failure_threshold, timeout=timeout
         )
     else:
         config = CircuitBreakerConfig(
-            failure_threshold=failure_threshold,
-            timeout=timeout
+            failure_threshold=failure_threshold, timeout=timeout
         )
         return CircuitBreaker(config)

@@ -6,24 +6,23 @@ class including error handling, connection testing, and message sending.
 """
 
 import asyncio
+from typing import Any, Dict
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-from typing import Dict, Any
 
 from trading_bot.core.config_manager import ConfigManager, IConfigLoader
 from trading_bot.notification.discord_notifier import (
-    DiscordNotifier,
-    DiscordHttpClient,
-    DiscordNotificationError,
-    IHttpClient,
-    create_discord_notifier,
-)
+    DiscordHttpClient, DiscordNotificationError, DiscordNotifier, IHttpClient,
+    create_discord_notifier)
 
 
 class MockConfigLoader(IConfigLoader):
     """Mock config loader for testing."""
 
-    def __init__(self, webhook_url: str = "https://discord.com/api/webhooks/test") -> None:
+    def __init__(
+        self, webhook_url: str = "https://discord.com/api/webhooks/test"
+    ) -> None:
         self.webhook_url = webhook_url
 
     def load_config(self) -> Dict[str, Any]:
@@ -130,7 +129,9 @@ class TestDiscordNotifier:
         assert call["data"]["content"] == message
 
     @pytest.mark.asyncio
-    async def test_send_message_async_with_options(self, discord_notifier, mock_http_client):
+    async def test_send_message_async_with_options(
+        self, discord_notifier, mock_http_client
+    ):
         """Test async message sending with optional parameters."""
         message = "Test message"
         username = "Test Bot"
@@ -149,7 +150,9 @@ class TestDiscordNotifier:
         assert call["data"]["embeds"] == embeds
 
     @pytest.mark.asyncio
-    async def test_send_message_async_empty_message(self, discord_notifier, mock_http_client):
+    async def test_send_message_async_empty_message(
+        self, discord_notifier, mock_http_client
+    ):
         """Test async message sending with empty message."""
         result = await discord_notifier.send_message_async("")
 
@@ -157,7 +160,9 @@ class TestDiscordNotifier:
         assert len(mock_http_client.post_async_calls) == 0
 
     @pytest.mark.asyncio
-    async def test_send_message_async_failure(self, config_manager, failing_http_client):
+    async def test_send_message_async_failure(
+        self, config_manager, failing_http_client
+    ):
         """Test async message sending failure."""
         notifier = DiscordNotifier(config_manager, failing_http_client)
 
@@ -208,7 +213,9 @@ class TestDiscordNotifier:
         with pytest.raises(DiscordNotificationError):
             notifier.send_message_sync("Test message")
 
-    def test_send_message_sync_long_message_truncation(self, discord_notifier, mock_http_client):
+    def test_send_message_sync_long_message_truncation(
+        self, discord_notifier, mock_http_client
+    ):
         """Test message truncation for long messages."""
         long_message = "x" * 3000  # Exceeds 2000 char limit
         result = discord_notifier.send_message_sync(long_message)
@@ -217,7 +224,9 @@ class TestDiscordNotifier:
         call = mock_http_client.post_sync_calls[0]
         assert len(call["data"]["content"]) == 2000
 
-    def test_send_message_sync_long_username_truncation(self, discord_notifier, mock_http_client):
+    def test_send_message_sync_long_username_truncation(
+        self, discord_notifier, mock_http_client
+    ):
         """Test username truncation for long usernames."""
         long_username = "x" * 100  # Exceeds 80 char limit
         result = discord_notifier.send_message_sync("test", username=long_username)
@@ -227,7 +236,9 @@ class TestDiscordNotifier:
         assert len(call["data"]["username"]) == 80
 
     @pytest.mark.asyncio
-    async def test_test_connection_async_success(self, discord_notifier, mock_http_client):
+    async def test_test_connection_async_success(
+        self, discord_notifier, mock_http_client
+    ):
         """Test successful async connection test."""
         result = await discord_notifier.test_connection_async()
 
@@ -239,7 +250,9 @@ class TestDiscordNotifier:
         assert call["data"]["username"] == "Trading Bot"
 
     @pytest.mark.asyncio
-    async def test_test_connection_async_failure(self, config_manager, failing_http_client):
+    async def test_test_connection_async_failure(
+        self, config_manager, failing_http_client
+    ):
         """Test async connection test failure."""
         notifier = DiscordNotifier(config_manager, failing_http_client)
         result = await notifier.test_connection_async()
@@ -272,7 +285,7 @@ class TestDiscordNotifier:
             action="BUY",
             price=45000.50,
             quantity=0.001,
-            reason="Strong bullish signal"
+            reason="Strong bullish signal",
         )
 
         assert result is True
@@ -288,10 +301,7 @@ class TestDiscordNotifier:
     def test_send_trading_alert_sync(self, discord_notifier, mock_http_client):
         """Test sending trading alert synchronously."""
         result = discord_notifier.send_trading_alert_sync(
-            symbol="ETHUSDT",
-            action="SELL",
-            price=3200.75,
-            quantity=0.5
+            symbol="ETHUSDT", action="SELL", price=3200.75, quantity=0.5
         )
 
         assert result is True
@@ -308,8 +318,7 @@ class TestDiscordNotifier:
     async def test_send_error_alert_async(self, discord_notifier, mock_http_client):
         """Test sending error alert asynchronously."""
         result = await discord_notifier.send_error_alert_async(
-            error_message="Connection failed",
-            component="BinanceClient"
+            error_message="Connection failed", component="BinanceClient"
         )
 
         assert result is True
@@ -358,7 +367,7 @@ class TestDiscordHttpClient:
     @pytest.mark.asyncio
     async def test_post_async_functionality_through_notifier(self):
         """Test async POST functionality through DiscordNotifier integration."""
-        # Since mocking aiohttp is complex, we test the integration through DiscordNotifier
+        # Since mocking aiohttp is complex, we test integration through DiscordNotifier
         # with MockHttpClient which validates the correct parameters are passed
         config_manager = ConfigManager(MockConfigLoader())
         config_manager.load_configuration()
@@ -389,14 +398,13 @@ class TestDiscordHttpClient:
         """Test sync POST request success."""
         client = DiscordHttpClient()
 
-        with patch.object(client._requests_session, 'post') as mock_post:
+        with patch.object(client._requests_session, "post") as mock_post:
             mock_response = Mock()
             mock_response.status_code = 204
             mock_post.return_value = mock_response
 
             result = client.post_sync(
-                "https://discord.com/api/webhooks/test",
-                {"content": "test"}
+                "https://discord.com/api/webhooks/test", {"content": "test"}
             )
 
             assert result["status"] == "success"
@@ -406,7 +414,7 @@ class TestDiscordHttpClient:
         """Test sync POST request rate limiting."""
         client = DiscordHttpClient()
 
-        with patch.object(client._requests_session, 'post') as mock_post:
+        with patch.object(client._requests_session, "post") as mock_post:
             mock_response = Mock()
             mock_response.status_code = 429
             mock_response.headers = {"Retry-After": "30"}
@@ -414,8 +422,7 @@ class TestDiscordHttpClient:
 
             with pytest.raises(DiscordNotificationError) as excinfo:
                 client.post_sync(
-                    "https://discord.com/api/webhooks/test",
-                    {"content": "test"}
+                    "https://discord.com/api/webhooks/test", {"content": "test"}
                 )
 
             assert "Rate limited" in str(excinfo.value)
@@ -424,15 +431,15 @@ class TestDiscordHttpClient:
     def test_post_sync_timeout(self):
         """Test sync POST request timeout."""
         import requests
+
         client = DiscordHttpClient()
 
-        with patch.object(client._requests_session, 'post') as mock_post:
+        with patch.object(client._requests_session, "post") as mock_post:
             mock_post.side_effect = requests.exceptions.Timeout("Request timeout")
 
             with pytest.raises(DiscordNotificationError) as excinfo:
                 client.post_sync(
-                    "https://discord.com/api/webhooks/test",
-                    {"content": "test"}
+                    "https://discord.com/api/webhooks/test", {"content": "test"}
                 )
 
             assert "Request timeout after 10s" in str(excinfo.value)
@@ -440,15 +447,17 @@ class TestDiscordHttpClient:
     def test_post_sync_connection_error(self):
         """Test sync POST request connection error."""
         import requests
+
         client = DiscordHttpClient()
 
-        with patch.object(client._requests_session, 'post') as mock_post:
-            mock_post.side_effect = requests.exceptions.ConnectionError("Connection failed")
+        with patch.object(client._requests_session, "post") as mock_post:
+            mock_post.side_effect = requests.exceptions.ConnectionError(
+                "Connection failed"
+            )
 
             with pytest.raises(DiscordNotificationError) as excinfo:
                 client.post_sync(
-                    "https://discord.com/api/webhooks/test",
-                    {"content": "test"}
+                    "https://discord.com/api/webhooks/test", {"content": "test"}
                 )
 
             assert "Connection error" in str(excinfo.value)
@@ -469,7 +478,7 @@ class TestDiscordHttpClient:
         """Test closing sync session."""
         client = DiscordHttpClient()
 
-        with patch.object(client._requests_session, 'close') as mock_close:
+        with patch.object(client._requests_session, "close") as mock_close:
             client.close_sync()
             mock_close.assert_called_once()
 

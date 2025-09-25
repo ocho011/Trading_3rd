@@ -9,21 +9,20 @@ with dependency injection for flexible storage backends.
 import asyncio
 import json
 import logging
-import os
 import sqlite3
 import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 
 class MessageStatus(Enum):
     """Status of queued messages."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -33,6 +32,7 @@ class MessageStatus(Enum):
 
 class MessagePriority(Enum):
     """Priority levels for messages."""
+
     LOW = 1
     NORMAL = 2
     HIGH = 3
@@ -58,6 +58,7 @@ class QueuedMessage:
         retry_delays: List of delay periods for retries
         metadata: Additional message metadata
     """
+
     id: str = field(default_factory=lambda: str(uuid4()))
     content: Dict[str, Any] = field(default_factory=dict)
     priority: MessagePriority = MessagePriority.NORMAL
@@ -74,27 +75,27 @@ class QueuedMessage:
     def to_dict(self) -> Dict[str, Any]:
         """Convert message to dictionary for storage."""
         data = asdict(self)
-        data['priority'] = self.priority.value
-        data['status'] = self.status.value
+        data["priority"] = self.priority.value
+        data["status"] = self.status.value
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'QueuedMessage':
+    def from_dict(cls, data: Dict[str, Any]) -> "QueuedMessage":
         """Create message from dictionary."""
         # Handle enum conversions
-        if 'priority' in data and isinstance(data['priority'], int):
-            data['priority'] = MessagePriority(data['priority'])
-        if 'status' in data and isinstance(data['status'], str):
-            data['status'] = MessageStatus(data['status'])
+        if "priority" in data and isinstance(data["priority"], int):
+            data["priority"] = MessagePriority(data["priority"])
+        if "status" in data and isinstance(data["status"], str):
+            data["status"] = MessageStatus(data["status"])
 
         return cls(**data)
 
     def should_retry(self) -> bool:
         """Check if message should be retried."""
         return (
-            self.status in [MessageStatus.PENDING, MessageStatus.FAILED] and
-            self.attempts < self.max_attempts and
-            time.time() >= self.scheduled_at
+            self.status in [MessageStatus.PENDING, MessageStatus.FAILED]
+            and self.attempts < self.max_attempts
+            and time.time() >= self.scheduled_at
         )
 
     def calculate_next_retry(self) -> float:
@@ -103,7 +104,9 @@ class QueuedMessage:
             delay = self.retry_delays[self.attempts]
         else:
             # Use exponential backoff for additional attempts
-            delay = self.retry_delays[-1] * (2 ** (self.attempts - len(self.retry_delays)))
+            delay = self.retry_delays[-1] * (
+                2 ** (self.attempts - len(self.retry_delays))
+            )
 
         return time.time() + delay
 
@@ -123,6 +126,7 @@ class QueueConfig:
         cleanup_interval: Seconds between cleanup cycles
         storage_path: Path to storage file/directory
     """
+
     max_size: int = 1000
     retention_hours: int = 24
     batch_size: int = 10
@@ -190,7 +194,8 @@ class SqliteMessageStorage(IMessageStorage):
     def _init_database(self) -> None:
         """Initialize database schema."""
         with sqlite3.connect(self._db_path) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS messages (
                     id TEXT PRIMARY KEY,
                     content TEXT NOT NULL,
@@ -205,43 +210,51 @@ class SqliteMessageStorage(IMessageStorage):
                     retry_delays TEXT NOT NULL,
                     metadata TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             # Create indexes for performance
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_status_scheduled
                 ON messages(status, scheduled_at)
-            """)
-            conn.execute("""
+            """
+            )
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_created_at
                 ON messages(created_at)
-            """)
+            """
+            )
 
     def save_message(self, message: QueuedMessage) -> None:
         """Save message to SQLite database."""
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
-                    conn.execute("""
+                    conn.execute(
+                        """
                         INSERT OR REPLACE INTO messages (
                             id, content, priority, status, created_at, scheduled_at,
                             attempts, max_attempts, last_error, webhook_url,
                             retry_delays, metadata
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        message.id,
-                        json.dumps(message.content),
-                        message.priority.value,
-                        message.status.value,
-                        message.created_at,
-                        message.scheduled_at,
-                        message.attempts,
-                        message.max_attempts,
-                        message.last_error,
-                        message.webhook_url,
-                        json.dumps(message.retry_delays),
-                        json.dumps(message.metadata)
-                    ))
+                    """,
+                        (
+                            message.id,
+                            json.dumps(message.content),
+                            message.priority.value,
+                            message.status.value,
+                            message.created_at,
+                            message.scheduled_at,
+                            message.attempts,
+                            message.max_attempts,
+                            message.last_error,
+                            message.webhook_url,
+                            json.dumps(message.retry_delays),
+                            json.dumps(message.metadata),
+                        ),
+                    )
 
             except sqlite3.Error as e:
                 self._logger.error(f"Failed to save message to database: {e}")
@@ -252,13 +265,15 @@ class SqliteMessageStorage(IMessageStorage):
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
-                    cursor = conn.execute("""
+                    cursor = conn.execute(
+                        """
                         SELECT id, content, priority, status, created_at, scheduled_at,
                                attempts, max_attempts, last_error, webhook_url,
                                retry_delays, metadata
                         FROM messages
                         ORDER BY priority DESC, scheduled_at ASC
-                    """)
+                    """
+                    )
 
                     messages = []
                     for row in cursor.fetchall():
@@ -274,7 +289,7 @@ class SqliteMessageStorage(IMessageStorage):
                             last_error=row[8],
                             webhook_url=row[9],
                             retry_delays=json.loads(row[10]),
-                            metadata=json.loads(row[11])
+                            metadata=json.loads(row[11]),
                         )
                         messages.append(message)
 
@@ -306,16 +321,19 @@ class SqliteMessageStorage(IMessageStorage):
         with self._lock:
             try:
                 with sqlite3.connect(self._db_path) as conn:
-                    cursor = conn.execute("""
+                    cursor = conn.execute(
+                        """
                         DELETE FROM messages
                         WHERE created_at < ?
                         AND status IN (?, ?, ?)
-                    """, (
-                        cutoff_time,
-                        MessageStatus.COMPLETED.value,
-                        MessageStatus.FAILED.value,
-                        MessageStatus.EXPIRED.value
-                    ))
+                    """,
+                        (
+                            cutoff_time,
+                            MessageStatus.COMPLETED.value,
+                            MessageStatus.FAILED.value,
+                            MessageStatus.EXPIRED.value,
+                        ),
+                    )
 
                     return cursor.rowcount
 
@@ -363,8 +381,11 @@ class InMemoryMessageStorage(IMessageStorage):
         with self._lock:
             messages_to_remove = []
             for msg_id, message in self._messages.items():
-                if (message.created_at < cutoff_time and
-                    message.status in [MessageStatus.COMPLETED, MessageStatus.FAILED, MessageStatus.EXPIRED]):
+                if message.created_at < cutoff_time and message.status in [
+                    MessageStatus.COMPLETED,
+                    MessageStatus.FAILED,
+                    MessageStatus.EXPIRED,
+                ]:
                     messages_to_remove.append(msg_id)
 
             for msg_id in messages_to_remove:
@@ -388,9 +409,7 @@ class MessageQueue:
     """
 
     def __init__(
-        self,
-        config: QueueConfig,
-        storage: Optional[IMessageStorage] = None
+        self, config: QueueConfig, storage: Optional[IMessageStorage] = None
     ) -> None:
         """
         Initialize message queue.
@@ -431,7 +450,7 @@ class MessageQueue:
         webhook_url: str,
         priority: MessagePriority = MessagePriority.NORMAL,
         max_attempts: int = 3,
-        retry_delays: Optional[List[float]] = None
+        retry_delays: Optional[List[float]] = None,
     ) -> str:
         """
         Add message to queue.
@@ -453,8 +472,14 @@ class MessageQueue:
         if self._config.max_size > 0:
             current_messages = self._storage.load_messages()
             active_count = sum(
-                1 for msg in current_messages
-                if msg.status not in [MessageStatus.COMPLETED, MessageStatus.FAILED, MessageStatus.EXPIRED]
+                1
+                for msg in current_messages
+                if msg.status
+                not in [
+                    MessageStatus.COMPLETED,
+                    MessageStatus.FAILED,
+                    MessageStatus.EXPIRED,
+                ]
             )
 
             if active_count >= self._config.max_size:
@@ -466,14 +491,16 @@ class MessageQueue:
             webhook_url=webhook_url,
             priority=priority,
             max_attempts=max_attempts,
-            retry_delays=retry_delays or [1.0, 5.0, 15.0]
+            retry_delays=retry_delays or [1.0, 5.0, 15.0],
         )
 
         # Save to storage if persistence enabled
         if self._config.persistence_enabled:
             self._storage.save_message(message)
 
-        self._logger.debug(f"Enqueued message {message.id} with priority {priority.name}")
+        self._logger.debug(
+            f"Enqueued message {message.id} with priority {priority.name}"
+        )
         return message.id
 
     def get_pending_messages(self, limit: Optional[int] = None) -> List[QueuedMessage]:
@@ -491,7 +518,8 @@ class MessageQueue:
 
         # Filter for processable messages
         pending_messages = [
-            msg for msg in messages
+            msg
+            for msg in messages
             if msg.should_retry() and msg.scheduled_at <= current_time
         ]
 
@@ -504,10 +532,7 @@ class MessageQueue:
         return pending_messages
 
     def update_message_status(
-        self,
-        message_id: str,
-        status: MessageStatus,
-        error: Optional[str] = None
+        self, message_id: str, status: MessageStatus, error: Optional[str] = None
     ) -> bool:
         """
         Update message status.
@@ -525,7 +550,9 @@ class MessageQueue:
             message = next((msg for msg in messages if msg.id == message_id), None)
 
             if not message:
-                self._logger.warning(f"Message {message_id} not found for status update")
+                self._logger.warning(
+                    f"Message {message_id} not found for status update"
+                )
                 return False
 
             message.status = status
@@ -533,7 +560,10 @@ class MessageQueue:
                 message.last_error = error
 
             # Schedule retry if failed and attempts remaining
-            if status == MessageStatus.FAILED and message.attempts < message.max_attempts:
+            if (
+                status == MessageStatus.FAILED
+                and message.attempts < message.max_attempts
+            ):
                 message.scheduled_at = message.calculate_next_retry()
                 message.status = MessageStatus.PENDING
 
@@ -563,20 +593,15 @@ class MessageQueue:
         messages = self._storage.load_messages()
 
         stats = {
-            'total_messages': len(messages),
-            'pending': 0,
-            'processing': 0,
-            'completed': 0,
-            'failed': 0,
-            'expired': 0,
-            'by_priority': {
-                'urgent': 0,
-                'high': 0,
-                'normal': 0,
-                'low': 0
-            },
-            'oldest_pending': None,
-            'newest_message': None
+            "total_messages": len(messages),
+            "pending": 0,
+            "processing": 0,
+            "completed": 0,
+            "failed": 0,
+            "expired": 0,
+            "by_priority": {"urgent": 0, "high": 0, "normal": 0, "low": 0},
+            "oldest_pending": None,
+            "newest_message": None,
         }
 
         for message in messages:
@@ -585,15 +610,21 @@ class MessageQueue:
 
             # Count by priority
             priority_name = message.priority.name.lower()
-            stats['by_priority'][priority_name] += 1
+            stats["by_priority"][priority_name] += 1
 
             # Track timestamps
             if message.status == MessageStatus.PENDING:
-                if stats['oldest_pending'] is None or message.scheduled_at < stats['oldest_pending']:
-                    stats['oldest_pending'] = message.scheduled_at
+                if (
+                    stats["oldest_pending"] is None
+                    or message.scheduled_at < stats["oldest_pending"]
+                ):
+                    stats["oldest_pending"] = message.scheduled_at
 
-            if stats['newest_message'] is None or message.created_at > stats['newest_message']:
-                stats['newest_message'] = message.created_at
+            if (
+                stats["newest_message"] is None
+                or message.created_at > stats["newest_message"]
+            ):
+                stats["newest_message"] = message.created_at
 
         return stats
 
@@ -682,9 +713,7 @@ class MessageQueue:
 
 
 def create_message_queue(
-    storage_path: Optional[str] = None,
-    max_size: int = 1000,
-    persistence: bool = True
+    storage_path: Optional[str] = None, max_size: int = 1000, persistence: bool = True
 ) -> MessageQueue:
     """
     Factory function to create message queue.
@@ -700,7 +729,7 @@ def create_message_queue(
     config = QueueConfig(
         max_size=max_size,
         persistence_enabled=persistence,
-        storage_path=storage_path or "discord_message_queue.db"
+        storage_path=storage_path or "discord_message_queue.db",
     )
 
     if persistence:

@@ -6,20 +6,14 @@ and failure pattern detection for Discord webhook health monitoring.
 """
 
 import asyncio
-import pytest
-import time
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from trading_bot.notification.webhook_health import (
-    HealthMetrics,
-    HealthAlert,
-    AlertType,
-    HealthThresholds,
-    WebhookHealthMonitor,
-    HealthReporter,
-    create_webhook_health_monitor
-)
+    AlertType, HealthAlert, HealthMetrics, HealthReporter, HealthThresholds,
+    WebhookHealthMonitor, create_webhook_health_monitor)
 
 
 class TestHealthMetrics:
@@ -131,7 +125,7 @@ class TestHealthMetrics:
         old_time = now - timedelta(hours=2)
 
         # Mock timestamps for testing
-        with patch('trading_bot.notification.webhook_health.datetime') as mock_datetime:
+        with patch("trading_bot.notification.webhook_health.datetime") as mock_datetime:
             mock_datetime.utcnow.return_value = old_time
             metrics.record_success(response_time_ms=100)
 
@@ -156,7 +150,7 @@ class TestHealthAlert:
             alert_type=AlertType.SUCCESS_RATE_LOW,
             message="Success rate dropped to 75%",
             severity="warning",
-            metrics_snapshot=HealthMetrics()
+            metrics_snapshot=HealthMetrics(),
         )
 
         assert alert.alert_type == AlertType.SUCCESS_RATE_LOW
@@ -174,7 +168,7 @@ class TestHealthAlert:
             alert_type=AlertType.RESPONSE_TIME_HIGH,
             message="Response time too high",
             severity="critical",
-            metrics_snapshot=metrics
+            metrics_snapshot=metrics,
         )
 
         # Convert to dict
@@ -201,7 +195,7 @@ class TestHealthThresholds:
             success_rate_critical=80.0,
             response_time_warning=1000,
             response_time_critical=2000,
-            failure_rate_window=300
+            failure_rate_window=300,
         )
 
         assert thresholds.success_rate_warning == 90.0
@@ -227,16 +221,20 @@ class TestHealthThresholds:
 
     def test_threshold_ordering_validation(self):
         """Test threshold ordering validation."""
-        with pytest.raises(ValueError, match="success_rate_critical must be <= success_rate_warning"):
+        with pytest.raises(
+            ValueError, match="success_rate_critical must be <= success_rate_warning"
+        ):
             HealthThresholds(
                 success_rate_warning=80.0,
-                success_rate_critical=90.0  # Critical should be lower
+                success_rate_critical=90.0,  # Critical should be lower
             )
 
-        with pytest.raises(ValueError, match="response_time_critical must be >= response_time_warning"):
+        with pytest.raises(
+            ValueError, match="response_time_critical must be >= response_time_warning"
+        ):
             HealthThresholds(
                 response_time_warning=2000,
-                response_time_critical=1000  # Critical should be higher
+                response_time_critical=1000,  # Critical should be higher
             )
 
 
@@ -286,8 +284,7 @@ class TestWebhookHealthMonitor:
     async def test_success_rate_alert_generation(self):
         """Test alert generation based on success rate thresholds."""
         thresholds = HealthThresholds(
-            success_rate_warning=90.0,
-            success_rate_critical=75.0
+            success_rate_warning=90.0, success_rate_critical=75.0
         )
         monitor = WebhookHealthMonitor(thresholds)
 
@@ -297,7 +294,9 @@ class TestWebhookHealthMonitor:
         # Record requests that push success rate below warning threshold
         # 7 successes, 3 failures = 70% success rate (below critical)
         for _ in range(7):
-            await monitor.record_success("https://discord.com/test", response_time_ms=100)
+            await monitor.record_success(
+                "https://discord.com/test", response_time_ms=100
+            )
         for _ in range(3):
             await monitor.record_failure("https://discord.com/test", "Timeout")
 
@@ -311,8 +310,7 @@ class TestWebhookHealthMonitor:
     async def test_response_time_alert_generation(self):
         """Test alert generation based on response time thresholds."""
         thresholds = HealthThresholds(
-            response_time_warning=500,
-            response_time_critical=1000
+            response_time_warning=500, response_time_critical=1000
         )
         monitor = WebhookHealthMonitor(thresholds)
 
@@ -321,7 +319,9 @@ class TestWebhookHealthMonitor:
 
         # Record requests with high response times
         for i in range(5):
-            await monitor.record_success("https://discord.com/test", response_time_ms=1200)
+            await monitor.record_success(
+                "https://discord.com/test", response_time_ms=1200
+            )
 
         # Should trigger critical alert
         assert alert_callback.called
@@ -353,7 +353,7 @@ class TestWebhookHealthMonitor:
             success_rate_warning=90.0,
             success_rate_critical=75.0,
             response_time_warning=500,
-            response_time_critical=1000
+            response_time_critical=1000,
         )
         monitor = WebhookHealthMonitor(thresholds)
 
@@ -502,8 +502,12 @@ class TestHealthReporter:
         reporter = HealthReporter(monitor)
 
         # Generate some alerts
-        monitor._trigger_alert(AlertType.SUCCESS_RATE_LOW, "Low success rate", "warning")
-        monitor._trigger_alert(AlertType.RESPONSE_TIME_HIGH, "High response time", "critical")
+        monitor._trigger_alert(
+            AlertType.SUCCESS_RATE_LOW, "Low success rate", "warning"
+        )
+        monitor._trigger_alert(
+            AlertType.RESPONSE_TIME_HIGH, "High response time", "critical"
+        )
 
         # Export alerts
         alerts_dict = reporter.export_alerts_to_dict()
@@ -523,7 +527,7 @@ class TestHealthMonitoringIntegration:
         thresholds = HealthThresholds(
             success_rate_warning=90.0,
             response_time_warning=500,
-            consecutive_failure_threshold=2
+            consecutive_failure_threshold=2,
         )
         monitor = WebhookHealthMonitor(thresholds)
         reporter = HealthReporter(monitor)
@@ -575,8 +579,7 @@ class TestFactoryFunction:
     def test_create_with_custom_thresholds(self):
         """Test creating monitor with custom thresholds."""
         thresholds = HealthThresholds(
-            success_rate_warning=95.0,
-            response_time_warning=300
+            success_rate_warning=95.0, response_time_warning=300
         )
         monitor = create_webhook_health_monitor(thresholds)
         assert isinstance(monitor, WebhookHealthMonitor)
@@ -587,8 +590,7 @@ class TestFactoryFunction:
         status_callback = Mock()
 
         monitor = create_webhook_health_monitor(
-            alert_callback=alert_callback,
-            status_callback=status_callback
+            alert_callback=alert_callback, status_callback=status_callback
         )
 
         # Trigger alert to test callback registration

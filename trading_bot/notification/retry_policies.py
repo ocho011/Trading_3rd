@@ -18,6 +18,7 @@ from typing import Any, Callable, Optional, Union
 
 class BackoffType(Enum):
     """Enumeration of supported backoff types."""
+
     EXPONENTIAL = "exponential"
     LINEAR = "linear"
     FIXED = "fixed"
@@ -40,6 +41,7 @@ class RetryConfig:
         retry_exceptions: Tuple of exception types to retry on
         stop_exceptions: Tuple of exception types to never retry
     """
+
     max_attempts: int = 3
     base_delay: float = 1.0
     max_delay: float = 60.0
@@ -79,6 +81,7 @@ class RetryAttempt:
         elapsed_time: Total elapsed time since first attempt
         last_exception: Exception from previous attempt (None for first attempt)
     """
+
     attempt_number: int
     total_attempts: int
     delay_before: float
@@ -90,7 +93,9 @@ class IRetryPolicy(ABC):
     """Interface for retry policy implementations."""
 
     @abstractmethod
-    def calculate_delay(self, attempt: int, last_exception: Optional[Exception] = None) -> float:
+    def calculate_delay(
+        self, attempt: int, last_exception: Optional[Exception] = None
+    ) -> float:
         """
         Calculate delay for a given retry attempt.
 
@@ -149,7 +154,9 @@ class RetryPolicy(IRetryPolicy):
         self._config = config
         self._logger = logging.getLogger(__name__)
 
-    def calculate_delay(self, attempt: int, last_exception: Optional[Exception] = None) -> float:
+    def calculate_delay(
+        self, attempt: int, last_exception: Optional[Exception] = None
+    ) -> float:
         """
         Calculate delay for retry attempt using configured backoff strategy.
 
@@ -229,7 +236,7 @@ class ExponentialBackoffPolicy(RetryPolicy):
         max_attempts: int = 5,
         base_delay: float = 1.0,
         max_delay: float = 30.0,
-        jitter_enabled: bool = True
+        jitter_enabled: bool = True,
     ) -> None:
         """
         Initialize exponential backoff policy.
@@ -246,7 +253,7 @@ class ExponentialBackoffPolicy(RetryPolicy):
             max_delay=max_delay,
             backoff_type=BackoffType.EXPONENTIAL,
             jitter_enabled=jitter_enabled,
-            jitter_max=0.1  # 10% jitter
+            jitter_max=0.1,  # 10% jitter
         )
         super().__init__(config)
 
@@ -264,7 +271,7 @@ class LinearBackoffPolicy(RetryPolicy):
         max_attempts: int = 3,
         base_delay: float = 2.0,
         max_delay: float = 20.0,
-        jitter_enabled: bool = True
+        jitter_enabled: bool = True,
     ) -> None:
         """
         Initialize linear backoff policy.
@@ -281,7 +288,7 @@ class LinearBackoffPolicy(RetryPolicy):
             max_delay=max_delay,
             backoff_type=BackoffType.LINEAR,
             jitter_enabled=jitter_enabled,
-            jitter_max=0.15  # 15% jitter
+            jitter_max=0.15,  # 15% jitter
         )
         super().__init__(config)
 
@@ -294,10 +301,7 @@ class FixedDelayPolicy(RetryPolicy):
     """
 
     def __init__(
-        self,
-        max_attempts: int = 3,
-        delay: float = 5.0,
-        jitter_enabled: bool = False
+        self, max_attempts: int = 3, delay: float = 5.0, jitter_enabled: bool = False
     ) -> None:
         """
         Initialize fixed delay policy.
@@ -313,7 +317,7 @@ class FixedDelayPolicy(RetryPolicy):
             max_delay=delay,
             backoff_type=BackoffType.FIXED,
             jitter_enabled=jitter_enabled,
-            jitter_max=0.05  # 5% jitter if enabled
+            jitter_max=0.05,  # 5% jitter if enabled
         )
         super().__init__(config)
 
@@ -337,10 +341,7 @@ class RetryExecutor:
         self._logger = logging.getLogger(__name__)
 
     async def execute_async(
-        self,
-        func: Callable[..., Any],
-        *args: Any,
-        **kwargs: Any
+        self, func: Callable[..., Any], *args: Any, **kwargs: Any
     ) -> Any:
         """
         Execute async function with retry logic.
@@ -376,7 +377,9 @@ class RetryExecutor:
 
                 # Execute function with timeout
                 try:
-                    result = await asyncio.wait_for(func(*args, **kwargs), timeout=timeout)
+                    result = await asyncio.wait_for(
+                        func(*args, **kwargs), timeout=timeout
+                    )
 
                     if attempt > 1:
                         self._logger.info(f"Function succeeded on attempt {attempt}")
@@ -414,12 +417,7 @@ class RetryExecutor:
         else:
             raise RuntimeError("Retry executor completed without success or exception")
 
-    def execute_sync(
-        self,
-        func: Callable[..., Any],
-        *args: Any,
-        **kwargs: Any
-    ) -> Any:
+    def execute_sync(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """
         Execute function with retry logic synchronously.
 
@@ -487,8 +485,7 @@ class RetryExecutor:
 
 
 def create_discord_retry_policy(
-    max_attempts: int = 5,
-    strategy: str = "exponential"
+    max_attempts: int = 5, strategy: str = "exponential"
 ) -> IRetryPolicy:
     """
     Factory function to create retry policy for Discord webhooks.

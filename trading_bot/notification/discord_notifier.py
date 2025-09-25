@@ -249,7 +249,7 @@ class DiscordNotifier(IDiscordNotifier):
         config_manager: ConfigManager,
         http_client: Optional[IHttpClient] = None,
         event_hub: Optional[EventHub] = None,
-        message_formatter_factory: Optional[MessageFormatterFactory] = None
+        message_formatter_factory: Optional[MessageFormatterFactory] = None,
     ) -> None:
         """
         Initialize Discord notifier with config manager dependency.
@@ -266,7 +266,9 @@ class DiscordNotifier(IDiscordNotifier):
         self._config_manager = config_manager
         self._http_client = http_client or DiscordHttpClient()
         self._event_hub = event_hub
-        self._message_formatter_factory = message_formatter_factory or MessageFormatterFactory()
+        self._message_formatter_factory = (
+            message_formatter_factory or MessageFormatterFactory()
+        )
         self._logger = logging.getLogger(__name__)
 
         # Track subscription state
@@ -672,7 +674,9 @@ class DiscordNotifier(IDiscordNotifier):
             event_data: Event payload containing ExecutionResult information
         """
         try:
-            formatter = self._message_formatter_factory.get_formatter(EventType.ORDER_FILLED)
+            formatter = self._message_formatter_factory.get_formatter(
+                EventType.ORDER_FILLED
+            )
             formatted_message = formatter.format_message(event_data)
 
             # Send message using the formatted content
@@ -680,9 +684,7 @@ class DiscordNotifier(IDiscordNotifier):
             content = formatted_message.get("content", "")
 
             await self._send_formatted_message_async(
-                content=content,
-                embeds=embeds,
-                username="Trading Bot - Order Execution"
+                content=content, embeds=embeds, username="Trading Bot - Order Execution"
             )
 
             self._logger.debug("Successfully sent ORDER_FILLED notification to Discord")
@@ -698,7 +700,9 @@ class DiscordNotifier(IDiscordNotifier):
             event_data: Event payload containing error information
         """
         try:
-            formatter = self._message_formatter_factory.get_formatter(EventType.ERROR_OCCURRED)
+            formatter = self._message_formatter_factory.get_formatter(
+                EventType.ERROR_OCCURRED
+            )
             formatted_message = formatter.format_message(event_data)
 
             # Send message using the formatted content
@@ -706,12 +710,12 @@ class DiscordNotifier(IDiscordNotifier):
             content = formatted_message.get("content", "")
 
             await self._send_formatted_message_async(
-                content=content,
-                embeds=embeds,
-                username="Trading Bot - Error Alert"
+                content=content, embeds=embeds, username="Trading Bot - Error Alert"
             )
 
-            self._logger.debug("Successfully sent ERROR_OCCURRED notification to Discord")
+            self._logger.debug(
+                "Successfully sent ERROR_OCCURRED notification to Discord"
+            )
 
         except Exception as e:
             self._logger.error(f"Failed to handle ERROR_OCCURRED event: {e}")
@@ -740,10 +744,12 @@ class DiscordNotifier(IDiscordNotifier):
             await self._send_formatted_message_async(
                 content=content,
                 embeds=embeds,
-                username="Trading Bot - Connection Monitor"
+                username="Trading Bot - Connection Monitor",
             )
 
-            self._logger.debug(f"Successfully sent {event_type} notification to Discord")
+            self._logger.debug(
+                f"Successfully sent {event_type} notification to Discord"
+            )
 
         except Exception as e:
             self._logger.error(f"Failed to handle connection event: {e}")
@@ -768,15 +774,19 @@ class DiscordNotifier(IDiscordNotifier):
             await self._send_formatted_message_async(
                 content=content,
                 embeds=embeds,
-                username="Trading Bot - Signal Generator"
+                username="Trading Bot - Signal Generator",
             )
 
-            self._logger.debug("Successfully sent TRADING_SIGNAL_GENERATED notification to Discord")
+            self._logger.debug(
+                "Successfully sent TRADING_SIGNAL_GENERATED notification to Discord"
+            )
 
         except Exception as e:
             self._logger.error(f"Failed to handle TRADING_SIGNAL_GENERATED event: {e}")
 
-    async def _handle_risk_limit_exceeded_async(self, event_data: Dict[str, Any]) -> None:
+    async def _handle_risk_limit_exceeded_async(
+        self, event_data: Dict[str, Any]
+    ) -> None:
         """
         Handle RISK_LIMIT_EXCEEDED events and send Discord notifications.
 
@@ -784,7 +794,9 @@ class DiscordNotifier(IDiscordNotifier):
             event_data: Event payload containing risk limit information
         """
         try:
-            formatter = self._message_formatter_factory.get_formatter(EventType.RISK_LIMIT_EXCEEDED)
+            formatter = self._message_formatter_factory.get_formatter(
+                EventType.RISK_LIMIT_EXCEEDED
+            )
             formatted_message = formatter.format_message(event_data)
 
             # Send message using the formatted content
@@ -792,12 +804,12 @@ class DiscordNotifier(IDiscordNotifier):
             content = formatted_message.get("content", "")
 
             await self._send_formatted_message_async(
-                content=content,
-                embeds=embeds,
-                username="Trading Bot - Risk Manager"
+                content=content, embeds=embeds, username="Trading Bot - Risk Manager"
             )
 
-            self._logger.debug("Successfully sent RISK_LIMIT_EXCEEDED notification to Discord")
+            self._logger.debug(
+                "Successfully sent RISK_LIMIT_EXCEEDED notification to Discord"
+            )
 
         except Exception as e:
             self._logger.error(f"Failed to handle RISK_LIMIT_EXCEEDED event: {e}")
@@ -806,7 +818,7 @@ class DiscordNotifier(IDiscordNotifier):
         self,
         content: str = "",
         embeds: Optional[List[Dict[str, Any]]] = None,
-        username: Optional[str] = None
+        username: Optional[str] = None,
     ) -> bool:
         """
         Send a formatted message to Discord.
@@ -828,9 +840,7 @@ class DiscordNotifier(IDiscordNotifier):
                 content = "📢 Trading Bot Notification"
 
             return await self.send_message_async(
-                message=content,
-                username=username,
-                embeds=embeds
+                message=content, username=username, embeds=embeds
             )
 
         except Exception as e:
@@ -891,7 +901,7 @@ class DiscordNotifier(IDiscordNotifier):
 def create_discord_notifier(
     config_manager: ConfigManager,
     event_hub: Optional[EventHub] = None,
-    message_formatter_factory: Optional[MessageFormatterFactory] = None
+    message_formatter_factory: Optional[MessageFormatterFactory] = None,
 ) -> DiscordNotifier:
     """
     Factory function to create DiscordNotifier with default HTTP client.
@@ -909,5 +919,5 @@ def create_discord_notifier(
         config_manager=config_manager,
         http_client=http_client,
         event_hub=event_hub,
-        message_formatter_factory=message_formatter_factory
+        message_formatter_factory=message_formatter_factory,
     )
