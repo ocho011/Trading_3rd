@@ -691,7 +691,7 @@
             "description": "Create a new configuration file for mainnet paper trading and modify the Execution Engine to simulate order fills when paper trading is enabled, ensuring no real funds are used.",
             "dependencies": [],
             "details": "Create a new file `config/paper_mainnet.yml`. This file should inherit from the default configuration but override settings for the `ExecutionEngine` to set `paper_trading: true` and use mainnet API endpoints. Then, modify `trading_bot/execution/execution_engine.py`. In the `execute_order` method, add a conditional check for the `paper_trading` flag. If true, the engine should bypass the actual API call to the exchange, simulate a successful order fill (e.g., at the current market price), and publish the corresponding `ORDER_FILLED` event to the EventHub, mimicking the behavior of a live trade.",
-            "status": "pending",
+            "status": "in-progress",
             "testStrategy": "Run the bot with the new `--config config/paper_mainnet.yml`. Place a test order manually or via a strategy signal. Verify that no order appears on the exchange. Check the application logs and EventHub (if monitored) to confirm that an `ORDER_FILLED` event was published with simulated fill data."
           },
           {
@@ -742,7 +742,7 @@
     ],
     "metadata": {
       "created": "2025-09-21T14:07:37.892Z",
-      "updated": "2025-09-26T18:39:19.950Z",
+      "updated": "2025-09-26T18:40:24.350Z",
       "description": "Tasks for master context"
     }
   }

@@ -1,0 +1,41 @@
+# Paper Trading Configuration for Mainnet Testing
+# This configuration enables paper trading mode with mainnet data feeds
+# ensuring no real funds are used while testing with live market data
+
+# Trading Configuration
+trading:
+  paper_trading: true  # Enable paper trading mode
+  symbol: "BTCUSDT"
+  timeframe: "1m"
+  max_position_size: 1000.0
+  risk_percentage: 2.0
+  max_daily_trades: 5
+
+# API Configuration - Mainnet endpoints for live data
+api:
+  network: "mainnet"
+  use_mainnet_data: true  # Use live mainnet data for accurate testing
+  base_url: "https://api.binance.com/api"
+
+# Execution Engine Configuration
+execution:
+  paper_trading: true  # Critical: prevents real orders
+  simulate_fills: true
+  simulate_latency: 50  # ms - realistic order fill simulation
+
+# Risk Management
+risk:
+  enable_paper_mode_safety: true
+  max_paper_balance: 10000.0  # USDT - virtual balance for testing
+
+# Logging Configuration for Testing
+logging:
+  level: "INFO"
+  enable_trade_logging: true
+  log_paper_trades: true
+
+# Notification Configuration
+notifications:
+  discord:
+    enable: true
+    include_paper_tag: true  # Tag messages as [PAPER] mode

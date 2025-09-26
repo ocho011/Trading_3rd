@@ -401,6 +401,10 @@ class ExecutionEngineConfig:
     critical_error_notification_threshold: int = 3
     error_notification_cooldown_seconds: int = 300  # 5 minutes
 
+    # Paper trading settings
+    paper_trading: bool = False
+    paper_trading_balance: float = 10000.0  # Virtual balance for paper trading
+
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
