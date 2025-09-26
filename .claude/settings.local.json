@@ -4,7 +4,9 @@
       "Bash(PYTHONPATH=. python3 test_event_subscriptions.py)",
       "Bash(PYTHONPATH=. python3 dev-files/test_task_10_4_implementation.py)",
       "Bash(PYTHONPATH=. python3 dev-files/test_final_integration_fixed.py)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(kill:*)",
+      "mcp__task-master-ai__set_task_status"
     ],
     "deny": [],
     "ask": []

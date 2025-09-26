@@ -61,12 +61,28 @@ class EnvConfigLoader(IConfigLoader):
             load_dotenv()
 
         return {
+            # Legacy keys for backward compatibility
             "binance_api_key": os.getenv("BINANCE_API_KEY"),
             "binance_secret_key": os.getenv("BINANCE_SECRET_KEY"),
+
+            # Mainnet API credentials
+            "binance_mainnet_api_key": os.getenv("BINANCE_MAINNET_API_KEY"),
+            "binance_mainnet_secret_key": os.getenv("BINANCE_MAINNET_SECRET_KEY"),
+
+            # Testnet API credentials
+            "binance_testnet_api_key": os.getenv("BINANCE_TESTNET_API_KEY"),
+            "binance_testnet_secret_key": os.getenv("BINANCE_TESTNET_SECRET_KEY"),
+
+            # Network selection
+            "binance_testnet": os.getenv("BINANCE_TESTNET", "true"),
+            "binance_mainnet_base_url": os.getenv("BINANCE_MAINNET_BASE_URL", "https://api.binance.com/api"),
+            "binance_testnet_base_url": os.getenv("BINANCE_TESTNET_BASE_URL", "https://testnet.binance.vision/api"),
+
+            # Other configuration
             "discord_webhook_url": os.getenv("DISCORD_WEBHOOK_URL"),
             "log_level": os.getenv("LOG_LEVEL", "INFO"),
             "trading_mode": os.getenv("TRADING_MODE", "paper"),
-            "max_position_size": float(os.getenv("MAX_POSITION_SIZE", "0.1")),
+            "max_position_size": float(os.getenv("MAX_POSITION_SIZE", "1000.0")),
             "risk_percentage": float(os.getenv("RISK_PERCENTAGE", "2.0")),
         }
 
@@ -177,19 +193,54 @@ class ConfigManager:
         """
         Get API credentials for trading exchanges.
 
+        Dynamically selects between mainnet and testnet credentials
+        based on BINANCE_TESTNET configuration.
+
         Returns:
-            Dict[str, str]: API credentials
+            Dict[str, str]: API credentials with network info
+                - api_key: The API key
+                - secret_key: The secret key
+                - network: 'testnet' or 'mainnet'
+                - base_url: The appropriate base URL
 
         Raises:
             ConfigurationError: If credentials are missing
         """
-        api_key = self.get_config_value("binance_api_key")
-        secret_key = self.get_config_value("binance_secret_key")
+        # Check if we should use testnet or mainnet
+        is_testnet = self.get_config_value("binance_testnet", "true").lower() == "true"
+
+        if is_testnet:
+            # Use testnet credentials
+            api_key = self.get_config_value("binance_testnet_api_key")
+            secret_key = self.get_config_value("binance_testnet_secret_key")
+            base_url = self.get_config_value("binance_testnet_base_url", "https://testnet.binance.vision/api")
+            network = "testnet"
+        else:
+            # Use mainnet credentials
+            api_key = self.get_config_value("binance_mainnet_api_key")
+            secret_key = self.get_config_value("binance_mainnet_secret_key")
+            base_url = self.get_config_value("binance_mainnet_base_url", "https://api.binance.com/api")
+            network = "mainnet"
+
+        # Fallback to legacy environment variables if new ones are not set
+        if not api_key or not secret_key:
+            api_key = self.get_config_value("binance_api_key")
+            secret_key = self.get_config_value("binance_secret_key")
+            network = "legacy"
+            base_url = "https://testnet.binance.vision/api" if is_testnet else "https://api.binance.com/api"
 
         if not api_key or not secret_key:
-            raise ConfigurationError("Binance API credentials are missing")
+            raise ConfigurationError(
+                f"Binance {network} API credentials are missing. "
+                f"Please set BINANCE_{network.upper()}_API_KEY and BINANCE_{network.upper()}_SECRET_KEY"
+            )
 
-        return {"api_key": api_key, "secret_key": secret_key}
+        return {
+            "api_key": api_key,
+            "secret_key": secret_key,
+            "network": network,
+            "base_url": base_url
+        }
 
     def get_notification_config(self) -> Dict[str, str]:
         """

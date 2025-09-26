@@ -202,7 +202,8 @@ class BinanceClient(IExchangeClient):
             credentials = self._config_manager.get_api_credentials()
             trading_config = self._config_manager.get_trading_config()
 
-            self._is_testnet = trading_config.get("trading_mode") == "paper"
+            # Use network setting from credentials, not trading mode
+            self._is_testnet = credentials["network"] == "testnet"
 
             self._client = Client(
                 api_key=credentials["api_key"],

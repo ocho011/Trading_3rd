@@ -672,11 +672,77 @@
             "testStrategy": ""
           }
         ]
+      },
+      {
+        "id": 11,
+        "title": "Trading Bot Paper Trading and Performance Validation",
+        "description": "Run the fully integrated trading bot in paper trading mode on the mainnet to validate system stability, analyze signal quality, and measure overall strategy performance across diverse market conditions.",
+        "details": "This task involves setting up a long-running paper trading session and creating tools to analyze the results. 1. **Configuration Setup**: Create a new configuration file, `config/paper_mainnet.yml`, that sets `paper_trading: true` in the `ExecutionEngine` and uses mainnet API endpoints. This ensures no real funds are at risk. 2. **Performance Logging Module**: Create a new module `analysis/performance_logger.py`. The `PerformanceLogger` class will subscribe to `ORDER_FILLED` events from the `EventHub`. For each closed trade, it will log a structured record to a CSV file (`trades.csv`) containing: `timestamp`, `symbol`, `direction`, `entry_price`, `exit_price`, `size`, `pnl`, `entry_reason`, `exit_reason`. 3. **Portfolio Snapshot Logging**: Enhance the `PortfolioManager` in `trading/portfolio_manager.py` to publish a `PORTFOLIO_SNAPSHOT` event every hour. The `PerformanceLogger` will also subscribe to this event and log the `timestamp`, `total_balance`, `unrealized_pnl`, and `open_positions_count` to a separate file (`portfolio_history.csv`). 4. **Stability Monitoring**: In `main.py`, implement a 'heartbeat' mechanism that publishes a `SYSTEM_HEARTBEAT` event every hour. The `DiscordNotifier` will subscribe to this and send a 'System OK' message to Discord, confirming the bot is running. Also, ensure the `WebSocketManager`'s reconnection logic publishes a `WEBSOCKET_RECONNECTED` event, which the `DiscordNotifier` will report. 5. **Analysis Script**: Create a Jupyter Notebook or Python script `analysis/analyzer.ipynb`. This script will use pandas, matplotlib, and quantstats to load data from `trades.csv` and `portfolio_history.csv`. It will generate a performance report including: an equity curve, max drawdown, Sharpe ratio, win/loss ratio, profit factor, and trade distribution analysis.",
+        "testStrategy": "1. **Deployment**: Run the bot using `python trading_bot/main.py --config config/paper_mainnet.yml` on a stable server (e.g., a cloud VM) for an extended period (e.g., 1-2 weeks) to capture data from various market phases. 2. **Real-time Monitoring**: Actively monitor the dedicated Discord channel for trade notifications, error alerts, and hourly heartbeat messages to ensure system uptime and responsiveness. 3. **Data Verification**: Periodically check that the `trades.csv` and `portfolio_history.csv` files are being populated correctly with new data. 4. **Post-Mortem Analysis**: After the testing period concludes, execute the `analysis/analyzer.ipynb` notebook. Review the generated performance report and visualizations. 5. **Strategy Evaluation**: Analyze the results to identify strengths and weaknesses. For example, check if the strategy underperforms in specific volatility regimes or times of day. The outcome of this test will be a data-driven decision on whether to refine the strategy, fix stability issues, or proceed towards live deployment.",
+        "status": "pending",
+        "dependencies": [
+          10
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create Paper Trading Configuration and Simulate Fills in Execution Engine",
+            "description": "Create a new configuration file for mainnet paper trading and modify the Execution Engine to simulate order fills when paper trading is enabled, ensuring no real funds are used.",
+            "dependencies": [],
+            "details": "Create a new file `config/paper_mainnet.yml`. This file should inherit from the default configuration but override settings for the `ExecutionEngine` to set `paper_trading: true` and use mainnet API endpoints. Then, modify `trading_bot/execution/execution_engine.py`. In the `execute_order` method, add a conditional check for the `paper_trading` flag. If true, the engine should bypass the actual API call to the exchange, simulate a successful order fill (e.g., at the current market price), and publish the corresponding `ORDER_FILLED` event to the EventHub, mimicking the behavior of a live trade.",
+            "status": "pending",
+            "testStrategy": "Run the bot with the new `--config config/paper_mainnet.yml`. Place a test order manually or via a strategy signal. Verify that no order appears on the exchange. Check the application logs and EventHub (if monitored) to confirm that an `ORDER_FILLED` event was published with simulated fill data."
+          },
+          {
+            "id": 2,
+            "title": "Implement System Stability Monitoring and Alerts",
+            "description": "Enhance system monitoring by implementing a heartbeat mechanism and WebSocket reconnection alerts, with notifications sent to Discord to confirm the bot's operational status during long-running sessions.",
+            "dependencies": [],
+            "details": "In `trading_bot/main.py`, implement a background async task that publishes a `SYSTEM_HEARTBEAT` event to the `EventHub` every hour. In `trading_bot/market_data/websocket_manager.py`, locate the reconnection logic and ensure it publishes a `WEBSOCKET_RECONNECTED` event upon successfully re-establishing a connection. Update `trading_bot/notification/discord_notifier.py` to subscribe to both `SYSTEM_HEARTBEAT` and `WEBSOCKET_RECONNECTED` events and send appropriately formatted status messages to the configured Discord channel.",
+            "status": "pending",
+            "testStrategy": "Run the bot. Verify that a 'System OK' message appears in Discord after one hour. Manually disconnect and reconnect the network to trigger the WebSocket reconnection logic and verify that a 'WebSocket Reconnected' alert is sent to Discord."
+          },
+          {
+            "id": 3,
+            "title": "Create Performance Logger for Trade Execution",
+            "description": "Create a new `PerformanceLogger` module that subscribes to filled order events and logs the details of each completed trade to a `trades.csv` file for later analysis.",
+            "dependencies": [
+              "11.1"
+            ],
+            "details": "Create a new file `trading_bot/analysis/performance_logger.py`. Inside, define a `PerformanceLogger` class. This class will subscribe to the `ORDER_FILLED` event on the `EventHub`. Upon receiving an event, it will process the payload to extract and structure data for a closed trade, including `timestamp`, `symbol`, `direction`, `entry_price`, `exit_price`, `size`, `pnl`, `entry_reason`, and `exit_reason`. This structured record will be appended as a new row to a CSV file named `trades.csv`. Instantiate this logger in `trading_bot/main.py` so it runs as part of the main application.",
+            "status": "pending",
+            "testStrategy": "With the paper trading mode active, trigger a few trades. After the session, inspect the generated `trades.csv` file. Verify that it contains the correct headers and that each row accurately reflects the data from the `ORDER_FILLED` events."
+          },
+          {
+            "id": 4,
+            "title": "Add Hourly Portfolio Snapshot Logging",
+            "description": "Enhance the `PortfolioManager` to publish hourly portfolio snapshots and update the `PerformanceLogger` to subscribe to and log this data to a separate `portfolio_history.csv` file.",
+            "dependencies": [
+              "11.3"
+            ],
+            "details": "Modify `trading_bot/trading/portfolio_manager.py`. Add a new background task that runs on an hourly timer. In each iteration, this task will gather the current portfolio state (`total_balance`, `unrealized_pnl`, `open_positions_count`) and publish it to the `EventHub` under a new `PORTFOLIO_SNAPSHOT` event topic. Then, enhance the `PerformanceLogger` in `trading_bot/analysis/performance_logger.py` to also subscribe to this new `PORTFOLIO_SNAPSHOT` event. When the event is received, the logger will write the `timestamp`, `total_balance`, `unrealized_pnl`, and `open_positions_count` to a new file, `portfolio_history.csv`.",
+            "status": "pending",
+            "testStrategy": "Run the bot for over an hour. Check for the creation of `portfolio_history.csv`. Verify that the file contains at least one entry with the correct headers and data reflecting the portfolio's state at that time."
+          },
+          {
+            "id": 5,
+            "title": "Develop Performance Analysis Script",
+            "description": "Create a Jupyter Notebook or Python script to load and analyze the data from `trades.csv` and `portfolio_history.csv`, generating a comprehensive performance report with metrics and visualizations.",
+            "dependencies": [
+              "11.3",
+              "11.4"
+            ],
+            "details": "Create a new analysis script, `analysis/analyzer.ipynb`. This notebook will use the pandas library to load the `trades.csv` and `portfolio_history.csv` files into DataFrames. It will then leverage analysis libraries such as `matplotlib`, `seaborn`, and `quantstats` to process the data. The script must generate and display an equity curve, max drawdown, Sharpe ratio, win/loss ratio, profit factor, and various charts for trade distribution analysis (e.g., PnL by symbol, trades per day).",
+            "status": "pending",
+            "testStrategy": "Populate `trades.csv` and `portfolio_history.csv` with sample data covering wins, losses, and open positions. Run the `analysis/analyzer.ipynb` script. Verify that all calculations are correct and that all specified charts and metrics are generated without errors."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-09-21T14:07:37.892Z",
-      "updated": "2025-09-25T22:00:11.186Z",
+      "updated": "2025-09-26T18:39:19.950Z",
       "description": "Tasks for master context"
     }
   }
