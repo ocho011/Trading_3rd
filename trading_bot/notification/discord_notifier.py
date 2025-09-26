@@ -615,6 +615,8 @@ class DiscordNotifier(IDiscordNotifier):
                 EventType.CONNECTION_RESTORED: self._handle_connection_event_async,
                 EventType.TRADING_SIGNAL_GENERATED: self._handle_trading_signal_async,
                 EventType.RISK_LIMIT_EXCEEDED: self._handle_risk_limit_exceeded_async,
+                EventType.SYSTEM_HEARTBEAT: self._handle_system_heartbeat_async,
+                EventType.WEBSOCKET_RECONNECTED: self._handle_websocket_reconnected_async,
             }
 
             # Subscribe to each event type
@@ -810,6 +812,103 @@ class DiscordNotifier(IDiscordNotifier):
 
         except Exception as e:
             self._logger.error(f"Failed to handle RISK_LIMIT_EXCEEDED event: {e}")
+
+    async def _handle_system_heartbeat_async(self, event_data: Dict[str, Any]) -> None:
+        """
+        Handle SYSTEM_HEARTBEAT events and send Discord notifications.
+
+        Args:
+            event_data: Event payload containing system status information
+        """
+        try:
+            # Only send heartbeat notifications if there are issues or on specific intervals
+            status = event_data.get("status", "unknown")
+            uptime_seconds = event_data.get("uptime_seconds", 0)
+            uptime_hours = uptime_seconds / 3600
+
+            # Send notification for system issues or every 24 hours
+            should_notify = (
+                status != "healthy" or
+                uptime_hours > 0 and uptime_hours % 24 < 1  # Every 24 hours
+            )
+
+            if should_notify:
+                embed = {
+                    "title": f"🔔 System Heartbeat - {status.title()}",
+                    "color": 0x00FF00 if status == "healthy" else 0xFFFF00,
+                    "fields": [
+                        {"name": "Status", "value": status.title(), "inline": True},
+                        {"name": "Uptime", "value": f"{uptime_hours:.1f} hours", "inline": True},
+                        {"name": "Components", "value": f"{len(event_data.get('components', {}))}", "inline": True},
+                    ],
+                    "timestamp": event_data.get("timestamp", ""),
+                }
+
+                # Add component status if there are issues
+                components = event_data.get("components", {})
+                if components and status != "healthy":
+                    component_status = []
+                    for comp, comp_status in components.items():
+                        status_emoji = "✅" if comp_status else "❌"
+                        component_status.append(f"{status_emoji} {comp}")
+
+                    embed["fields"].append({
+                        "name": "Component Status",
+                        "value": "\n".join(component_status),
+                        "inline": False
+                    })
+
+                content = f"🔔 System heartbeat: {status} (Uptime: {uptime_hours:.1f}h)"
+                await self._send_formatted_message_async(
+                    content=content, embeds=[embed], username="Trading Bot - System Monitor"
+                )
+
+            self._logger.debug("Successfully processed SYSTEM_HEARTBEAT event")
+
+        except Exception as e:
+            self._logger.error(f"Failed to handle SYSTEM_HEARTBEAT event: {e}")
+
+    async def _handle_websocket_reconnected_async(self, event_data: Dict[str, Any]) -> None:
+        """
+        Handle WEBSOCKET_RECONNECTED events and send Discord notifications.
+
+        Args:
+            event_data: Event payload containing reconnection information
+        """
+        try:
+            symbol = event_data.get("symbol", "UNKNOWN")
+            retry_attempts = event_data.get("retry_attempts", 0)
+            connection_state = event_data.get("connection_state", "unknown")
+
+            embed = {
+                "title": f"🔄 WebSocket Reconnected - {symbol}",
+                "color": 0x00FF00,  # Green for successful reconnection
+                "fields": [
+                    {"name": "Symbol", "value": symbol, "inline": True},
+                    {"name": "Retry Attempts", "value": str(retry_attempts), "inline": True},
+                    {"name": "State", "value": connection_state.title(), "inline": True},
+                ],
+                "timestamp": event_data.get("timestamp", ""),
+            }
+
+            # Add stream information if available
+            streams = event_data.get("subscribed_streams", [])
+            if streams:
+                embed["fields"].append({
+                    "name": "Active Streams",
+                    "value": "\n".join(streams),
+                    "inline": False
+                })
+
+            content = f"🔄 WebSocket reconnected for {symbol} after {retry_attempts} attempts"
+            await self._send_formatted_message_async(
+                content=content, embeds=[embed], username="Trading Bot - Connection Monitor"
+            )
+
+            self._logger.debug("Successfully sent WEBSOCKET_RECONNECTED notification to Discord")
+
+        except Exception as e:
+            self._logger.error(f"Failed to handle WEBSOCKET_RECONNECTED event: {e}")
 
     async def _send_formatted_message_async(
         self,

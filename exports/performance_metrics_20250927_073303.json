@@ -1,0 +1,32 @@
+{
+  "generated_at": "2025-09-27T07:33:03.777194",
+  "basic_metrics": {
+    "total_trades": 150,
+    "winning_trades": 74,
+    "losing_trades": 76,
+    "win_rate": 49.333333333333336,
+    "total_pnl": -4118.324499999999,
+    "gross_pnl": -2346.528199999999,
+    "total_fees": 1771.7963,
+    "avg_win": 231.18115675675668,
+    "avg_loss": -279.2859223684211,
+    "largest_win": 1365.4446,
+    "largest_loss": -2076.981,
+    "profit_factor": 0.805974895534924,
+    "expectancy": -27.45549666666672
+  },
+  "portfolio_metrics": {
+    "starting_balance": 9712.56,
+    "ending_balance": 5370.4,
+    "total_return": -44.706647886859905,
+    "annualized_return": -99.94229304954838,
+    "volatility": 37.99241072153051,
+    "days_tracked": 29
+  },
+  "drawdown_metrics": {
+    "max_drawdown": -62.74620267603831,
+    "max_drawdown_date": "2025-11-06 23:54:34.143211",
+    "avg_drawdown": -27.966135404993658
+  },
+  "sharpe_ratio": -0.6398372260857992
+}

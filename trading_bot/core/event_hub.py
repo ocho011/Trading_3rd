@@ -44,13 +44,16 @@ class EventType:
     RISK_LIMIT_EXCEEDED: str = "risk_limit_exceeded"
     POSITION_SIZE_WARNING: str = "position_size_warning"
     PORTFOLIO_REBALANCE: str = "portfolio_rebalance"
+    PORTFOLIO_SNAPSHOT: str = "portfolio_snapshot"
 
     # System events
     SYSTEM_STARTUP: str = "system_startup"
     SYSTEM_SHUTDOWN: str = "system_shutdown"
+    SYSTEM_HEARTBEAT: str = "system_heartbeat"
     ERROR_OCCURRED: str = "error_occurred"
     CONNECTION_LOST: str = "connection_lost"
     CONNECTION_RESTORED: str = "connection_restored"
+    WEBSOCKET_RECONNECTED: str = "websocket_reconnected"
 
 
 class EventHubInterface(ABC):

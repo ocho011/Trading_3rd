@@ -11,6 +11,7 @@ import logging
 import os
 import signal
 import sys
+import time
 from decimal import Decimal
 from typing import List, Optional
 
@@ -44,6 +45,7 @@ from trading_bot.portfolio_manager.portfolio_manager import (
 from trading_bot.risk_management.risk_manager import RiskManager, RiskManagerConfig
 from trading_bot.strategies.base_strategy import StrategyConfiguration
 from trading_bot.strategies.ict_strategy import ICTStrategy
+from trading_bot.analysis.performance_logger import PerformanceLogger, create_performance_logger
 
 
 class ComponentInitializationError(Exception):
@@ -84,6 +86,9 @@ class TradingBotApplication:
         self._discord_notifier: Optional[DiscordNotifier] = None
         self._trading_modules_initialized = False
 
+        # Performance logging (Task 11.3)
+        self._performance_logger: Optional[PerformanceLogger] = None
+
         # WebSocket manager (Task 10.4)
         self._websocket_manager: Optional[BinanceWebSocketManager] = None
         self._websocket_initialized = False
@@ -91,6 +96,7 @@ class TradingBotApplication:
         # Async loop management
         self._running = False
         self._shutdown_event = asyncio.Event()
+        self._heartbeat_task: Optional[asyncio.Task] = None
 
     def initialize_core_components(self) -> None:
         """
@@ -334,6 +340,7 @@ class TradingBotApplication:
             self._initialize_execution_engine()
             self._initialize_portfolio_manager()
             self._initialize_discord_notifier()
+            self._initialize_performance_logger()
 
             # Mark trading modules as initialized
             self._trading_modules_initialized = True
@@ -360,6 +367,7 @@ class TradingBotApplication:
                         "ExecutionEngine",
                         "PortfolioManager",
                         "DiscordNotifier",
+                        "PerformanceLogger",
                         "WebSocketManager",
                     ],
                 },
@@ -546,6 +554,28 @@ class TradingBotApplication:
             self._logger.warning(f"DiscordNotifier initialization failed: {e}")
             self._logger.warning("Continuing without Discord notifications")
             self._discord_notifier = None
+
+    def _initialize_performance_logger(self) -> None:
+        """Initialize performance logger for trade execution tracking."""
+        try:
+            if not self._event_hub:
+                msg = "EventHub must be initialized before PerformanceLogger"
+                raise ComponentInitializationError(msg)
+
+            # Create performance logger with default settings
+            self._performance_logger = create_performance_logger(
+                event_hub=self._event_hub,
+                log_directory="logs",
+                csv_filename="trades.csv"
+            )
+
+            self._logger.info("✓ PerformanceLogger: Initialized and subscribed to ORDER_FILLED events")
+
+        except Exception as e:
+            # Don't fail the entire system if performance logging fails
+            self._logger.warning(f"PerformanceLogger initialization failed: {e}")
+            self._logger.warning("Continuing without performance logging")
+            self._performance_logger = None
 
     def _initialize_websocket_manager(self) -> None:
         """Initialize WebSocket manager for real-time market data streaming.
@@ -1029,6 +1059,56 @@ class TradingBotApplication:
         """
         return self._websocket_initialized
 
+    async def _system_heartbeat_loop(self) -> None:
+        """
+        Background task that publishes system heartbeat events every hour.
+
+        This method runs continuously while the application is active,
+        sending SYSTEM_HEARTBEAT events to indicate the system is running normally.
+        """
+        if not self._logger or not self._event_hub:
+            return
+
+        self._logger.info("System heartbeat monitoring started (1-hour intervals)")
+
+        while self._running and not self._shutdown_event.is_set():
+            try:
+                # Wait for 1 hour (3600 seconds) between heartbeats
+                await asyncio.wait_for(
+                    self._shutdown_event.wait(),
+                    timeout=3600.0  # 1 hour
+                )
+                # If we reach here, shutdown was requested
+                break
+
+            except asyncio.TimeoutError:
+                # Timeout is expected - this means 1 hour has passed
+                if self._running and not self._shutdown_event.is_set():
+                    # Publish heartbeat event
+                    heartbeat_data = {
+                        "timestamp": int(time.time()),
+                        "uptime_hours": int((time.time() - self._start_time) / 3600) if hasattr(self, '_start_time') else 0,
+                        "components_status": {
+                            "core_initialized": self._is_initialized,
+                            "trading_modules_initialized": self._trading_modules_initialized,
+                            "websocket_connected": bool(
+                                self._websocket_manager
+                                and hasattr(self._websocket_manager, 'is_connected')
+                                and self._websocket_manager.is_connected()
+                            )
+                        }
+                    }
+
+                    self._event_hub.publish(EventType.SYSTEM_HEARTBEAT, heartbeat_data)
+                    self._logger.info("System heartbeat published - all systems operational")
+
+            except Exception as e:
+                self._logger.error(f"Error in heartbeat loop: {e}")
+                # Continue running even if there's an error
+                await asyncio.sleep(60)  # Wait 1 minute before retrying
+
+        self._logger.info("System heartbeat monitoring stopped")
+
     def shutdown(self) -> None:
         """
         Gracefully shutdown the application.
@@ -1152,10 +1232,16 @@ class TradingBotApplication:
             )
 
         self._running = True
+        self._start_time = time.time()  # Track application start time
         self._logger.info("=== Starting Trading Bot Async Mode ===")
 
         # Setup signal handlers for graceful shutdown
         self._setup_signal_handlers()
+
+        # Start system heartbeat monitoring
+        if self._event_hub:
+            self._heartbeat_task = asyncio.create_task(self._system_heartbeat_loop())
+            self._logger.info("System heartbeat monitoring task started")
 
         try:
             # Start WebSocket connection if available
@@ -1262,6 +1348,16 @@ class TradingBotApplication:
         self._logger.info("Performing async cleanup...")
 
         try:
+            # Stop heartbeat monitoring task
+            if self._heartbeat_task and not self._heartbeat_task.done():
+                self._logger.info("Stopping heartbeat monitoring task...")
+                self._heartbeat_task.cancel()
+                try:
+                    await self._heartbeat_task
+                except asyncio.CancelledError:
+                    self._logger.info("✓ Heartbeat monitoring task stopped")
+                except Exception as e:
+                    self._logger.warning(f"Heartbeat task shutdown warning: {e}")
             # Stop WebSocket connection if active
             if (
                 self._websocket_manager

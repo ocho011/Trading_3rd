@@ -9,7 +9,19 @@
       "mcp__task-master-ai__set_task_status",
       "Bash(find:*)",
       "SlashCommand(/sc:task:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(PYTHONPATH=. python3 dev-files/test_paper_trading.py)",
+      "mcp__task-master-ai__get_task",
+      "Bash(python3:*)",
+      "mcp__task-master-ai__update_subtask",
+      "Bash(PYTHONPATH=. python3 dev-files/test_system_monitoring.py)",
+      "mcp__task-master-ai__next_task",
+      "Bash(PYTHONPATH=. python3 dev-files/test_performance_logging.py)",
+      "Bash(python test:*)",
+      "Bash(grep:*)",
+      "Bash(pip3 install:*)"
     ],
     "deny": [],
     "ask": []

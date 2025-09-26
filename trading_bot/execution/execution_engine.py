@@ -8,6 +8,7 @@ order requests, and preparing them for execution via the BinanceClient.
 
 import asyncio
 import time
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -1058,6 +1059,10 @@ class ExecutionEngine(IExecutionEngine):
             ExecutionEngineError: If order type is unsupported
             BinanceError: If order execution fails
         """
+        # Check if paper trading mode is enabled
+        if self._config.paper_trading:
+            return await self._simulate_paper_order(order_type, binance_params)
+
         if order_type == OrderType.MARKET:
             return self._binance_client.place_market_order(
                 symbol=binance_params["symbol"],
@@ -1073,6 +1078,84 @@ class ExecutionEngine(IExecutionEngine):
             )
         else:
             raise ExecutionEngineError(f"Unsupported order type: {order_type}")
+
+    async def _simulate_paper_order(
+        self, order_type: OrderType, binance_params: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Simulate order execution for paper trading mode.
+
+        Args:
+            order_type: Type of order to simulate
+            binance_params: Order parameters
+
+        Returns:
+            Simulated Binance order response
+
+        Raises:
+            ExecutionEngineError: If simulation fails
+        """
+        import time
+        import uuid
+        from decimal import Decimal
+
+        try:
+            symbol = binance_params["symbol"]
+            side = binance_params["side"]
+            quantity = binance_params["quantity"]
+
+            # Get current market price for simulation
+            ticker = self._binance_client.get_symbol_ticker(symbol)
+            current_price = float(ticker.get("price", 0)) if ticker else 0
+            if not current_price:
+                raise ExecutionEngineError(f"Cannot get current price for {symbol}")
+
+            # Simulate realistic order execution price
+            if order_type == OrderType.MARKET:
+                # Market orders get filled at current price with small slippage
+                slippage = 0.001  # 0.1% slippage simulation
+                if side == "BUY":
+                    execution_price = current_price * (1 + slippage)
+                else:
+                    execution_price = current_price * (1 - slippage)
+            else:  # LIMIT order
+                # Limit orders get filled at the specified price
+                execution_price = float(binance_params["price"])
+
+            # Generate simulated order response matching Binance format
+            simulated_response = {
+                "symbol": symbol,
+                "orderId": int(str(int(time.time()))[-10:]),  # Mock order ID
+                "orderListId": -1,
+                "clientOrderId": f"paper_{uuid.uuid4().hex[:16]}",
+                "transactTime": int(time.time() * 1000),
+                "price": str(execution_price),
+                "origQty": str(quantity),
+                "executedQty": str(quantity),  # Assume full fill for market orders
+                "cummulativeQuoteQty": str(float(quantity) * execution_price),
+                "status": "FILLED",
+                "timeInForce": "GTC",
+                "type": order_type.value,
+                "side": side,
+                "fills": [
+                    {
+                        "price": str(execution_price),
+                        "qty": str(quantity),
+                        "commission": "0.00075",  # Simulate 0.075% fee
+                        "commissionAsset": "USDT",
+                        "tradeId": int(str(int(time.time()))[-8:])
+                    }
+                ]
+            }
+
+            self._logger.info(
+                f"[PAPER] Simulated order: {symbol} {side} {quantity} @ {execution_price}"
+            )
+
+            return simulated_response
+
+        except Exception as e:
+            self._logger.error(f"Paper trading simulation failed: {e}")
+            raise ExecutionEngineError(f"Paper trading simulation error: {e}")
 
     def _process_order_response(
         self,

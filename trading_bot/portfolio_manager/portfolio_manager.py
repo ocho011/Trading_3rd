@@ -76,6 +76,8 @@ class PortfolioManagerConfig:
     max_position_age_hours: int = 24
     enable_portfolio_reporting: bool = True
     reporting_interval_minutes: int = 15
+    enable_hourly_snapshots: bool = True
+    snapshot_interval_minutes: int = 60
     commission_rate: Decimal = Decimal("0.001")
     base_currency: str = "USDT"
     enable_health_monitoring: bool = True
@@ -210,6 +212,7 @@ class PortfolioManager(IPortfolioManager):
         self._price_update_task: Optional[asyncio.Task] = None
         self._health_check_task: Optional[asyncio.Task] = None
         self._reporting_task: Optional[asyncio.Task] = None
+        self._snapshot_task: Optional[asyncio.Task] = None
         self._is_running = False
         self._last_sync_timestamp = 0
 
@@ -248,6 +251,9 @@ class PortfolioManager(IPortfolioManager):
             if self._config.enable_portfolio_reporting:
                 self._reporting_task = asyncio.create_task(self._reporting_loop())
 
+            if self._config.enable_hourly_snapshots:
+                self._snapshot_task = asyncio.create_task(self._snapshot_loop())
+
             # Publish startup event
             self._event_hub.publish(
                 EventType.SYSTEM_STARTUP,
@@ -278,6 +284,7 @@ class PortfolioManager(IPortfolioManager):
             self._price_update_task,
             self._health_check_task,
             self._reporting_task,
+            self._snapshot_task,
         ]
 
         for task in tasks_to_cancel:
@@ -686,6 +693,80 @@ class PortfolioManager(IPortfolioManager):
                 self._logger.error(f"Error in reporting loop: {e}")
                 await asyncio.sleep(300)  # Wait 5 minutes before retry
 
+    async def _snapshot_loop(self) -> None:
+        """Background task for hourly portfolio snapshot logging."""
+        while self._is_running:
+            try:
+                await asyncio.sleep(self._config.snapshot_interval_minutes * 60)
+                if self._is_running:
+                    # Create portfolio snapshot
+                    snapshot_data = self._create_portfolio_snapshot()
+
+                    # Publish portfolio snapshot event
+                    self._event_hub.publish(
+                        EventType.PORTFOLIO_SNAPSHOT,
+                        snapshot_data
+                    )
+
+                    self._logger.debug("Published hourly portfolio snapshot")
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self._logger.error(f"Error in snapshot loop: {e}")
+                await asyncio.sleep(300)  # Wait 5 minutes before retry
+
+    def _create_portfolio_snapshot(self) -> Dict[str, Any]:
+        """Create portfolio snapshot data.
+
+        Returns:
+            Dict containing timestamp, total_balance, unrealized_pnl, open_positions_count
+        """
+        try:
+            # Get current portfolio summary
+            portfolio_summary = self.get_portfolio_summary()
+
+            # Extract key metrics for snapshot
+            timestamp = int(time.time() * 1000)
+
+            # Get total balance (base currency equivalent)
+            total_balance = portfolio_summary.get("total_balance", 0)
+            if isinstance(total_balance, Decimal):
+                total_balance = float(total_balance)
+
+            # Get unrealized PnL from open positions
+            unrealized_pnl = portfolio_summary.get("unrealized_pnl", 0)
+            if isinstance(unrealized_pnl, Decimal):
+                unrealized_pnl = float(unrealized_pnl)
+
+            # Count open positions
+            open_positions = self.get_open_positions()
+            open_positions_count = len(open_positions)
+
+            snapshot_data = {
+                "timestamp": timestamp,
+                "total_balance": total_balance,
+                "unrealized_pnl": unrealized_pnl,
+                "open_positions_count": open_positions_count,
+                "base_currency": self._config.base_currency,
+                "snapshot_type": "hourly"
+            }
+
+            return snapshot_data
+
+        except Exception as e:
+            self._logger.error(f"Error creating portfolio snapshot: {e}")
+            # Return minimal snapshot data
+            return {
+                "timestamp": int(time.time() * 1000),
+                "total_balance": 0,
+                "unrealized_pnl": 0,
+                "open_positions_count": 0,
+                "base_currency": self._config.base_currency,
+                "snapshot_type": "hourly",
+                "error": str(e)
+            }
+
     def __str__(self) -> str:
         """String representation of portfolio manager."""
         return (
@@ -728,6 +809,8 @@ def create_portfolio_manager(
             commission_rate=Decimal(str(kwargs.get("commission_rate", "0.001"))),
             base_currency=kwargs.get("base_currency", "USDT"),
             enable_health_monitoring=kwargs.get("enable_health_monitoring", True),
+            enable_hourly_snapshots=kwargs.get("enable_hourly_snapshots", True),
+            snapshot_interval_minutes=kwargs.get("snapshot_interval_minutes", 60),
         )
 
         # Create portfolio manager

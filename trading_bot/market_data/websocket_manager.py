@@ -398,8 +398,24 @@ class BinanceWebSocketManager(IWebSocketManager):
 
         try:
             await self._connect_without_reconnection()
+
+            # Capture retry count before reset for event data
+            attempts_made = self._retry_count
             self._retry_count = 0  # Reset on successful connection
             self._last_connection_time = time.time()
+
+            # Publish WEBSOCKET_RECONNECTED event for system monitoring
+            reconnection_data = {
+                "timestamp": time.time(),
+                "symbol": self._symbol.upper(),
+                "retry_attempts": attempts_made,
+                "last_connection_time": self._last_connection_time,
+                "connection_state": self._connection_state.value,
+                "subscribed_streams": list(self._subscribed_streams)
+            }
+            self._event_hub.publish(EventType.WEBSOCKET_RECONNECTED, reconnection_data)
+            self._logger.info(f"WebSocket reconnected successfully after {attempts_made} attempts")
+
             return True
 
         except Exception as e:
