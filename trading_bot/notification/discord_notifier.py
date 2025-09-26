@@ -24,8 +24,6 @@ from trading_bot.notification.message_formatters import MessageFormatterFactory
 class DiscordNotificationError(Exception):
     """Custom exception for Discord notification related errors."""
 
-    pass
-
 
 class IHttpClient(ABC):
     """Interface for HTTP client implementations."""
@@ -45,7 +43,6 @@ class IHttpClient(ABC):
         Raises:
             DiscordNotificationError: If request fails
         """
-        pass
 
     @abstractmethod
     def post_sync(self, url: str, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -62,7 +59,6 @@ class IHttpClient(ABC):
         Raises:
             DiscordNotificationError: If request fails
         """
-        pass
 
 
 class DiscordHttpClient(IHttpClient):
@@ -204,22 +200,18 @@ class IDiscordNotifier(ABC):
     @abstractmethod
     async def send_message_async(self, message: str, **kwargs) -> bool:
         """Send message asynchronously."""
-        pass
 
     @abstractmethod
     def send_message_sync(self, message: str, **kwargs) -> bool:
         """Send message synchronously."""
-        pass
 
     @abstractmethod
     async def test_connection_async(self) -> bool:
         """Test Discord webhook connection asynchronously."""
-        pass
 
     @abstractmethod
     def test_connection_sync(self) -> bool:
         """Test Discord webhook connection synchronously."""
-        pass
 
 
 class DiscordNotifier(IDiscordNotifier):
@@ -597,11 +589,13 @@ class DiscordNotifier(IDiscordNotifier):
         """
         Subscribe to relevant EventHub events for Discord notifications.
 
-        This method registers the DiscordNotifier to listen for specific trading bot events
+        This method registers the DiscordNotifier to listen for specific
+        trading bot events
         and send formatted Discord notifications when they occur.
 
         Raises:
-            DiscordNotificationError: If EventHub is not configured or subscription fails
+            DiscordNotificationError: If EventHub is not configured or
+                subscription fails
         """
         if not self._event_hub:
             raise DiscordNotificationError(
@@ -720,9 +714,12 @@ class DiscordNotifier(IDiscordNotifier):
         except Exception as e:
             self._logger.error(f"Failed to handle ERROR_OCCURRED event: {e}")
 
-    async def _handle_connection_event_async(self, event_data: Dict[str, Any]) -> None:
+    async def _handle_connection_event_async(
+        self, event_data: Dict[str, Any]
+    ) -> None:
         """
-        Handle CONNECTION_LOST and CONNECTION_RESTORED events and send Discord notifications.
+        Handle CONNECTION_LOST and CONNECTION_RESTORED events and send
+        Discord notifications.
 
         Args:
             event_data: Event payload containing connection information
@@ -851,12 +848,14 @@ class DiscordNotifier(IDiscordNotifier):
         """
         Initialize Discord notifications by setting up EventHub subscriptions.
 
-        This is a convenience method that sets up all required subscriptions for
+        This is a convenience method that sets up all required
+        subscriptions for
         Discord notifications. It ensures the notifier is ready to receive and
         process trading bot events.
 
         Raises:
-            DiscordNotificationError: If EventHub is not configured or initialization fails
+            DiscordNotificationError: If EventHub is not configured or
+                initialization fails
         """
         if not self._event_hub:
             raise DiscordNotificationError(

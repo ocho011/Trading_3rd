@@ -5,16 +5,19 @@ Comprehensive test suite covering all functionality of the DiscordNotifier
 class including error handling, connection testing, and message sending.
 """
 
-import asyncio
 from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from trading_bot.core.config_manager import ConfigManager, IConfigLoader
 from trading_bot.notification.discord_notifier import (
-    DiscordHttpClient, DiscordNotificationError, DiscordNotifier, IHttpClient,
-    create_discord_notifier)
+    DiscordHttpClient,
+    DiscordNotificationError,
+    DiscordNotifier,
+    IHttpClient,
+    create_discord_notifier,
+)
 
 
 class MockConfigLoader(IConfigLoader):

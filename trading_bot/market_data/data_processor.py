@@ -20,25 +20,17 @@ from trading_bot.core.logger import get_module_logger
 class DataProcessingError(Exception):
     """Base exception for data processing errors."""
 
-    pass
-
 
 class InvalidDataError(DataProcessingError):
     """Exception raised for invalid or malformed data."""
-
-    pass
 
 
 class TimeframeError(DataProcessingError):
     """Exception raised for timeframe-related errors."""
 
-    pass
-
 
 class CandleAggregationError(DataProcessingError):
     """Exception raised for candle aggregation errors."""
-
-    pass
 
 
 class Timeframe(Enum):
@@ -157,12 +149,10 @@ class IMarketDataValidator(ABC):
     @abstractmethod
     def validate_raw_data(self, data: Dict[str, Any]) -> bool:
         """Validate raw market data format."""
-        pass
 
     @abstractmethod
     def validate_candle_data(self, candle: CandleData) -> bool:
         """Validate candle data integrity."""
-        pass
 
 
 class BinanceDataValidator(IMarketDataValidator):
@@ -233,17 +223,14 @@ class ICandleAggregator(ABC):
     @abstractmethod
     def update_candle(self, market_data: MarketData) -> Optional[CandleData]:
         """Update candle with new market data."""
-        pass
 
     @abstractmethod
     def get_current_candle(self, timeframe: Timeframe) -> Optional[CandleData]:
         """Get current incomplete candle for timeframe."""
-        pass
 
     @abstractmethod
     def get_completed_candles(self) -> List[CandleData]:
         """Get all completed candles since last call."""
-        pass
 
 
 class TimeframeCandleAggregator(ICandleAggregator):
@@ -401,17 +388,14 @@ class IMarketDataProcessor(ABC):
     @abstractmethod
     async def start(self) -> None:
         """Start data processing."""
-        pass
 
     @abstractmethod
     async def stop(self) -> None:
         """Stop data processing."""
-        pass
 
     @abstractmethod
     def process_market_data(self, event_data: Dict[str, Any]) -> None:
         """Process incoming market data event."""
-        pass
 
 
 class MarketDataProcessor(IMarketDataProcessor):

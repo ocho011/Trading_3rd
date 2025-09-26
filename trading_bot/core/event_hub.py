@@ -63,17 +63,14 @@ class EventHubInterface(ABC):
     @abstractmethod
     def subscribe(self, event_type: str, callback: Callable[[Any], None]) -> None:
         """Subscribe to an event type with a callback function."""
-        pass
 
     @abstractmethod
     def unsubscribe(self, event_type: str, callback: Callable[[Any], None]) -> None:
         """Unsubscribe from an event type."""
-        pass
 
     @abstractmethod
     def publish(self, event_type: str, data: Any) -> None:
         """Publish an event to all subscribers."""
-        pass
 
 
 class EventHub(EventHubInterface):

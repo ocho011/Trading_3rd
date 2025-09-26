@@ -2,7 +2,8 @@
 Stop-loss and take-profit level calculation module for trading bot risk management.
 
 This module provides comprehensive stop-loss and take-profit level calculations
-using multiple methodologies including fixed percentage, ATR-based, and volatility-adjusted
+using multiple methodologies including fixed percentage, ATR-based, and
+volatility-adjusted
 approaches. Follows SOLID principles and integrates with the event-driven architecture.
 """
 
@@ -19,19 +20,13 @@ from trading_bot.core.logger import get_module_logger
 class StopLossCalculationError(Exception):
     """Base exception for stop-loss calculation related errors."""
 
-    pass
-
 
 class InvalidStopLossConfigError(StopLossCalculationError):
     """Exception raised for invalid stop-loss configuration."""
 
-    pass
-
 
 class InvalidPriceLevelError(StopLossCalculationError):
     """Exception raised for invalid price level calculations."""
-
-    pass
 
 
 class StopLossMethod(Enum):
@@ -133,7 +128,8 @@ class StopLossConfig:
                     "Support/resistance method requires at least one level"
                 )
 
-        # Note: Volatility method can work with either config volatility or market data volatility
+        # Note: Volatility method can work with either config volatility or
+        # market data volatility
         # Validation happens during calculation, not configuration
 
 
@@ -290,7 +286,6 @@ class IStopLossCalculator(ABC):
         Raises:
             StopLossCalculationError: If calculation fails
         """
-        pass
 
     @abstractmethod
     def update_config(self, config: StopLossConfig) -> None:
@@ -302,13 +297,13 @@ class IStopLossCalculator(ABC):
         Raises:
             InvalidStopLossConfigError: If configuration is invalid
         """
-        pass
 
 
 class StopLossCalculator(IStopLossCalculator):
     """Comprehensive stop-loss and take-profit level calculator.
 
-    This class provides various stop-loss calculation methods including fixed percentage,
+    This class provides various stop-loss calculation methods including
+    fixed percentage,
     ATR-based, support/resistance, and volatility-adjusted approaches. It follows SOLID
     principles and integrates with the event-driven architecture.
 
@@ -580,7 +575,9 @@ class StopLossCalculator(IStopLossCalculator):
                 percentage_from_entry=percentage_from_entry,
                 distance_from_entry=target_distance,
                 level_type="take_profit",
-                calculation_method=f"risk_reward_ratio_{self._config.risk_reward_ratio}",
+                calculation_method=(
+                    f"risk_reward_ratio_{self._config.risk_reward_ratio}"
+                ),
                 confidence=0.9,
                 metadata={
                     "risk_reward_ratio": self._config.risk_reward_ratio,

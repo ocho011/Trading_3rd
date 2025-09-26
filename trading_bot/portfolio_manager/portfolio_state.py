@@ -2,7 +2,8 @@
 Portfolio state management module for comprehensive portfolio tracking.
 
 This module provides centralized portfolio state management with balance tracking,
-position aggregation, risk metrics, and performance analytics following SOLID principles.
+position aggregation, risk metrics, and performance analytics following
+SOLID principles.
 """
 
 import time
@@ -21,19 +22,13 @@ from trading_bot.portfolio_manager.position import (
 class PortfolioError(Exception):
     """Base exception for portfolio-related errors."""
 
-    pass
-
 
 class PortfolioStateError(PortfolioError):
     """Exception raised for portfolio state management errors."""
 
-    pass
-
 
 class InsufficientBalanceError(PortfolioError):
     """Exception raised when insufficient balance for operations."""
-
-    pass
 
 
 class PortfolioHealthStatus(Enum):

@@ -16,8 +16,6 @@ from typing import Dict, Optional
 class LogFormatterError(Exception):
     """Custom exception for log formatting errors."""
 
-    pass
-
 
 class ILogFormatter(ABC):
     """Interface for log formatting strategies."""
@@ -30,7 +28,6 @@ class ILogFormatter(ABC):
         Returns:
             logging.Formatter: Configured formatter instance
         """
-        pass
 
 
 class StandardLogFormatter(ILogFormatter):
@@ -91,7 +88,6 @@ class ILogHandler(ABC):
         Returns:
             logging.Handler: Configured handler instance
         """
-        pass
 
 
 class ConsoleLogHandler(ILogHandler):

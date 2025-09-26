@@ -143,32 +143,26 @@ class IMessageStorage(ABC):
     @abstractmethod
     def save_message(self, message: QueuedMessage) -> None:
         """Save message to storage."""
-        pass
 
     @abstractmethod
     def load_messages(self) -> List[QueuedMessage]:
         """Load all messages from storage."""
-        pass
 
     @abstractmethod
     def update_message(self, message: QueuedMessage) -> None:
         """Update existing message in storage."""
-        pass
 
     @abstractmethod
     def delete_message(self, message_id: str) -> None:
         """Delete message from storage."""
-        pass
 
     @abstractmethod
     def cleanup_old_messages(self, retention_hours: int) -> int:
         """Remove old messages. Returns count of deleted messages."""
-        pass
 
     @abstractmethod
     def close(self) -> None:
         """Close storage connection."""
-        pass
 
 
 class SqliteMessageStorage(IMessageStorage):
@@ -342,8 +336,9 @@ class SqliteMessageStorage(IMessageStorage):
                 return 0
 
     def close(self) -> None:
-        """Close database connection (no persistent connection in this implementation)."""
-        pass
+        """
+        Close database connection (no persistent connection in this implementation).
+        """
 
 
 class InMemoryMessageStorage(IMessageStorage):

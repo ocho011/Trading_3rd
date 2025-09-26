@@ -32,19 +32,13 @@ from trading_bot.strategies.ict_patterns import (
 class IctStrategyError(Exception):
     """Base exception for ICT strategy-specific errors."""
 
-    pass
-
 
 class IctConfigurationError(IctStrategyError):
     """Exception raised for ICT configuration errors."""
 
-    pass
-
 
 class IctSignalGenerationError(IctStrategyError):
     """Exception raised for ICT signal generation errors."""
-
-    pass
 
 
 @dataclass

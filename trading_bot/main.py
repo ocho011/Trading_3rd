@@ -14,20 +14,21 @@ import sys
 from decimal import Decimal
 from typing import List, Optional
 
-from trading_bot.core.config_manager import (ConfigManager, ConfigurationError,
-                                             create_config_manager)
+from trading_bot.core.config_manager import (
+    ConfigManager,
+    ConfigurationError,
+    create_config_manager,
+)
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.core.logger import create_trading_logger
+from trading_bot.execution.execution_engine import (
+    ExecutionEngine,
+    ExecutionEngineConfig,
+)
 
 # Trading module imports for Task 10.2
 from trading_bot.market_data.binance_client import BinanceClient
 from trading_bot.market_data.data_processor import MarketDataProcessor
-from trading_bot.strategies.ict_strategy import ICTStrategy
-from trading_bot.strategies.base_strategy import StrategyConfiguration
-from trading_bot.risk_management.risk_manager import RiskManager, RiskManagerConfig
-from trading_bot.execution.execution_engine import ExecutionEngine, ExecutionEngineConfig
-from trading_bot.portfolio_manager.portfolio_manager import PortfolioManager, PortfolioManagerConfig
-from trading_bot.notification.discord_notifier import DiscordNotifier
 
 # WebSocket manager imports for Task 10.4
 from trading_bot.market_data.websocket_manager import (
@@ -35,12 +36,18 @@ from trading_bot.market_data.websocket_manager import (
     WebSocketConnectionError,
     create_binance_websocket_manager,
 )
+from trading_bot.notification.discord_notifier import DiscordNotifier
+from trading_bot.portfolio_manager.portfolio_manager import (
+    PortfolioManager,
+    PortfolioManagerConfig,
+)
+from trading_bot.risk_management.risk_manager import RiskManager, RiskManagerConfig
+from trading_bot.strategies.base_strategy import StrategyConfiguration
+from trading_bot.strategies.ict_strategy import ICTStrategy
 
 
 class ComponentInitializationError(Exception):
     """Custom exception for component initialization failures."""
-
-    pass
 
 
 class TradingBotApplication:
@@ -139,9 +146,13 @@ class TradingBotApplication:
             self._validate_critical_configuration()
 
         except ConfigurationError as e:
-            raise ComponentInitializationError(f"ConfigManager initialization failed: {e}")
+            raise ComponentInitializationError(
+                f"ConfigManager initialization failed: {e}"
+            )
         except Exception as e:
-            raise ComponentInitializationError(f"Unexpected error initializing ConfigManager: {e}")
+            raise ComponentInitializationError(
+                f"Unexpected error initializing ConfigManager: {e}"
+            )
 
     def _initialize_event_hub(self) -> None:
         """
@@ -217,7 +228,9 @@ class TradingBotApplication:
         if not self._logger or not self._config_manager:
             return
 
-        self._logger.info("=== Trading Bot Core Components Initialized Successfully ===")
+        self._logger.info(
+            "=== Trading Bot Core Components Initialized Successfully ==="
+        )
 
         # Log ConfigManager status
         self._logger.info("✓ ConfigManager: Loaded and validated")
@@ -303,7 +316,9 @@ class TradingBotApplication:
             RuntimeError: If core components not initialized first
         """
         if not self._is_initialized:
-            raise RuntimeError("Core components must be initialized before trading modules")
+            raise RuntimeError(
+                "Core components must be initialized before trading modules"
+            )
 
         if not self._config_manager or not self._event_hub or not self._logger:
             raise RuntimeError("Core components not properly initialized")
@@ -365,7 +380,9 @@ class TradingBotApplication:
             self._logger.info("✓ BinanceClient: Initialized and connected")
         except Exception as e:
             self._logger.error(f"BinanceClient initialization failed: {e}")
-            raise ComponentInitializationError(f"BinanceClient initialization failed: {e}") from e
+            raise ComponentInitializationError(
+                f"BinanceClient initialization failed: {e}"
+            ) from e
 
     def _initialize_data_processor(self) -> None:
         """Initialize market data processor."""
@@ -381,15 +398,17 @@ class TradingBotApplication:
             self._logger.info("✓ DataProcessor: Initialized with default configuration")
         except Exception as e:
             self._logger.error(f"DataProcessor initialization failed: {e}")
-            raise ComponentInitializationError(f"DataProcessor initialization failed: {e}") from e
+            raise ComponentInitializationError(
+                f"DataProcessor initialization failed: {e}"
+            ) from e
 
     def _initialize_ict_strategy(self) -> None:
         """Initialize ICT trading strategy."""
         try:
             # Get default symbol and timeframe from environment or use defaults
-            trading_config = self._config_manager.get_trading_config()
-            default_symbol = os.environ.get('DEFAULT_SYMBOL', 'BTCUSDT')
-            default_timeframe = os.environ.get('DEFAULT_TIMEFRAME', '15m')
+            self._config_manager.get_trading_config()
+            default_symbol = os.environ.get("DEFAULT_SYMBOL", "BTCUSDT")
+            default_timeframe = os.environ.get("DEFAULT_TIMEFRAME", "15m")
 
             # Create strategy configuration with defaults
             strategy_config = StrategyConfiguration(
@@ -414,7 +433,9 @@ class TradingBotApplication:
             self._logger.info("✓ ICTStrategy: Initialized with default configuration")
         except Exception as e:
             self._logger.error(f"ICTStrategy initialization failed: {e}")
-            raise ComponentInitializationError(f"ICTStrategy initialization failed: {e}") from e
+            raise ComponentInitializationError(
+                f"ICTStrategy initialization failed: {e}"
+            ) from e
 
     def _initialize_risk_manager(self) -> None:
         """Initialize risk management system."""
@@ -442,7 +463,9 @@ class TradingBotApplication:
             self._logger.info("✓ RiskManager: Initialized with conservative defaults")
         except Exception as e:
             self._logger.error(f"RiskManager initialization failed: {e}")
-            raise ComponentInitializationError(f"RiskManager initialization failed: {e}") from e
+            raise ComponentInitializationError(
+                f"RiskManager initialization failed: {e}"
+            ) from e
 
     def _initialize_execution_engine(self) -> None:
         """Initialize order execution engine."""
@@ -467,10 +490,14 @@ class TradingBotApplication:
                 event_hub=self._event_hub,
                 binance_client=self._binance_client,
             )
-            self._logger.info("✓ ExecutionEngine: Initialized with default configuration")
+            self._logger.info(
+                "✓ ExecutionEngine: Initialized with default configuration"
+            )
         except Exception as e:
             self._logger.error(f"ExecutionEngine initialization failed: {e}")
-            raise ComponentInitializationError(f"ExecutionEngine initialization failed: {e}") from e
+            raise ComponentInitializationError(
+                f"ExecutionEngine initialization failed: {e}"
+            ) from e
 
     def _initialize_portfolio_manager(self) -> None:
         """Initialize portfolio management system."""
@@ -511,7 +538,9 @@ class TradingBotApplication:
                 event_hub=self._event_hub,
                 message_formatter_factory=None,  # Use default message formatter
             )
-            self._logger.info("✓ DiscordNotifier: Initialized with default configuration")
+            self._logger.info(
+                "✓ DiscordNotifier: Initialized with default configuration"
+            )
         except Exception as e:
             # Don't fail the entire system if Discord notifications fail
             self._logger.warning(f"DiscordNotifier initialization failed: {e}")
@@ -542,7 +571,9 @@ class TradingBotApplication:
             )
 
             self._websocket_initialized = True
-            self._logger.info(f"✓ WebSocketManager: Initialized for symbol {symbol.upper()}")
+            self._logger.info(
+                f"✓ WebSocketManager: Initialized for symbol {symbol.upper()}"
+            )
 
         except Exception as e:
             # Don't fail the entire system if WebSocket fails to initialize
@@ -557,8 +588,10 @@ class TradingBotApplication:
 
         Establishes the event flow architecture:
         1. WebSocketManager publishes MARKET_DATA_RECEIVED
-        2. DataProcessor subscribes to MARKET_DATA_RECEIVED, publishes CANDLE_DATA_PROCESSED
-        3. ICTStrategy subscribes to CANDLE_DATA_PROCESSED, publishes TRADING_SIGNAL_GENERATED
+        2. DataProcessor subscribes to MARKET_DATA_RECEIVED, publishes
+           CANDLE_DATA_PROCESSED
+        3. ICTStrategy subscribes to CANDLE_DATA_PROCESSED, publishes
+           TRADING_SIGNAL_GENERATED
         4. RiskManager subscribes to TRADING_SIGNAL_GENERATED,
            publishes ORDER_REQUEST_GENERATED
         5. ExecutionEngine subscribes to ORDER_REQUEST_GENERATED,
@@ -581,16 +614,23 @@ class TradingBotApplication:
             successful_subscriptions = []
 
             # 1. DataProcessor - manually subscribe to MARKET_DATA_RECEIVED
-            # (DataProcessor already subscribes in its constructor, but we verify it here)
+            # (DataProcessor already subscribes in its constructor,
+            # but we verify it here)
             if self._data_processor:
                 try:
-                    # DataProcessor constructor already handles this subscription
+                    # DataProcessor constructor already handles
+                    # this subscription
                     self._logger.info(
-                        "✓ DataProcessor: Already subscribed to MARKET_DATA_RECEIVED events"
+                        "✓ DataProcessor: Already subscribed to "
+                        "MARKET_DATA_RECEIVED events"
                     )
-                    successful_subscriptions.append("DataProcessor -> MARKET_DATA_RECEIVED")
+                    successful_subscriptions.append(
+                        "DataProcessor -> MARKET_DATA_RECEIVED"
+                    )
                 except Exception as e:
-                    self._logger.error(f"Failed to setup DataProcessor event subscription: {e}")
+                    self._logger.error(
+                        f"Failed to setup DataProcessor event subscription: {e}"
+                    )
                     raise ComponentInitializationError(
                         f"DataProcessor event subscription failed: {e}"
                     )
@@ -600,9 +640,13 @@ class TradingBotApplication:
                 try:
                     self._ict_strategy._subscribe_to_events()
                     self._logger.info("✓ ICTStrategy: Subscribed to trading events")
-                    successful_subscriptions.append("ICTStrategy -> CANDLE_DATA_PROCESSED")
+                    successful_subscriptions.append(
+                        "ICTStrategy -> CANDLE_DATA_PROCESSED"
+                    )
                 except Exception as e:
-                    self._logger.error(f"Failed to setup ICTStrategy event subscriptions: {e}")
+                    self._logger.error(
+                        f"Failed to setup ICTStrategy event subscriptions: {e}"
+                    )
                     raise ComponentInitializationError(
                         f"ICTStrategy event subscription failed: {e}"
                     )
@@ -612,20 +656,28 @@ class TradingBotApplication:
                 try:
                     # RiskManager constructor already handles event subscriptions
                     self._logger.info(
-                        "✓ RiskManager: Auto-subscribed to TRADING_SIGNAL_GENERATED events"
+                        "✓ RiskManager: Auto-subscribed to "
+                        "TRADING_SIGNAL_GENERATED events"
                     )
-                    successful_subscriptions.append("RiskManager -> TRADING_SIGNAL_GENERATED")
+                    successful_subscriptions.append(
+                        "RiskManager -> TRADING_SIGNAL_GENERATED"
+                    )
                 except Exception as e:
-                    self._logger.warning(f"RiskManager event subscription verification failed: {e}")
+                    self._logger.warning(
+                        f"RiskManager event subscription verification failed: {e}"
+                    )
 
             # 4. ExecutionEngine - automatic subscription in constructor
             if self._execution_engine:
                 try:
                     # ExecutionEngine constructor already handles event subscriptions
                     self._logger.info(
-                        "✓ ExecutionEngine: Auto-subscribed to ORDER_REQUEST_GENERATED events"
+                        "✓ ExecutionEngine: Auto-subscribed to "
+                        "ORDER_REQUEST_GENERATED events"
                     )
-                    successful_subscriptions.append("ExecutionEngine -> ORDER_REQUEST_GENERATED")
+                    successful_subscriptions.append(
+                        "ExecutionEngine -> ORDER_REQUEST_GENERATED"
+                    )
                 except Exception as e:
                     self._logger.warning(
                         f"ExecutionEngine event subscription verification failed: {e}"
@@ -635,7 +687,9 @@ class TradingBotApplication:
             if self._portfolio_manager:
                 try:
                     # PortfolioManager constructor already handles event subscriptions
-                    self._logger.info("✓ PortfolioManager: Auto-subscribed to ORDER_FILLED events")
+                    self._logger.info(
+                        "✓ PortfolioManager: Auto-subscribed to ORDER_FILLED events"
+                    )
                     successful_subscriptions.append("PortfolioManager -> ORDER_FILLED")
                 except Exception as e:
                     self._logger.warning(
@@ -646,18 +700,26 @@ class TradingBotApplication:
             if self._discord_notifier:
                 try:
                     self._discord_notifier.subscribe_to_events()
-                    self._logger.info("✓ DiscordNotifier: Subscribed to notification events")
-                    successful_subscriptions.extend([
-                        "DiscordNotifier -> ORDER_FILLED",
-                        "DiscordNotifier -> ERROR_OCCURRED",
-                        "DiscordNotifier -> CONNECTION_LOST",
-                        "DiscordNotifier -> TRADING_SIGNAL_GENERATED",
-                        "DiscordNotifier -> RISK_LIMIT_EXCEEDED"
-                    ])
+                    self._logger.info(
+                        "✓ DiscordNotifier: Subscribed to notification events"
+                    )
+                    successful_subscriptions.extend(
+                        [
+                            "DiscordNotifier -> ORDER_FILLED",
+                            "DiscordNotifier -> ERROR_OCCURRED",
+                            "DiscordNotifier -> CONNECTION_LOST",
+                            "DiscordNotifier -> TRADING_SIGNAL_GENERATED",
+                            "DiscordNotifier -> RISK_LIMIT_EXCEEDED",
+                        ]
+                    )
                 except Exception as e:
                     # Don't fail system if Discord notifications fail
-                    self._logger.warning(f"DiscordNotifier event subscription failed: {e}")
-                    self._logger.warning("Continuing without Discord notification events")
+                    self._logger.warning(
+                        f"DiscordNotifier event subscription failed: {e}"
+                    )
+                    self._logger.warning(
+                        "Continuing without Discord notification events"
+                    )
 
             # Log summary of established event subscriptions
             self._log_event_subscription_summary(successful_subscriptions)
@@ -670,7 +732,7 @@ class TradingBotApplication:
                     "event_subscriptions_setup": True,
                     "subscription_count": len(successful_subscriptions),
                     "subscriptions": successful_subscriptions,
-                }
+                },
             )
 
             self._logger.info("=== Event Subscriptions Setup Complete ===")
@@ -683,7 +745,9 @@ class TradingBotApplication:
             self._logger.error(error_msg)
             raise ComponentInitializationError(error_msg) from e
 
-    def _log_event_subscription_summary(self, successful_subscriptions: List[str]) -> None:
+    def _log_event_subscription_summary(
+        self, successful_subscriptions: List[str]
+    ) -> None:
         """
         Log summary of established event subscriptions.
 
@@ -694,11 +758,15 @@ class TradingBotApplication:
             return
 
         self._logger.info("=== Event Flow Architecture Established ===")
-        self._logger.info("Event flow: WebSocket -> DataProcessor -> ICTStrategy -> RiskManager")
+        self._logger.info(
+            "Event flow: WebSocket -> DataProcessor -> ICTStrategy -> RiskManager"
+        )
         self._logger.info("            -> ExecutionEngine -> PortfolioManager")
         self._logger.info("Notifications: DiscordNotifier listens to multiple events")
 
-        self._logger.info(f"Total event subscriptions established: {len(successful_subscriptions)}")
+        self._logger.info(
+            f"Total event subscriptions established: {len(successful_subscriptions)}"
+        )
 
         if successful_subscriptions:
             self._logger.info("Active event subscriptions:")
@@ -708,7 +776,9 @@ class TradingBotApplication:
         # Log event hub statistics
         if self._event_hub:
             try:
-                startup_count = self._event_hub.get_subscriber_count(EventType.SYSTEM_STARTUP)
+                startup_count = self._event_hub.get_subscriber_count(
+                    EventType.SYSTEM_STARTUP
+                )
                 market_data_count = self._event_hub.get_subscriber_count(
                     EventType.MARKET_DATA_RECEIVED
                 )
@@ -756,7 +826,10 @@ class TradingBotApplication:
             RuntimeError: If components not initialized
         """
         if not self._is_initialized or not self._config_manager:
-            msg = "Application not initialized. Call " "initialize_core_components() first."
+            msg = (
+                "Application not initialized. Call "
+                "initialize_core_components() first."
+            )
             raise RuntimeError(msg)
         return self._config_manager
 
@@ -771,7 +844,10 @@ class TradingBotApplication:
             RuntimeError: If components not initialized
         """
         if not self._is_initialized or not self._event_hub:
-            msg = "Application not initialized. Call " "initialize_core_components() first."
+            msg = (
+                "Application not initialized. Call "
+                "initialize_core_components() first."
+            )
             raise RuntimeError(msg)
         return self._event_hub
 
@@ -786,7 +862,10 @@ class TradingBotApplication:
             RuntimeError: If components not initialized
         """
         if not self._is_initialized or not self._logger:
-            msg = "Application not initialized. Call " "initialize_core_components() first."
+            msg = (
+                "Application not initialized. Call "
+                "initialize_core_components() first."
+            )
             raise RuntimeError(msg)
         return self._logger
 
@@ -819,7 +898,10 @@ class TradingBotApplication:
             RuntimeError: If trading modules not initialized
         """
         if not self._trading_modules_initialized or not self._binance_client:
-            msg = "Trading modules not initialized. Call initialize_trading_modules() first."
+            msg = (
+                "Trading modules not initialized. "
+                "Call initialize_trading_modules() first."
+            )
             raise RuntimeError(msg)
         return self._binance_client
 
@@ -834,7 +916,10 @@ class TradingBotApplication:
             RuntimeError: If trading modules not initialized
         """
         if not self._trading_modules_initialized or not self._data_processor:
-            msg = "Trading modules not initialized. Call initialize_trading_modules() first."
+            msg = (
+                "Trading modules not initialized. "
+                "Call initialize_trading_modules() first."
+            )
             raise RuntimeError(msg)
         return self._data_processor
 
@@ -849,7 +934,10 @@ class TradingBotApplication:
             RuntimeError: If trading modules not initialized
         """
         if not self._trading_modules_initialized or not self._ict_strategy:
-            msg = "Trading modules not initialized. Call initialize_trading_modules() first."
+            msg = (
+                "Trading modules not initialized. "
+                "Call initialize_trading_modules() first."
+            )
             raise RuntimeError(msg)
         return self._ict_strategy
 
@@ -864,7 +952,10 @@ class TradingBotApplication:
             RuntimeError: If trading modules not initialized
         """
         if not self._trading_modules_initialized or not self._risk_manager:
-            msg = "Trading modules not initialized. Call initialize_trading_modules() first."
+            msg = (
+                "Trading modules not initialized. "
+                "Call initialize_trading_modules() first."
+            )
             raise RuntimeError(msg)
         return self._risk_manager
 
@@ -879,7 +970,10 @@ class TradingBotApplication:
             RuntimeError: If trading modules not initialized
         """
         if not self._trading_modules_initialized or not self._execution_engine:
-            msg = "Trading modules not initialized. Call initialize_trading_modules() first."
+            msg = (
+                "Trading modules not initialized. "
+                "Call initialize_trading_modules() first."
+            )
             raise RuntimeError(msg)
         return self._execution_engine
 
@@ -894,7 +988,10 @@ class TradingBotApplication:
             RuntimeError: If trading modules not initialized
         """
         if not self._trading_modules_initialized or not self._portfolio_manager:
-            msg = "Trading modules not initialized. Call initialize_trading_modules() first."
+            msg = (
+                "Trading modules not initialized. "
+                "Call initialize_trading_modules() first."
+            )
             raise RuntimeError(msg)
         return self._portfolio_manager
 
@@ -915,7 +1012,8 @@ class TradingBotApplication:
         Get initialized WebSocketManager instance.
 
         Returns:
-            Optional[BinanceWebSocketManager]: Initialized WebSocket manager or None if failed
+            Optional[BinanceWebSocketManager]: Initialized WebSocket manager
+                or None if failed
 
         Note:
             WebSocket manager is optional and may be None if initialization failed
@@ -947,7 +1045,8 @@ class TradingBotApplication:
             # Publish shutdown event
             if self._event_hub:
                 self._event_hub.publish(
-                    EventType.SYSTEM_SHUTDOWN, {"timestamp": "now", "reason": "Graceful shutdown"}
+                    EventType.SYSTEM_SHUTDOWN,
+                    {"timestamp": "now", "reason": "Graceful shutdown"},
                 )
 
                 # Clear all event subscribers for clean shutdown
@@ -1048,7 +1147,8 @@ class TradingBotApplication:
         if not self._is_initialized or not self._trading_modules_initialized:
             raise RuntimeError(
                 "All components must be initialized before starting async mode. "
-                "Call initialize_core_components() and initialize_trading_modules() first."
+                "Call initialize_core_components() and "
+                "initialize_trading_modules() first."
             )
 
         self._running = True
@@ -1069,23 +1169,48 @@ class TradingBotApplication:
                     )
                 except WebSocketConnectionError as e:
                     self._logger.error(f"WebSocket connection failed: {e}")
-                    self._logger.warning("Continuing in async mode without WebSocket data")
+                    self._logger.warning(
+                        "Continuing in async mode without WebSocket data"
+                    )
                     # Don't raise - continue without WebSocket
                 except Exception as e:
                     self._logger.error(f"Unexpected WebSocket error: {e}")
-                    self._logger.warning("Continuing in async mode without WebSocket data")
+                    self._logger.warning(
+                        "Continuing in async mode without WebSocket data"
+                    )
             else:
-                self._logger.warning("WebSocket manager not initialized - no real-time data")
+                self._logger.warning(
+                    "WebSocket manager not initialized - no real-time data"
+                )
 
             # Log async mode startup complete
             self._logger.info("=== Trading Bot Async Mode Active ===")
             self._logger.info("System Status:")
-            self._logger.info(f"  • Core Components: {'✓' if self._is_initialized else '✗'}")
-            self._logger.info(f"  • Trading Modules: {'✓' if self._trading_modules_initialized else '✗'}")
-            ws_status = '✓' if (self._websocket_manager and hasattr(self._websocket_manager, 'is_connected') and self._websocket_manager.is_connected()) else '✗'
+            self._logger.info(
+                f"  • Core Components: {'✓' if self._is_initialized else '✗'}"
+            )
+            self._logger.info(
+                f"  • Trading Modules: "
+                f"{'✓' if self._trading_modules_initialized else '✗'}"
+            )
+            ws_status = (
+                "✓"
+                if (
+                    self._websocket_manager
+                    and hasattr(self._websocket_manager, "is_connected")
+                    and self._websocket_manager.is_connected()
+                )
+                else "✗"
+            )
             self._logger.info(f"  • WebSocket Connection: {ws_status}")
-            startup_count = self._event_hub.get_subscriber_count(EventType.SYSTEM_STARTUP) if self._event_hub else 0
-            self._logger.info(f"  • Event Subscriptions: {'✓' if startup_count > 0 else '✗'}")
+            startup_count = (
+                self._event_hub.get_subscriber_count(EventType.SYSTEM_STARTUP)
+                if self._event_hub
+                else 0
+            )
+            self._logger.info(
+                f"  • Event Subscriptions: {'✓' if startup_count > 0 else '✗'}"
+            )
 
             # Wait for shutdown signal
             self._logger.info("Trading bot running... Press Ctrl+C to stop")
@@ -1105,12 +1230,13 @@ class TradingBotApplication:
 
     def _setup_signal_handlers(self) -> None:
         """Set up signal handlers for graceful shutdown in async mode."""
-        import signal
 
-        def signal_handler(signum: int, frame) -> None:
+        def signal_handler(signum: int, _frame) -> None:
             """Handle shutdown signals by setting the shutdown event."""
             signal_name = signal.Signals(signum).name
-            self._logger.info(f"Received {signal_name} signal - initiating graceful shutdown")
+            self._logger.info(
+                f"Received {signal_name} signal - initiating graceful shutdown"
+            )
 
             # Schedule async shutdown in the event loop
             try:
@@ -1118,7 +1244,9 @@ class TradingBotApplication:
                 loop.create_task(self._signal_shutdown())
             except RuntimeError:
                 # No event loop running, fallback to sync shutdown
-                self._logger.warning("No event loop running - falling back to sync shutdown")
+                self._logger.warning(
+                    "No event loop running - falling back to sync shutdown"
+                )
                 self.shutdown()
 
         # Register signal handlers
@@ -1135,7 +1263,11 @@ class TradingBotApplication:
 
         try:
             # Stop WebSocket connection if active
-            if self._websocket_manager and hasattr(self._websocket_manager, 'is_connected') and self._websocket_manager.is_connected():
+            if (
+                self._websocket_manager
+                and hasattr(self._websocket_manager, "is_connected")
+                and self._websocket_manager.is_connected()
+            ):
                 self._logger.info("Stopping WebSocket connection...")
                 try:
                     await self._websocket_manager.stop()
@@ -1211,8 +1343,10 @@ def main() -> int:
         # Log summary of initialized components
         logger.info("=== System Ready ===")
         logger.info("Core Components: ConfigManager, EventHub, Logger")
-        logger.info("Trading Modules: BinanceClient, DataProcessor, ICTStrategy, "
-                    "RiskManager, ExecutionEngine, PortfolioManager, DiscordNotifier")
+        logger.info(
+            "Trading Modules: BinanceClient, DataProcessor, ICTStrategy, "
+            "RiskManager, ExecutionEngine, PortfolioManager, DiscordNotifier"
+        )
         logger.info("System is ready for trading operations")
 
         # Trading system is now ready for:
@@ -1247,151 +1381,6 @@ def main() -> int:
                 app.shutdown()
             except Exception as e:
                 print(f"Error during shutdown: {e}", file=sys.stderr)
-
-    async def run_async(self) -> None:
-        """
-        Run the trading bot in async mode with WebSocket streaming.
-
-        This method provides the main async event loop for the trading bot,
-        including WebSocket data streaming, signal handling, and graceful shutdown.
-
-        Raises:
-            RuntimeError: If components not initialized
-            ComponentInitializationError: If WebSocket connection fails
-        """
-        if not self._is_initialized or not self._trading_modules_initialized:
-            raise RuntimeError(
-                "All components must be initialized before starting async mode. "
-                "Call initialize_core_components() and initialize_trading_modules() first."
-            )
-
-        self._running = True
-        self._logger.info("=== Starting Trading Bot Async Mode ===")
-
-        # Setup signal handlers for graceful shutdown
-        self._setup_signal_handlers()
-
-        try:
-            # Start WebSocket connection if available
-            if self._websocket_manager:
-                self._logger.info("Starting WebSocket data streaming...")
-                try:
-                    await self._websocket_manager.start()
-                    self._logger.info(
-                        f"✓ WebSocket streaming active for "
-                        f"symbol {self._websocket_manager._symbol.upper()}"
-                    )
-                except WebSocketConnectionError as e:
-                    self._logger.error(f"WebSocket connection failed: {e}")
-                    self._logger.warning("Continuing in async mode without WebSocket data")
-                    # Don't raise - continue without WebSocket
-                except Exception as e:
-                    self._logger.error(f"Unexpected WebSocket error: {e}")
-                    self._logger.warning("Continuing in async mode without WebSocket data")
-            else:
-                self._logger.warning("WebSocket manager not initialized - no real-time data")
-
-            # Log async mode startup complete
-            self._logger.info("=== Trading Bot Async Mode Active ===")
-            self._logger.info("System Status:")
-            self._logger.info(f"  • Core Components: {'✓' if self._is_initialized else '✗'}")
-            self._logger.info(
-                f"  • Trading Modules: {'✓' if self._trading_modules_initialized else '✗'}"
-            )
-            websocket_status = (
-                "✓ Connected" if self._websocket_manager and self._websocket_manager.is_connected()
-                else "✗ Disconnected"
-            )
-            self._logger.info(f"  • WebSocket Streaming: {websocket_status}")
-            self._logger.info("  • Event System: ✓ Active")
-            self._logger.info("Ready for trading operations...")
-
-            # Wait for shutdown signal
-            await self._shutdown_event.wait()
-
-        except KeyboardInterrupt:
-            self._logger.info("Keyboard interrupt received")
-        except Exception as e:
-            self._logger.error(f"Error in async main loop: {e}")
-            raise
-        finally:
-            await self._async_cleanup()
-
-    def _setup_signal_handlers(self) -> None:
-        """
-        Setup signal handlers for graceful shutdown.
-
-        Handles SIGINT (Ctrl+C) and SIGTERM signals for clean shutdown.
-        """
-        def signal_handler(signum: int, frame) -> None:
-            """Handle shutdown signals."""
-            signal_name = "SIGINT" if signum == signal.SIGINT else "SIGTERM"
-            self._logger.info(f"Received {signal_name} - initiating graceful shutdown")
-            self._running = False
-            if not self._shutdown_event.is_set():
-                # Use asyncio to set the event from the signal handler
-                asyncio.create_task(self._signal_shutdown())
-
-        # Register signal handlers
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-        self._logger.info("Signal handlers registered (SIGINT, SIGTERM)")
-
-    async def _signal_shutdown(self) -> None:
-        """Set shutdown event from signal handler."""
-        self._shutdown_event.set()
-
-    async def _async_cleanup(self) -> None:
-        """
-        Perform async cleanup operations.
-
-        Stops WebSocket connections and cleans up async resources.
-        """
-        self._logger.info("=== Starting Async Cleanup ===")
-        self._running = False
-
-        try:
-            # Stop WebSocket manager first
-            if self._websocket_manager:
-                try:
-                    self._logger.info("Stopping WebSocket manager...")
-                    await self._websocket_manager.stop()
-                    self._logger.info("✓ WebSocket manager stopped")
-                except Exception as e:
-                    self._logger.warning(f"Error stopping WebSocket manager: {e}")
-
-            # Stop other async components if they exist
-            # (Future async components can be added here)
-
-            self._logger.info("✓ Async cleanup complete")
-
-        except Exception as e:
-            self._logger.error(f"Error during async cleanup: {e}")
-
-    async def async_shutdown(self) -> None:
-        """
-        Perform async shutdown of the application.
-
-        This method handles both sync and async cleanup operations.
-        """
-        if self._logger:
-            self._logger.info("=== Trading Bot Async Shutdown Initiated ===")
-
-        try:
-            # Perform async cleanup first
-            await self._async_cleanup()
-
-            # Then perform sync cleanup
-            self.shutdown()
-
-            if self._logger:
-                self._logger.info("=== Trading Bot Async Shutdown Complete ===")
-
-        except Exception as e:
-            if self._logger:
-                self._logger.error(f"Error during async shutdown: {e}")
-            else:
-                print(f"Error during async shutdown: {e}", file=sys.stderr)
 
 
 async def async_main() -> int:
@@ -1457,8 +1446,6 @@ if __name__ == "__main__":
     - Default: async mode with WebSocket streaming
     - Fallback: sync mode for compatibility
     """
-    import os
-
     # Check for sync mode flag
     sync_mode = os.getenv("TRADING_BOT_SYNC_MODE", "false").lower() == "true"
 

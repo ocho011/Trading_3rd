@@ -26,19 +26,13 @@ from trading_bot.core.logger import get_module_logger
 class WebSocketError(Exception):
     """Base exception for WebSocket-related errors."""
 
-    pass
-
 
 class WebSocketConnectionError(WebSocketError):
     """Exception raised for WebSocket connection failures."""
 
-    pass
-
 
 class WebSocketDataError(WebSocketError):
     """Exception raised for WebSocket data parsing failures."""
-
-    pass
 
 
 class ConnectionState(Enum):
@@ -95,22 +89,18 @@ class IWebSocketManager(ABC):
     @abstractmethod
     async def start(self) -> None:
         """Start WebSocket connection and begin streaming data."""
-        pass
 
     @abstractmethod
     async def stop(self) -> None:
         """Stop WebSocket connection and cleanup resources."""
-        pass
 
     @abstractmethod
     def get_connection_state(self) -> ConnectionState:
         """Get current connection state."""
-        pass
 
     @abstractmethod
     def is_connected(self) -> bool:
         """Check if WebSocket is currently connected."""
-        pass
 
 
 class WebSocketDataValidator:

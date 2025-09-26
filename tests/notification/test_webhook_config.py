@@ -8,7 +8,6 @@ and configuration updates for Discord webhook reliability features.
 import json
 import os
 import tempfile
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -17,9 +16,13 @@ from trading_bot.notification.circuit_breaker import CircuitBreakerConfig
 from trading_bot.notification.message_queue import QueueConfig
 from trading_bot.notification.retry_policies import BackoffType, RetryConfig
 from trading_bot.notification.webhook_config import (
-    ConfigPresets, ConfigurationSource, WebhookConfigManager,
-    WebhookReliabilityConfig, create_webhook_config_manager,
-    load_webhook_config)
+    ConfigPresets,
+    ConfigurationSource,
+    WebhookConfigManager,
+    WebhookReliabilityConfig,
+    create_webhook_config_manager,
+    load_webhook_config,
+)
 from trading_bot.notification.webhook_health import HealthThresholds
 
 

@@ -380,7 +380,6 @@ class IAccountRiskEvaluator(ABC):
         Raises:
             AccountRiskError: If evaluation fails
         """
-        pass
 
     @abstractmethod
     def get_max_position_size(
@@ -402,7 +401,6 @@ class IAccountRiskEvaluator(ABC):
         Raises:
             AccountRiskError: If calculation fails
         """
-        pass
 
     @abstractmethod
     def check_portfolio_health(
@@ -420,7 +418,6 @@ class IAccountRiskEvaluator(ABC):
         Raises:
             AccountRiskError: If health check fails
         """
-        pass
 
     @abstractmethod
     def validate_margin_requirements(
@@ -442,7 +439,6 @@ class IAccountRiskEvaluator(ABC):
         Raises:
             InsufficientMarginError: If insufficient margin
         """
-        pass
 
     @abstractmethod
     def update_config(self, config: AccountRiskConfig) -> None:
@@ -454,7 +450,6 @@ class IAccountRiskEvaluator(ABC):
         Raises:
             InvalidAccountStateError: If configuration is invalid
         """
-        pass
 
 
 class AccountRiskEvaluator(IAccountRiskEvaluator):

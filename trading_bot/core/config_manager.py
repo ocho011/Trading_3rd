@@ -16,8 +16,6 @@ from dotenv import load_dotenv
 class ConfigurationError(Exception):
     """Custom exception for configuration-related errors."""
 
-    pass
-
 
 class IConfigLoader:
     """Interface for configuration loading strategies."""

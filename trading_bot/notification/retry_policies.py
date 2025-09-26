@@ -13,7 +13,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, Optional
 
 
 class BackoffType(Enum):
@@ -106,7 +106,6 @@ class IRetryPolicy(ABC):
         Returns:
             float: Delay in seconds before next attempt
         """
-        pass
 
     @abstractmethod
     def should_retry(self, attempt: int, exception: Exception) -> bool:
@@ -120,7 +119,6 @@ class IRetryPolicy(ABC):
         Returns:
             bool: True if retry should be attempted
         """
-        pass
 
     @abstractmethod
     def calculate_timeout(self, attempt: int) -> float:
@@ -133,7 +131,6 @@ class IRetryPolicy(ABC):
         Returns:
             float: Timeout in seconds for this attempt
         """
-        pass
 
 
 class RetryPolicy(IRetryPolicy):
@@ -187,7 +184,8 @@ class RetryPolicy(IRetryPolicy):
 
     def should_retry(self, attempt: int, exception: Exception) -> bool:
         """
-        Determine if retry should be attempted based on attempt count and exception type.
+        Determine if retry should be attempted based on attempt count and
+        exception type.
 
         Args:
             attempt: Current attempt number (1-based)
@@ -368,7 +366,8 @@ class RetryExecutor:
                     delay = self._policy.calculate_delay(attempt - 1, last_exception)
                     if delay > 0:
                         self._logger.debug(
-                            f"Retrying in {delay:.2f}s (attempt {attempt}/{self._policy._config.max_attempts})"
+                            f"Retrying in {delay:.2f}s "
+                            f"(attempt {attempt}/{self._policy._config.max_attempts})"
                         )
                         await asyncio.sleep(delay)
 
@@ -394,7 +393,8 @@ class RetryExecutor:
                 elapsed = time.time() - start_time
 
                 self._logger.warning(
-                    f"Attempt {attempt} failed after {elapsed:.2f}s: {type(e).__name__}: {e}"
+                    f"Attempt {attempt} failed after {elapsed:.2f}s: "
+                    f"{type(e).__name__}: {e}"
                 )
 
                 # Check if we should retry
@@ -407,7 +407,8 @@ class RetryExecutor:
                 # If this was the last attempt, raise the exception
                 if attempt >= self._policy._config.max_attempts:
                     self._logger.error(
-                        f"All {attempt} attempts failed. Last error: {type(e).__name__}: {e}"
+                        f"All {attempt} attempts failed. Last error: "
+                        f"{type(e).__name__}: {e}"
                     )
                     raise e
 
@@ -443,7 +444,8 @@ class RetryExecutor:
                     delay = self._policy.calculate_delay(attempt - 1, last_exception)
                     if delay > 0:
                         self._logger.debug(
-                            f"Retrying in {delay:.2f}s (attempt {attempt}/{self._policy._config.max_attempts})"
+                            f"Retrying in {delay:.2f}s "
+                            f"(attempt {attempt}/{self._policy._config.max_attempts})"
                         )
                         time.sleep(delay)
 
@@ -460,7 +462,8 @@ class RetryExecutor:
                 elapsed = time.time() - start_time
 
                 self._logger.warning(
-                    f"Attempt {attempt} failed after {elapsed:.2f}s: {type(e).__name__}: {e}"
+                    f"Attempt {attempt} failed after {elapsed:.2f}s: "
+                    f"{type(e).__name__}: {e}"
                 )
 
                 # Check if we should retry
@@ -473,7 +476,8 @@ class RetryExecutor:
                 # If this was the last attempt, raise the exception
                 if attempt >= self._policy._config.max_attempts:
                     self._logger.error(
-                        f"All {attempt} attempts failed. Last error: {type(e).__name__}: {e}"
+                        f"All {attempt} attempts failed. Last error: "
+                        f"{type(e).__name__}: {e}"
                     )
                     raise e
 

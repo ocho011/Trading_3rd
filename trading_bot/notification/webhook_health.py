@@ -9,9 +9,8 @@ rate limiting events, and overall service health.
 import logging
 import threading
 import time
-from collections import defaultdict, deque
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta
+from collections import deque
+from dataclasses import asdict, dataclass
 from enum import Enum
 from statistics import mean, median
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -357,7 +356,7 @@ class WebhookHealthMonitor:
             requests_per_minute = len(recent_requests)
 
             # Calculate uptime
-            total_time = current_time - self._start_time
+            current_time - self._start_time
             uptime_percentage = self._calculate_uptime_percentage()
 
             # Calculate processing lag

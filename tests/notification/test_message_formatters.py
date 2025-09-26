@@ -8,20 +8,31 @@ for Discord notification formatting.
 import time
 import unittest
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from trading_bot.core.event_hub import EventType
-from trading_bot.execution.execution_engine import (ExecutionResult,
-                                                    FillDetail, OrderStatus)
+from trading_bot.execution.execution_engine import (
+    ExecutionResult,
+    OrderStatus,
+)
 from trading_bot.notification.message_formatters import (
-    ConnectionEventMessageFormatter, DiscordColor,
-    ErrorOccurredMessageFormatter, FormatterNotFoundError, FormatterUtils,
-    InvalidEventDataError, MessageFormatterFactory,
-    OrderFilledMessageFormatter, RiskLimitExceededMessageFormatter,
-    TradingSignalMessageFormatter)
+    ConnectionEventMessageFormatter,
+    DiscordColor,
+    ErrorOccurredMessageFormatter,
+    FormatterNotFoundError,
+    FormatterUtils,
+    InvalidEventDataError,
+    MessageFormatterFactory,
+    OrderFilledMessageFormatter,
+    RiskLimitExceededMessageFormatter,
+    TradingSignalMessageFormatter,
+)
 from trading_bot.risk_management.risk_manager import OrderRequest, OrderType
-from trading_bot.strategies.base_strategy import (SignalStrength, SignalType,
-                                                  TradingSignal)
+from trading_bot.strategies.base_strategy import (
+    SignalStrength,
+    SignalType,
+    TradingSignal,
+)
 
 
 class TestFormatterUtils(unittest.TestCase):

@@ -45,25 +45,17 @@ from trading_bot.strategies.base_strategy import SignalType, TradingSignal
 class RiskManagerError(Exception):
     """Base exception for risk manager errors."""
 
-    pass
-
 
 class OrderGenerationError(RiskManagerError):
     """Exception raised for order generation errors."""
-
-    pass
 
 
 class InsufficientRiskDataError(RiskManagerError):
     """Exception raised when insufficient risk data is available."""
 
-    pass
-
 
 class RiskLimitExceededError(RiskManagerError):
     """Exception raised when risk limits are exceeded."""
-
-    pass
 
 
 class OrderType(Enum):
@@ -232,7 +224,6 @@ class IRiskManager(ABC):
         Raises:
             RiskManagerError: If processing fails
         """
-        pass
 
     @abstractmethod
     def update_config(self, config: RiskManagerConfig) -> None:
@@ -244,7 +235,6 @@ class IRiskManager(ABC):
         Raises:
             RiskManagerError: If configuration is invalid
         """
-        pass
 
     @abstractmethod
     def get_risk_statistics(self) -> Dict[str, Any]:
@@ -253,7 +243,6 @@ class IRiskManager(ABC):
         Returns:
             Dictionary containing risk management statistics
         """
-        pass
 
 
 class RiskManager(IRiskManager):
@@ -626,7 +615,8 @@ class RiskManager(IRiskManager):
 
             if not result.can_add_position:
                 raise RiskLimitExceededError(
-                    f"Account risk limits prevent new position: {result.risk_level.value}"
+                    f"Account risk limits prevent new position: "
+                    f"{result.risk_level.value}"
                 )
 
             self._logger.debug(
@@ -751,10 +741,15 @@ class RiskManager(IRiskManager):
                 signal.price, position_type, market_data_dict
             )
 
+            stop_price = (
+                result.stop_loss_level.price if result.stop_loss_level else 'None'
+            )
+            target_price = (
+                result.take_profit_level.price if result.take_profit_level else 'None'
+            )
             self._logger.debug(
                 f"Stop-loss levels calculated: {signal.symbol} "
-                f"stop={result.stop_loss_level.price if result.stop_loss_level else 'None'} "
-                f"target={result.take_profit_level.price if result.take_profit_level else 'None'}"
+                f"stop={stop_price} target={target_price}"
             )
 
             return result
@@ -891,7 +886,9 @@ class RiskManager(IRiskManager):
         if order_request.confidence_score < self._config.min_confidence_threshold:
             return {
                 "valid": False,
-                "reason": f"Final confidence too low: {order_request.confidence_score:.3f}",
+                "reason": (
+                    f"Final confidence too low: {order_request.confidence_score:.3f}"
+                ),
             }
 
         # Check stop-loss requirements

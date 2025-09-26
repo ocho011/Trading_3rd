@@ -1,7 +1,9 @@
 """
-Position sizing module for calculating optimal position sizes based on risk management rules.
+Position sizing module for calculating optimal position sizes based on
+risk management rules.
 
-This module provides position sizing algorithms that calculate the appropriate position size
+This module provides position sizing algorithms that calculate the
+appropriate position size
 based on account balance, risk percentage, and various risk management methodologies.
 Follows SOLID principles and integrates with the event-driven architecture.
 """
@@ -19,19 +21,13 @@ from trading_bot.core.logger import get_module_logger
 class PositionSizingError(Exception):
     """Base exception for position sizing related errors."""
 
-    pass
-
 
 class InvalidPositionSizingConfigError(PositionSizingError):
     """Exception raised for invalid position sizing configuration."""
 
-    pass
-
 
 class PositionSizingCalculationError(PositionSizingError):
     """Exception raised for position sizing calculation errors."""
-
-    pass
 
 
 class PositionSizingMethod(Enum):
@@ -91,7 +87,8 @@ class PositionSizingConfig:
                 ]
             ):
                 raise InvalidPositionSizingConfigError(
-                    "Kelly criterion requires win_rate, avg_win, and avg_loss parameters"
+                    "Kelly criterion requires win_rate, avg_win, and "
+                    "avg_loss parameters"
                 )
 
         # Volatility adjusted specific validations
@@ -161,7 +158,6 @@ class IPositionSizer(ABC):
         Raises:
             PositionSizingCalculationError: If calculation fails
         """
-        pass
 
     @abstractmethod
     def update_config(self, config: PositionSizingConfig) -> None:
@@ -173,7 +169,6 @@ class IPositionSizer(ABC):
         Raises:
             InvalidPositionSizingConfigError: If configuration is invalid
         """
-        pass
 
 
 class PositionSizer(IPositionSizer):
@@ -262,7 +257,8 @@ class PositionSizer(IPositionSizer):
             self._calculations_count += 1
 
             self._logger.info(
-                f"Calculated position size: {position_size:.6f} for entry price: {entry_price}"
+                f"Calculated position size: {position_size:.6f} for entry price: "
+                f"{entry_price}"
             )
 
             return result

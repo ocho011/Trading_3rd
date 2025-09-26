@@ -6,28 +6,29 @@ risk factor calculations, and edge cases to ensure reliable
 risk management functionality.
 """
 
-import pytest
 import time
 from typing import Any, Dict
 from unittest.mock import Mock
 
+import pytest
+
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.market_data.data_processor import MarketData
-from trading_bot.strategies.base_strategy import (
-    TradingSignal,
-    SignalType,
-    SignalStrength,
-)
 from trading_bot.risk_management.risk_assessor import (
+    InvalidRiskConfigError,
     RiskAssessmentConfig,
-    RiskFactorResult,
     RiskAssessmentResult,
     RiskAssessor,
-    RiskFactor,
-    RiskLevel,
-    InvalidRiskConfigError,
     RiskCalculationError,
+    RiskFactor,
+    RiskFactorResult,
+    RiskLevel,
     create_risk_assessor,
+)
+from trading_bot.strategies.base_strategy import (
+    SignalStrength,
+    SignalType,
+    TradingSignal,
 )
 
 

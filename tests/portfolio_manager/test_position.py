@@ -4,18 +4,18 @@ Unit tests for Position class and related components.
 Tests position tracking, P&L calculations, validation, and state management.
 """
 
-import pytest
 import time
 from decimal import Decimal
 
+import pytest
+
 from trading_bot.portfolio_manager.position import (
+    InvalidPositionError,
     Position,
+    PositionCalculationError,
     PositionLevel,
     PositionSide,
     PositionStatus,
-    PositionError,
-    InvalidPositionError,
-    PositionCalculationError,
 )
 
 
@@ -96,7 +96,9 @@ class TestPosition:
 
     def test_position_creation_invalid_commission_rate(self):
         """Test position creation with negative commission rate."""
-        with pytest.raises(InvalidPositionError, match="Commission rate cannot be negative"):
+        with pytest.raises(
+            InvalidPositionError, match="Commission rate cannot be negative"
+        ):
             Position(
                 symbol="BTCUSDT",
                 side=PositionSide.LONG,
@@ -125,7 +127,9 @@ class TestPosition:
 
         assert len(sample_position.entry_levels) == 2
         assert sample_position.total_entry_quantity == Decimal("0.2")
-        assert sample_position.average_entry_price == Decimal("50500.0")  # (50000*0.1 + 51000*0.1) / 0.2
+        assert sample_position.average_entry_price == Decimal(
+            "50500.0"
+        )  # (50000*0.1 + 51000*0.1) / 0.2
 
     def test_add_exit_valid(self, sample_position):
         """Test adding valid exit to position."""
@@ -165,7 +169,9 @@ class TestPosition:
 
     def test_update_current_price_invalid(self, sample_position):
         """Test updating current price with invalid value."""
-        with pytest.raises(InvalidPositionError, match="Current price must be positive"):
+        with pytest.raises(
+            InvalidPositionError, match="Current price must be positive"
+        ):
             sample_position.update_current_price(Decimal("0"))
 
     def test_unrealized_pnl_long_profit(self, sample_position):
@@ -204,8 +210,12 @@ class TestPosition:
 
     def test_realized_pnl_long_profit(self, sample_position):
         """Test realized P&L calculation for long position with profit."""
-        sample_position.add_entry(Decimal("50000.0"), Decimal("0.2"), fees=Decimal("10.0"))
-        sample_position.add_exit(Decimal("55000.0"), Decimal("0.1"), fees=Decimal("5.5"))
+        sample_position.add_entry(
+            Decimal("50000.0"), Decimal("0.2"), fees=Decimal("10.0")
+        )
+        sample_position.add_exit(
+            Decimal("55000.0"), Decimal("0.1"), fees=Decimal("5.5")
+        )
 
         # Price P&L = (55000 - 50000) * 0.1 = 500
         # Exit fees = 5.5
@@ -305,7 +315,9 @@ class TestPosition:
         sample_position.add_entry(Decimal("50000.0"), Decimal("0.1"))
         sample_position.add_exit(Decimal("55000.0"), Decimal("0.1"))
 
-        with pytest.raises(InvalidPositionError, match="Cannot add entry to closed position"):
+        with pytest.raises(
+            InvalidPositionError, match="Cannot add entry to closed position"
+        ):
             sample_position.add_entry(Decimal("60000.0"), Decimal("0.1"))
 
     def test_no_entry_levels_calculation_error(self, sample_position):
@@ -323,9 +335,15 @@ class TestPosition:
 
     def test_position_fees_tracking(self, sample_position):
         """Test position fees tracking."""
-        sample_position.add_entry(Decimal("50000.0"), Decimal("0.1"), fees=Decimal("10.0"))
-        sample_position.add_entry(Decimal("51000.0"), Decimal("0.1"), fees=Decimal("11.0"))
-        sample_position.add_exit(Decimal("55000.0"), Decimal("0.05"), fees=Decimal("5.5"))
+        sample_position.add_entry(
+            Decimal("50000.0"), Decimal("0.1"), fees=Decimal("10.0")
+        )
+        sample_position.add_entry(
+            Decimal("51000.0"), Decimal("0.1"), fees=Decimal("11.0")
+        )
+        sample_position.add_exit(
+            Decimal("55000.0"), Decimal("0.05"), fees=Decimal("5.5")
+        )
 
         assert sample_position.total_entry_fees == Decimal("21.0")
         assert sample_position.total_exit_fees == Decimal("5.5")

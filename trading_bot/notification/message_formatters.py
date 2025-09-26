@@ -20,19 +20,13 @@ from trading_bot.strategies.base_strategy import SignalType, TradingSignal
 class MessageFormatterError(Exception):
     """Base exception for message formatter errors."""
 
-    pass
-
 
 class InvalidEventDataError(MessageFormatterError):
     """Exception raised when event data is malformed or missing required fields."""
 
-    pass
-
 
 class FormatterNotFoundError(MessageFormatterError):
     """Exception raised when no formatter is found for event type."""
-
-    pass
 
 
 @dataclass
@@ -95,7 +89,6 @@ class IMessageFormatter(ABC):
         Raises:
             InvalidEventDataError: If event data is malformed
         """
-        pass
 
     @abstractmethod
     def validate_event_data(self, event_data: Dict[str, Any]) -> bool:
@@ -111,7 +104,6 @@ class IMessageFormatter(ABC):
         Raises:
             InvalidEventDataError: If required fields are missing
         """
-        pass
 
 
 class FormatterUtils:
@@ -287,8 +279,13 @@ class OrderFilledMessageFormatter(IMessageFormatter):
             )
 
         embed = DiscordEmbed(
-            title=f"🎉 Order {execution_result.execution_status.value.replace('_', ' ').title()}",
-            description=f"**{signal.signal_type.value.upper()}** order for {signal.symbol}",
+            title=(
+                f"🎉 Order "
+                f"{execution_result.execution_status.value.replace('_', ' ').title()}"
+            ),
+            description=(
+                f"**{signal.signal_type.value.upper()}** order for {signal.symbol}"
+            ),
             color=color,
             fields=fields,
             timestamp=FormatterUtils.format_timestamp(

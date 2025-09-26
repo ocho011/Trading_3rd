@@ -12,22 +12,22 @@ from unittest.mock import Mock
 
 from trading_bot.core.event_hub import EventHub
 from trading_bot.risk_management.account_risk_evaluator import (
-    AccountRiskEvaluator,
     AccountRiskConfig,
+    AccountRiskError,
+    AccountRiskEvaluator,
+    AccountRiskLevel,
     AccountRiskResult,
     AccountState,
-    PositionInfo,
-    RiskProfile,
-    AccountRiskLevel,
-    AccountRiskError,
     InsufficientMarginError,
     InvalidAccountStateError,
+    PositionInfo,
+    RiskProfile,
     create_account_risk_evaluator,
 )
 from trading_bot.strategies.base_strategy import (
-    TradingSignal,
-    SignalType,
     SignalStrength,
+    SignalType,
+    TradingSignal,
 )
 
 
@@ -465,7 +465,7 @@ class TestAccountRiskEvaluator(unittest.TestCase):
         # Evaluate a risky position to trigger events
         large_quantity = Decimal("1000")
 
-        result = self.evaluator.evaluate_new_position(
+        self.evaluator.evaluate_new_position(
             self.signal, self.account_state, large_quantity
         )
 

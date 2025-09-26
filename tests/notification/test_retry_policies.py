@@ -11,9 +11,15 @@ from unittest.mock import Mock, patch
 import pytest
 
 from trading_bot.notification.retry_policies import (
-    BackoffType, ExponentialBackoffPolicy, FixedDelayPolicy,
-    LinearBackoffPolicy, RetryConfig, RetryExecutor, RetryPolicy,
-    create_discord_retry_policy)
+    BackoffType,
+    ExponentialBackoffPolicy,
+    FixedDelayPolicy,
+    LinearBackoffPolicy,
+    RetryConfig,
+    RetryExecutor,
+    RetryPolicy,
+    create_discord_retry_policy,
+)
 
 
 class TestRetryConfig:

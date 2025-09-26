@@ -12,7 +12,7 @@ import os
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from trading_bot.notification.circuit_breaker import CircuitBreakerConfig
 from trading_bot.notification.message_queue import QueueConfig
@@ -171,7 +171,8 @@ class WebhookReliabilityConfig:
             > self.health_thresholds.success_rate_warning
         ):
             errors.append(
-                "health_thresholds.success_rate_critical must be <= success_rate_warning"
+                "health_thresholds.success_rate_critical must be "
+                "<= success_rate_warning"
             )
 
         return errors

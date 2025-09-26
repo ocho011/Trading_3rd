@@ -6,22 +6,17 @@ health monitoring, and fallback strategies for Discord webhook client.
 """
 
 import asyncio
-from datetime import timedelta
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from trading_bot.notification.circuit_breaker import (CircuitBreaker,
-                                                      CircuitBreakerConfig)
 from trading_bot.notification.discord_notifier import DiscordNotificationError
 from trading_bot.notification.enhanced_discord_client import (
-    DiscordRateLimitInfo, EnhancedDiscordHttpClient,
-    create_enhanced_discord_client)
-from trading_bot.notification.message_queue import MessageQueue, QueueConfig
-from trading_bot.notification.retry_policies import RetryConfig, RetryPolicy
+    DiscordRateLimitInfo,
+    EnhancedDiscordHttpClient,
+    create_enhanced_discord_client,
+)
 from trading_bot.notification.webhook_config import WebhookReliabilityConfig
-from trading_bot.notification.webhook_health import (HealthThresholds,
-                                                     WebhookHealthMonitor)
 
 
 class TestDiscordRateLimitInfo:
@@ -259,8 +254,10 @@ class TestEnhancedDiscordHttpClient:
         client = self.create_test_client()
 
         # Add message to queue
-        from trading_bot.notification.message_queue import (MessagePriority,
-                                                            QueuedMessage)
+        from trading_bot.notification.message_queue import (
+            MessagePriority,
+            QueuedMessage,
+        )
 
         message = QueuedMessage(
             content='{"content": "Queued message"}',

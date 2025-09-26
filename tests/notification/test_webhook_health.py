@@ -7,13 +7,19 @@ and failure pattern detection for Discord webhook health monitoring.
 
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from trading_bot.notification.webhook_health import (
-    AlertType, HealthAlert, HealthMetrics, HealthReporter, HealthThresholds,
-    WebhookHealthMonitor, create_webhook_health_monitor)
+    AlertType,
+    HealthAlert,
+    HealthMetrics,
+    HealthReporter,
+    HealthThresholds,
+    WebhookHealthMonitor,
+    create_webhook_health_monitor,
+)
 
 
 class TestHealthMetrics:
@@ -555,7 +561,7 @@ class TestHealthMonitoringIntegration:
 
         # Generate comprehensive report
         report = reporter.generate_health_report()
-        summary = reporter.generate_summary_report()
+        reporter.generate_summary_report()
         metrics_export = reporter.export_metrics_to_dict()
 
         # Verify monitoring captured the activity

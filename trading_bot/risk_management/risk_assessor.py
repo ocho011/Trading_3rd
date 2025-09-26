@@ -22,19 +22,13 @@ from trading_bot.strategies.base_strategy import SignalStrength, TradingSignal
 class RiskAssessmentError(Exception):
     """Base exception for risk assessment errors."""
 
-    pass
-
 
 class InvalidRiskConfigError(RiskAssessmentError):
     """Exception raised for invalid risk assessment configuration."""
 
-    pass
-
 
 class RiskCalculationError(RiskAssessmentError):
     """Exception raised for risk calculation errors."""
-
-    pass
 
 
 class RiskFactor(Enum):
@@ -227,7 +221,6 @@ class IRiskAssessor(ABC):
         Raises:
             RiskCalculationError: If risk assessment fails
         """
-        pass
 
     @abstractmethod
     def update_config(self, config: RiskAssessmentConfig) -> None:
@@ -239,7 +232,6 @@ class IRiskAssessor(ABC):
         Raises:
             InvalidRiskConfigError: If configuration is invalid
         """
-        pass
 
 
 class RiskAssessor(IRiskAssessor):

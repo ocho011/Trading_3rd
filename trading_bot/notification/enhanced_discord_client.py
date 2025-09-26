@@ -16,18 +16,29 @@ import aiohttp
 import requests
 from requests.adapters import HTTPAdapter
 
-from trading_bot.notification.circuit_breaker import (CircuitBreakerError,
-                                                      ICircuitBreaker,
-                                                      create_circuit_breaker)
+from trading_bot.notification.circuit_breaker import (
+    CircuitBreakerError,
+    ICircuitBreaker,
+    create_circuit_breaker,
+)
 from trading_bot.notification.discord_notifier import (
-    DiscordNotificationError, IHttpClient)
-from trading_bot.notification.message_queue import (MessagePriority,
-                                                    MessageQueue,
-                                                    create_message_queue)
+    DiscordNotificationError,
+    IHttpClient,
+)
+from trading_bot.notification.message_queue import (
+    MessagePriority,
+    MessageQueue,
+    create_message_queue,
+)
 from trading_bot.notification.retry_policies import (
-    IRetryPolicy, RetryExecutor, create_discord_retry_policy)
-from trading_bot.notification.webhook_health import (WebhookHealthMonitor,
-                                                     create_health_monitor)
+    IRetryPolicy,
+    RetryExecutor,
+    create_discord_retry_policy,
+)
+from trading_bot.notification.webhook_health import (
+    WebhookHealthMonitor,
+    create_health_monitor,
+)
 
 
 class RateLimitInfo:

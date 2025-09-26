@@ -5,20 +5,23 @@ Tests cover all calculation methods, edge cases, error handling,
 and integration with the event system.
 """
 
-import pytest
 import time
+from typing import Any
+from unittest.mock import Mock
+
+import pytest
 
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.risk_management.stop_loss_calculator import (
+    InvalidPriceLevelError,
+    InvalidStopLossConfigError,
+    PositionType,
+    StopLossCalculationError,
     StopLossCalculator,
     StopLossConfig,
-    StopLossMethod,
-    PositionType,
     StopLossLevel,
+    StopLossMethod,
     StopLossResult,
-    StopLossCalculationError,
-    InvalidStopLossConfigError,
-    InvalidPriceLevelError,
     create_stop_loss_calculator,
 )
 
@@ -76,7 +79,8 @@ class TestStopLossConfig:
 
     def test_atr_method_requires_atr(self) -> None:
         """Test ATR method validation."""
-        # ATR method no longer requires current_atr in config since it can use market data
+        # ATR method no longer requires current_atr in config since it can
+        # use market data
         # Should not raise even without ATR in config
         config = StopLossConfig(method=StopLossMethod.ATR_BASED)
         assert config.method == StopLossMethod.ATR_BASED
@@ -100,7 +104,8 @@ class TestStopLossConfig:
 
     def test_volatility_method_requires_volatility(self) -> None:
         """Test volatility method validation."""
-        # Volatility method no longer requires current_volatility in config since it can use market data
+        # Volatility method no longer requires current_volatility in config
+        # since it can use market data
         # Should not raise even without volatility in config
         config = StopLossConfig(method=StopLossMethod.VOLATILITY_ADJUSTED)
         assert config.method == StopLossMethod.VOLATILITY_ADJUSTED
@@ -488,7 +493,7 @@ class TestStopLossCalculator:
         config = self.create_test_config()
         calculator = StopLossCalculator(config, mock_event_hub)
 
-        result = calculator.calculate_levels(100.0, PositionType.LONG)
+        calculator.calculate_levels(100.0, PositionType.LONG)
 
         # Verify event was published
         mock_event_hub.publish.assert_called_once()

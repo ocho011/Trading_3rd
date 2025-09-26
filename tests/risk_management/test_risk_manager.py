@@ -13,9 +13,7 @@ from unittest.mock import MagicMock, patch
 from trading_bot.core.config_manager import ConfigManager, EnvConfigLoader
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.market_data.data_processor import MarketData
-from trading_bot.risk_management.account_risk_evaluator import (
-    AccountState,
-)
+from trading_bot.risk_management.account_risk_evaluator import AccountState
 from trading_bot.risk_management.risk_manager import (
     OrderRequest,
     OrderType,
@@ -320,17 +318,11 @@ class TestRiskManager(unittest.TestCase):
         """Test successful signal processing."""
         # Configure mock components to return successful results
         from trading_bot.risk_management.position_sizer import (
-            PositionSizingResult,
             PositionSizingMethod,
+            PositionSizingResult,
         )
         from trading_bot.risk_management.risk_assessor import (
-            RiskAssessmentResult,
             RiskLevel,
-        )
-        from trading_bot.risk_management.stop_loss_calculator import (
-            StopLossResult,
-            StopLossLevel,
-            PositionType,
         )
 
         # Mock position sizing result

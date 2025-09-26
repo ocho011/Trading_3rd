@@ -126,7 +126,6 @@ class ICircuitBreaker(ABC):
         Raises:
             CircuitBreakerError: If circuit is open
         """
-        pass
 
     @abstractmethod
     def call_sync(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
@@ -144,22 +143,18 @@ class ICircuitBreaker(ABC):
         Raises:
             CircuitBreakerError: If circuit is open
         """
-        pass
 
     @abstractmethod
     def get_state(self) -> CircuitState:
         """Get current circuit state."""
-        pass
 
     @abstractmethod
     def get_metrics(self) -> CircuitMetrics:
         """Get circuit breaker metrics."""
-        pass
 
     @abstractmethod
     def reset(self) -> None:
         """Manually reset circuit breaker to closed state."""
-        pass
 
 
 class CircuitBreaker(ICircuitBreaker):
@@ -367,7 +362,8 @@ class CircuitBreaker(ICircuitBreaker):
             if self._failure_count >= self._config.failure_threshold:
                 should_open = True
                 self._logger.warning(
-                    f"Circuit breaker failure threshold reached: {self._failure_count} failures"
+                    f"Circuit breaker failure threshold reached: "
+                    f"{self._failure_count} failures"
                 )
 
             # Check failure rate threshold
@@ -380,7 +376,8 @@ class CircuitBreaker(ICircuitBreaker):
                 if failure_rate >= self._config.failure_rate_threshold:
                     should_open = True
                     self._logger.warning(
-                        f"Circuit breaker failure rate threshold reached: {failure_rate:.1f}%"
+                        f"Circuit breaker failure rate threshold reached: "
+                        f"{failure_rate:.1f}%"
                     )
 
             # Open circuit if threshold exceeded
@@ -450,8 +447,7 @@ class DiscordCircuitBreaker(CircuitBreaker):
             timeout: Seconds to wait before trying half-open
             success_threshold: Successes needed to close from half-open
         """
-        from trading_bot.notification.discord_notifier import \
-            DiscordNotificationError
+        from trading_bot.notification.discord_notifier import DiscordNotificationError
 
         config = CircuitBreakerConfig(
             failure_threshold=failure_threshold,

@@ -13,7 +13,9 @@ This test module validates all aspects of error handling in the ExecutionEngine:
 
 import time
 import unittest
+from unittest.mock import Mock, patch
 
+from trading_bot.core.event_hub import EventHub
 from trading_bot.execution.execution_engine import (
     CircuitBreakerError,
     CircuitBreakerState,
@@ -25,11 +27,9 @@ from trading_bot.execution.execution_engine import (
     ExecutionEngineConfigError,
     ExecutionEngineError,
     ExecutionProcessingError,
-    ExecutionResult,
     InsufficientBalanceError,
     MarketDataError,
     NetworkError,
-    OrderStatus,
     OrderTimeoutError,
     OrderValidationError,
 )

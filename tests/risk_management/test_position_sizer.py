@@ -5,18 +5,19 @@ Tests all position sizing methods, error handling, and edge cases
 to ensure reliable risk management functionality.
 """
 
-import pytest
 import time
 from unittest.mock import Mock
 
+import pytest
+
 from trading_bot.core.event_hub import EventHub, EventType
 from trading_bot.risk_management.position_sizer import (
-    PositionSizer,
-    PositionSizingConfig,
-    PositionSizingResult,
-    PositionSizingMethod,
     InvalidPositionSizingConfigError,
+    PositionSizer,
     PositionSizingCalculationError,
+    PositionSizingConfig,
+    PositionSizingMethod,
+    PositionSizingResult,
     create_position_sizer,
 )
 
@@ -438,7 +439,6 @@ class TestEdgeCases:
 
         result = sizer.calculate_position_size(entry_price=100.0)
 
-        expected_risk_amount = 1.0 * 0.01  # 0.01
         expected_position_size = max(0.01 / 100.0, config.min_position_size)
 
         assert result.position_size == expected_position_size
@@ -453,7 +453,6 @@ class TestEdgeCases:
 
         result = sizer.calculate_position_size(entry_price=1000000.0)
 
-        expected_risk_amount = 200.0
         expected_position_size = max(200.0 / 1000000.0, config.min_position_size)
 
         assert result.position_size == expected_position_size

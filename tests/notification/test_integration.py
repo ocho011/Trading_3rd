@@ -9,18 +9,20 @@ monitoring, and enhanced HTTP client.
 import asyncio
 import os
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from trading_bot.notification.discord_notifier import DiscordNotifier
 from trading_bot.notification.enhanced_discord_client import (
-    EnhancedDiscordHttpClient, create_enhanced_discord_client)
-from trading_bot.notification.message_queue import MessagePriority
-from trading_bot.notification.webhook_config import (ConfigPresets,
-                                                     WebhookConfigManager,
-                                                     WebhookReliabilityConfig)
+    create_enhanced_discord_client,
+)
+from trading_bot.notification.webhook_config import (
+    ConfigPresets,
+    WebhookConfigManager,
+    WebhookReliabilityConfig,
+)
 
 
 class TestEnhancedSystemIntegration:
@@ -55,7 +57,9 @@ class TestEnhancedSystemIntegration:
                         "embeds": [
                             {
                                 "title": "Test Embed",
-                                "description": "Testing enhanced Discord webhook system",
+                                "description": (
+                                    "Testing enhanced Discord webhook system"
+                                ),
                             }
                         ],
                     }
@@ -161,8 +165,9 @@ class TestEnhancedSystemIntegration:
                     assert result3 is False
 
                     # Circuit should be open - next request should be blocked
-                    from trading_bot.notification.discord_notifier import \
-                        DiscordNotificationError
+                    from trading_bot.notification.discord_notifier import (
+                        DiscordNotificationError,
+                    )
 
                     with pytest.raises(
                         DiscordNotificationError, match="Circuit breaker"
@@ -187,7 +192,7 @@ class TestEnhancedSystemIntegration:
     @pytest.mark.asyncio
     async def test_message_queue_processing(self):
         """Test message queue processing and persistence."""
-        with tempfile.TemporaryDirectory() as temp_dir:
+        with tempfile.TemporaryDirectory():
             # Enable queue persistence
             config = ConfigPresets.high_reliability()
             config.webhook_url = "https://discord.com/api/webhooks/test/token"
@@ -289,7 +294,7 @@ class TestEnhancedSystemIntegration:
                     await client.send_webhook({"content": "Fast success"})
 
                     # Simulate slow response time
-                    start_time = datetime.utcnow()
+                    datetime.utcnow()
                     await client.send_webhook({"content": "Slow success"})
                     # Manually record slow response for testing
                     client._health_monitor._current_metrics.record_success(
@@ -301,7 +306,7 @@ class TestEnhancedSystemIntegration:
                     await client.send_webhook({"content": "Will fail 2"})
 
                     # Check health status
-                    health_status = client.get_health_status()
+                    client.get_health_status()
                     metrics = client.get_health_metrics()
 
                     # Should have some failures affecting health

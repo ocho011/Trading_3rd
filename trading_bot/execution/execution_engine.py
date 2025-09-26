@@ -29,55 +29,37 @@ from trading_bot.strategies.base_strategy import SignalType
 class ExecutionEngineError(Exception):
     """Base exception for execution engine errors."""
 
-    pass
-
 
 class OrderValidationError(ExecutionEngineError):
     """Exception raised for order validation errors."""
-
-    pass
 
 
 class ExecutionProcessingError(ExecutionEngineError):
     """Exception raised for execution processing errors."""
 
-    pass
-
 
 class NetworkError(ExecutionEngineError):
     """Exception raised for network-related errors."""
-
-    pass
 
 
 class InsufficientBalanceError(ExecutionEngineError):
     """Exception raised for insufficient balance errors."""
 
-    pass
-
 
 class MarketDataError(ExecutionEngineError):
     """Exception raised for market data related errors."""
-
-    pass
 
 
 class OrderTimeoutError(ExecutionEngineError):
     """Exception raised when order execution times out."""
 
-    pass
-
 
 class CircuitBreakerError(ExecutionEngineError):
     """Exception raised when circuit breaker is open."""
 
-    pass
-
 
 class ExecutionEngineConfigError(ExecutionEngineError):
     """Exception raised for configuration errors."""
-
-    pass
 
 
 class ErrorSeverity(Enum):
@@ -459,7 +441,6 @@ class IExecutionEngine(ABC):
         Raises:
             ExecutionEngineError: If processing fails
         """
-        pass
 
     @abstractmethod
     def update_config(self, config: ExecutionEngineConfig) -> None:
@@ -471,7 +452,6 @@ class IExecutionEngine(ABC):
         Raises:
             ExecutionEngineError: If configuration is invalid
         """
-        pass
 
     @abstractmethod
     def get_execution_statistics(self) -> Dict[str, Any]:
@@ -480,7 +460,6 @@ class IExecutionEngine(ABC):
         Returns:
             Dictionary containing execution statistics
         """
-        pass
 
 
 class ExecutionEngine(IExecutionEngine):
@@ -1628,10 +1607,13 @@ class ExecutionEngine(IExecutionEngine):
             jitter_factor = random.uniform(0.5, 1.5)
             delay *= jitter_factor
 
+        backoff_type = (
+            "exponential" if self._config.enable_exponential_backoff else "linear"
+        )
         self._logger.info(
             f"Retrying in {delay:.2f}s due to {error_type} "
             f"(attempt {attempt + 1}/{self._config.max_retry_attempts}, "
-            f"backoff={'exponential' if self._config.enable_exponential_backoff else 'linear'})"
+            f"backoff={backoff_type})"
         )
 
         await asyncio.sleep(delay)
@@ -1720,7 +1702,9 @@ class ExecutionEngine(IExecutionEngine):
         self._logger.info("Started order monitoring background task")
 
     async def _monitor_orders_loop(self) -> None:
-        """Enhanced continuous loop for monitoring active orders with error resilience."""
+        """
+        Enhanced continuous loop for monitoring active orders with error resilience.
+        """
         consecutive_errors = 0
         max_consecutive_errors = 5
         error_backoff_delay = 5.0
@@ -1747,17 +1731,19 @@ class ExecutionEngine(IExecutionEngine):
                     # Implement backoff for consecutive errors
                     if consecutive_errors >= max_consecutive_errors:
                         self._logger.critical(
-                            f"Too many consecutive monitoring errors ({consecutive_errors}), "
-                            "stopping monitoring loop"
+                            f"Too many consecutive monitoring errors "
+                            f"({consecutive_errors}), stopping monitoring loop"
                         )
                         break
 
                     # Use exponential backoff for error recovery
                     delay = min(
-                        error_backoff_delay * (2 ** (consecutive_errors - 1)), 60.0
+                        error_backoff_delay * (2 ** (consecutive_errors - 1)),
+                        60.0
                     )
                     self._logger.warning(
-                        f"Monitoring error #{consecutive_errors}, backing off for {delay}s"
+                        f"Monitoring error #{consecutive_errors}, "
+                        f"backing off for {delay}s"
                     )
                     await asyncio.sleep(delay)
 
@@ -2039,7 +2025,8 @@ class ExecutionEngine(IExecutionEngine):
         current_status: str,
         status_response: Dict[str, Any],
     ) -> None:
-        """Publish comprehensive event based on order status change with detailed fill data.
+        """Publish comprehensive event based on order status change with
+        detailed fill data.
 
         Args:
             execution_result: Updated execution result with comprehensive data
@@ -2091,10 +2078,14 @@ class ExecutionEngine(IExecutionEngine):
                 "execution_quality": {
                     "slippage_percentage": execution_result.slippage_percentage,
                     "price_impact_percentage": execution_result.price_impact_percentage,
-                    "execution_efficiency_score": execution_result.execution_efficiency_score,
+                    "execution_efficiency_score": (
+                        execution_result.execution_efficiency_score
+                    ),
                     "execution_latency_ms": execution_result.execution_latency_ms,
                     "time_to_fill_ms": execution_result.time_to_fill_ms,
-                    "market_price_at_execution": execution_result.market_price_at_execution,
+                    "market_price_at_execution": (
+                        execution_result.market_price_at_execution
+                    ),
                 },
                 # Trade value information
                 "trade_value": {
@@ -2216,7 +2207,9 @@ class ExecutionEngine(IExecutionEngine):
             "monitoring_running": self._monitoring_running,
             "active_orders_count": len(self._active_orders),
             "monitoring_interval_seconds": self._config.monitoring_interval_seconds,
-            "max_monitoring_duration_seconds": self._config.max_monitoring_duration_seconds,
+            "max_monitoring_duration_seconds": (
+                self._config.max_monitoring_duration_seconds
+            ),
             "active_orders": [
                 {
                     "order_id": order_id,
@@ -2508,7 +2501,8 @@ class ExecutionEngine(IExecutionEngine):
 
         if not self._circuit_breaker.should_allow_request():
             error_msg = (
-                f"Circuit breaker is OPEN (failures={self._circuit_breaker.failure_count}, "
+                f"Circuit breaker is OPEN "
+                f"(failures={self._circuit_breaker.failure_count}, "
                 f"threshold={self._circuit_breaker.failure_threshold})"
             )
             raise CircuitBreakerError(error_msg)
@@ -2593,7 +2587,9 @@ class ExecutionEngine(IExecutionEngine):
             "rate_limit_status": {
                 "requests_in_last_minute": len(self._request_timestamps),
                 "max_requests_per_minute": self._config.max_requests_per_minute,
-                "rate_limit_protection_enabled": self._config.enable_rate_limit_protection,
+                "rate_limit_protection_enabled": (
+                    self._config.enable_rate_limit_protection
+                ),
             },
         }
 

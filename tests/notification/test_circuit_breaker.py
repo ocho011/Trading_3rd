@@ -11,12 +11,14 @@ from unittest.mock import Mock
 
 import pytest
 
-from trading_bot.notification.circuit_breaker import (CircuitBreaker,
-                                                      CircuitBreakerConfig,
-                                                      CircuitBreakerError,
-                                                      CircuitState,
-                                                      DiscordCircuitBreaker,
-                                                      create_circuit_breaker)
+from trading_bot.notification.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitBreakerError,
+    CircuitState,
+    DiscordCircuitBreaker,
+    create_circuit_breaker,
+)
 
 
 class TestCircuitBreakerConfig:
@@ -407,8 +409,7 @@ class TestDiscordCircuitBreaker:
         assert config.timeout >= 60.0  # Should allow time for recovery
 
         # Should handle Discord-specific exceptions
-        from trading_bot.notification.discord_notifier import \
-            DiscordNotificationError
+        from trading_bot.notification.discord_notifier import DiscordNotificationError
 
         expected_exceptions = config.expected_exception
         assert DiscordNotificationError in expected_exceptions

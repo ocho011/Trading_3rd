@@ -4,19 +4,21 @@ Unit tests for PortfolioState class and related components.
 Tests portfolio state management, balance tracking, metrics calculation, and validation.
 """
 
-import pytest
-import time
 from decimal import Decimal
+
+import pytest
 
 from trading_bot.portfolio_manager.portfolio_state import (
     BalanceInfo,
     PortfolioHealthStatus,
-    PortfolioMetrics,
     PortfolioState,
-    PortfolioError,
     PortfolioStateError,
 )
-from trading_bot.portfolio_manager.position import Position, PositionSide, PositionStatus
+from trading_bot.portfolio_manager.position import (
+    Position,
+    PositionSide,
+    PositionStatus,
+)
 
 
 class TestBalanceInfo:
@@ -58,7 +60,9 @@ class TestBalanceInfo:
 
     def test_balance_info_negative_balance(self):
         """Test balance info creation with negative balance."""
-        with pytest.raises(PortfolioStateError, match="Balance amounts cannot be negative"):
+        with pytest.raises(
+            PortfolioStateError, match="Balance amounts cannot be negative"
+        ):
             BalanceInfo(asset="USDT", free=Decimal("-100.0"))
 
     def test_balance_utilization_zero_total(self):
@@ -108,7 +112,9 @@ class TestPortfolioState:
 
     def test_add_position_invalid(self, sample_portfolio):
         """Test adding invalid position to portfolio."""
-        with pytest.raises(PortfolioStateError, match="Position must be Position instance"):
+        with pytest.raises(
+            PortfolioStateError, match="Position must be Position instance"
+        ):
             sample_portfolio.add_position("not_a_position")
 
     def test_remove_position_existing(self, sample_portfolio, sample_position):
@@ -139,7 +145,9 @@ class TestPortfolioState:
 
     def test_update_balance_invalid(self, sample_portfolio):
         """Test updating balance with invalid info."""
-        with pytest.raises(PortfolioStateError, match="Balance info must be BalanceInfo instance"):
+        with pytest.raises(
+            PortfolioStateError, match="Balance info must be BalanceInfo instance"
+        ):
             sample_portfolio.update_balance("not_balance_info")
 
     def test_update_multiple_balances(self, sample_portfolio):
@@ -396,7 +404,9 @@ class TestPortfolioState:
         assert updated_position.status == PositionStatus.OPEN
         assert len(updated_position.exit_levels) == 0
 
-    def test_portfolio_state_string_representation(self, sample_portfolio, sample_position):
+    def test_portfolio_state_string_representation(
+        self, sample_portfolio, sample_position
+    ):
         """Test portfolio state string representation."""
         sample_portfolio.add_position(sample_position)
 

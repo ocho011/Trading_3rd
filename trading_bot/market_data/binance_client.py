@@ -19,31 +19,21 @@ from trading_bot.core.logger import get_module_logger
 class BinanceError(Exception):
     """Base exception for Binance-related errors."""
 
-    pass
-
 
 class BinanceConnectionError(BinanceError):
     """Exception raised for Binance connection failures."""
-
-    pass
 
 
 class BinanceAuthenticationError(BinanceError):
     """Exception raised for Binance authentication failures."""
 
-    pass
-
 
 class BinanceRateLimitError(BinanceError):
     """Exception raised when Binance rate limits are exceeded."""
 
-    pass
-
 
 class BinanceOrderError(BinanceError):
     """Exception raised for Binance order execution failures."""
-
-    pass
 
 
 class IExchangeClient(ABC):
@@ -60,7 +50,6 @@ class IExchangeClient(ABC):
         Raises:
             BinanceError: If account info retrieval fails
         """
-        pass
 
     @abstractmethod
     def place_market_order(
@@ -83,7 +72,6 @@ class IExchangeClient(ABC):
         Raises:
             BinanceOrderError: If order placement fails
         """
-        pass
 
     @abstractmethod
     def place_limit_order(
@@ -108,7 +96,6 @@ class IExchangeClient(ABC):
         Raises:
             BinanceOrderError: If order placement fails
         """
-        pass
 
     @abstractmethod
     def get_symbol_ticker(self, symbol: str) -> Dict[str, Any]:
@@ -124,7 +111,6 @@ class IExchangeClient(ABC):
         Raises:
             BinanceError: If ticker retrieval fails
         """
-        pass
 
     @abstractmethod
     def is_connected(self) -> bool:
@@ -134,7 +120,6 @@ class IExchangeClient(ABC):
         Returns:
             bool: True if connected, False otherwise
         """
-        pass
 
     @abstractmethod
     def get_order_status(self, symbol: str, order_id: str) -> Dict[str, Any]:
@@ -151,7 +136,6 @@ class IExchangeClient(ABC):
         Raises:
             BinanceError: If order status retrieval fails
         """
-        pass
 
     @abstractmethod
     def get_all_orders(self, symbol: str, limit: int = 100) -> List[Dict[str, Any]]:
@@ -168,7 +152,6 @@ class IExchangeClient(ABC):
         Raises:
             BinanceError: If order retrieval fails
         """
-        pass
 
     @abstractmethod
     def get_open_orders(self, symbol: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -184,7 +167,6 @@ class IExchangeClient(ABC):
         Raises:
             BinanceError: If open orders retrieval fails
         """
-        pass
 
 
 class BinanceClient(IExchangeClient):

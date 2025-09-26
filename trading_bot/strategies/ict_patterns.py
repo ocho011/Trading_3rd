@@ -31,19 +31,13 @@ from trading_bot.strategies.base_strategy import (
 class IctPatternError(StrategyError):
     """Base exception for ICT pattern detection errors."""
 
-    pass
-
 
 class OrderBlockError(IctPatternError):
     """Exception raised for order block detection errors."""
 
-    pass
-
 
 class StructureAnalysisError(IctPatternError):
     """Exception raised for market structure analysis errors."""
-
-    pass
 
 
 class Direction(Enum):
@@ -229,7 +223,6 @@ class IMarketStructureAnalyzer(ABC):
     @abstractmethod
     def find_structure_points(self, candles: pd.DataFrame) -> List[StructurePoint]:
         """Find significant structure points in price data."""
-        pass
 
     @abstractmethod
     def detect_structure_break(
@@ -239,7 +232,6 @@ class IMarketStructureAnalyzer(ABC):
         current_index: int,
     ) -> Optional[StructureType]:
         """Detect break of structure or change of character."""
-        pass
 
 
 class ZigZagStructureAnalyzer(IMarketStructureAnalyzer):
@@ -515,7 +507,6 @@ class IOrderBlockDetector(ABC):
         current_index: int,
     ) -> List[OrderBlock]:
         """Detect order blocks based on structure analysis."""
-        pass
 
     @abstractmethod
     def update_order_blocks(
@@ -525,7 +516,6 @@ class IOrderBlockDetector(ABC):
         current_time: int,
     ) -> List[OrderBlock]:
         """Update existing order blocks with current market data."""
-        pass
 
 
 class IctOrderBlockDetector(IOrderBlockDetector):

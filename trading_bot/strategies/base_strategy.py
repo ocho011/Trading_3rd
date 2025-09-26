@@ -20,25 +20,17 @@ from trading_bot.market_data.data_processor import MarketData
 class StrategyError(Exception):
     """Base exception for strategy-related errors."""
 
-    pass
-
 
 class InvalidStrategyConfigError(StrategyError):
     """Exception raised for invalid strategy configuration."""
-
-    pass
 
 
 class SignalGenerationError(StrategyError):
     """Exception raised for signal generation errors."""
 
-    pass
-
 
 class StrategyInitializationError(StrategyError):
     """Exception raised for strategy initialization errors."""
-
-    pass
 
 
 class SignalType(Enum):
@@ -158,7 +150,6 @@ class IStrategyInterface(ABC):
         Raises:
             SignalGenerationError: If signal generation fails
         """
-        pass
 
     @abstractmethod
     def initialize(self) -> None:
@@ -167,12 +158,10 @@ class IStrategyInterface(ABC):
         Raises:
             StrategyInitializationError: If initialization fails
         """
-        pass
 
     @abstractmethod
     def cleanup(self) -> None:
         """Clean up strategy resources and subscriptions."""
-        pass
 
     @abstractmethod
     def get_strategy_info(self) -> Dict[str, Any]:
@@ -181,7 +170,6 @@ class IStrategyInterface(ABC):
         Returns:
             Dictionary containing strategy metadata and state
         """
-        pass
 
 
 class BaseStrategy(IStrategyInterface):
@@ -320,7 +308,6 @@ class BaseStrategy(IStrategyInterface):
         Returns:
             TradingSignal if conditions are met, None otherwise
         """
-        pass
 
     def initialize(self) -> None:
         """Initialize strategy with configuration and dependencies.
@@ -513,18 +500,15 @@ class BaseStrategy(IStrategyInterface):
         """
         # Base validation is handled by StrategyConfiguration.__post_init__
         # Concrete implementations can override for additional validation
-        pass
 
     def _subscribe_to_events(self) -> None:
         """Subscribe to required events."""
         # This can be overridden by concrete implementations
         # Default implementation doesn't subscribe to additional events
-        pass
 
     def _unsubscribe_from_events(self) -> None:
         """Unsubscribe from events."""
         # This can be overridden by concrete implementations
-        pass
 
     @abstractmethod
     def _initialize_strategy(self) -> None:
@@ -533,7 +517,6 @@ class BaseStrategy(IStrategyInterface):
         This method must be implemented by concrete strategy classes
         to handle any strategy-specific initialization logic.
         """
-        pass
 
     @abstractmethod
     def _cleanup_strategy(self) -> None:
@@ -542,7 +525,6 @@ class BaseStrategy(IStrategyInterface):
         This method must be implemented by concrete strategy classes
         to handle any strategy-specific cleanup logic.
         """
-        pass
 
     def _get_performance_metrics(self) -> Dict[str, Any]:
         """Get strategy performance metrics.

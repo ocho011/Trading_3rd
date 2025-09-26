@@ -2,7 +2,8 @@
 Position tracking module for portfolio management.
 
 This module provides comprehensive position tracking with accurate P&L calculations,
-risk metrics, and validation following SOLID principles and dependency injection patterns.
+risk metrics, and validation following SOLID principles and dependency
+injection patterns.
 """
 
 import time
@@ -15,19 +16,13 @@ from typing import Any, Dict, List, Optional
 class PositionError(Exception):
     """Base exception for position-related errors."""
 
-    pass
-
 
 class InvalidPositionError(PositionError):
     """Exception raised when position data is invalid."""
 
-    pass
-
 
 class PositionCalculationError(PositionError):
     """Exception raised when position calculations fail."""
-
-    pass
 
 
 class PositionSide(Enum):
@@ -452,7 +447,8 @@ class Position:
         expected_status = self._calculate_expected_status()
         if self.status != expected_status:
             errors.append(
-                f"Status mismatch: {self.status.value} vs expected {expected_status.value}"
+                f"Status mismatch: {self.status.value} vs expected "
+                f"{expected_status.value}"
             )
 
         return errors
@@ -472,7 +468,8 @@ class Position:
         """String representation of position."""
         return (
             f"Position({self.symbol} {self.side.value} "
-            f"qty={self.open_quantity} @ {self.average_entry_price if self.entry_levels else 'N/A'} "
+            f"qty={self.open_quantity} @ "
+            f"{self.average_entry_price if self.entry_levels else 'N/A'} "
             f"P&L={self.total_pnl:.2f} {self.status.value})"
         )
 
@@ -480,6 +477,7 @@ class Position:
         """Detailed representation of position."""
         return (
             f"Position(symbol='{self.symbol}', side={self.side}, "
-            f"entry_levels={len(self.entry_levels)}, exit_levels={len(self.exit_levels)}, "
+            f"entry_levels={len(self.entry_levels)}, "
+            f"exit_levels={len(self.exit_levels)}, "
             f"status={self.status}, open_qty={self.open_quantity})"
         )

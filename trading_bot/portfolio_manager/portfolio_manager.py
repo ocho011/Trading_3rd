@@ -11,7 +11,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional
 
 from trading_bot.core.config_manager import ConfigManager
 from trading_bot.core.event_hub import EventHub, EventType
@@ -25,32 +25,23 @@ from trading_bot.portfolio_manager.portfolio_state import (
 from trading_bot.portfolio_manager.position import (
     Position,
     PositionSide,
-    PositionStatus,
 )
 
 
 class PortfolioManagerError(Exception):
     """Base exception for portfolio manager errors."""
 
-    pass
-
 
 class AccountSyncError(PortfolioManagerError):
     """Exception raised when account synchronization fails."""
-
-    pass
 
 
 class PositionUpdateError(PortfolioManagerError):
     """Exception raised when position updates fail."""
 
-    pass
-
 
 class InsufficientDataError(PortfolioManagerError):
     """Exception raised when insufficient data for portfolio operations."""
-
-    pass
 
 
 @dataclass
@@ -113,7 +104,6 @@ class IPortfolioManager(ABC):
         Returns:
             bool: True if sync successful, False otherwise
         """
-        pass
 
     @abstractmethod
     async def update_position_from_fill(self, fill_data: Dict[str, Any]) -> None:
@@ -125,7 +115,6 @@ class IPortfolioManager(ABC):
         Raises:
             PositionUpdateError: If position update fails
         """
-        pass
 
     @abstractmethod
     def get_portfolio_summary(self) -> Dict[str, Any]:
@@ -134,7 +123,6 @@ class IPortfolioManager(ABC):
         Returns:
             Dict containing portfolio state and metrics
         """
-        pass
 
     @abstractmethod
     def get_position(self, symbol: str) -> Optional[Position]:
@@ -146,7 +134,6 @@ class IPortfolioManager(ABC):
         Returns:
             Position or None if not found
         """
-        pass
 
     @abstractmethod
     async def update_current_prices(self, price_updates: Dict[str, Decimal]) -> None:
@@ -158,7 +145,6 @@ class IPortfolioManager(ABC):
         Raises:
             PortfolioManagerError: If price update fails
         """
-        pass
 
 
 class PortfolioManager(IPortfolioManager):
@@ -704,7 +690,8 @@ class PortfolioManager(IPortfolioManager):
         """String representation of portfolio manager."""
         return (
             f"PortfolioManager(positions={len(self._portfolio_state.positions)} "
-            f"health={self._portfolio_state.health_status.value} running={self._is_running})"
+            f"health={self._portfolio_state.health_status.value} "
+            f"running={self._is_running})"
         )
 
 

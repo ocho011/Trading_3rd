@@ -1,25 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(gh auth:*)",
-      "Bash(brew install:*)",
-      "mcp__task-master-ai__get_tasks",
-      "mcp__task-master-ai__next_task",
-      "mcp__task-master-ai__set_task_status",
-      "mcp__task-master-ai__get_task",
-      "Bash(python3:*)",
-      "Bash(python -m pytest tests/test_event_hub.py -v)",
-      "Bash(python -m pytest tests/test_binance_client.py -v)",
-      "Bash(python -m pytest tests/test_data_processor.py -v)",
-      "Bash(python -m pytest tests/test_position_sizer.py -v)",
-      "mcp__task-master-ai__update_subtask",
-      "Bash(python:*)",
-      "Bash(PYTHONPATH=/Users/osangwon/github/thirdtry python3 dev-files/test_execution_engine_integration.py)",
-      "Bash(PYTHONPATH=. python3 dev-files/message_formatters_demo.py)"
-    ]
+      "Bash(PYTHONPATH=. python3 test_event_subscriptions.py)",
+      "Bash(PYTHONPATH=. python3 dev-files/test_task_10_4_implementation.py)",
+      "Bash(PYTHONPATH=. python3 dev-files/test_final_integration_fixed.py)",
+      "Bash(awk:*)"
+    ],
+    "deny": [],
+    "ask": []
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [

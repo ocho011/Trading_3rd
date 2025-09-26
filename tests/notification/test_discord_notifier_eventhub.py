@@ -9,21 +9,28 @@ import asyncio
 import time
 from decimal import Decimal
 from typing import Any, Dict
-from unittest.mock import AsyncMock, Mock, call, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from trading_bot.core.config_manager import ConfigManager, IConfigLoader
 from trading_bot.core.event_hub import EventHub, EventType
-from trading_bot.execution.execution_engine import (ExecutionResult,
-                                                    OrderStatus)
+from trading_bot.execution.execution_engine import ExecutionResult, OrderStatus
 from trading_bot.notification.discord_notifier import (
-    DiscordNotificationError, DiscordNotifier, IHttpClient)
+    DiscordNotificationError,
+    DiscordNotifier,
+    IHttpClient,
+)
 from trading_bot.notification.message_formatters import (
-    MessageFormatterError, MessageFormatterFactory)
+    MessageFormatterError,
+    MessageFormatterFactory,
+)
 from trading_bot.risk_management.risk_manager import OrderRequest, OrderType
-from trading_bot.strategies.base_strategy import (SignalStrength, SignalType,
-                                                  TradingSignal)
+from trading_bot.strategies.base_strategy import (
+    SignalStrength,
+    SignalType,
+    TradingSignal,
+)
 
 
 class MockConfigLoader(IConfigLoader):
@@ -238,7 +245,7 @@ class TestEventHubSubscription:
 
         # Verify each event type was subscribed with correct handler
         subscribed_events = [
-            call.args[0] for call in mock_event_hub.subscribe.call_args_list
+            call_obj.args[0] for call_obj in mock_event_hub.subscribe.call_args_list
         ]
         assert set(subscribed_events) == set(expected_events)
 
@@ -743,7 +750,8 @@ class TestIntegrationScenarios:
         mock_message_formatter,
         sample_execution_result,
     ):
-        """Test EventHub publishing ORDER_FILLED event and DiscordNotifier handling it."""
+        """Test EventHub publishing ORDER_FILLED event and DiscordNotifier
+        handling it."""
         notifier = DiscordNotifier(
             config_manager, mock_http_client, real_event_hub, mock_message_formatter
         )
@@ -766,7 +774,8 @@ class TestIntegrationScenarios:
     async def test_eventhub_publishes_error_notifier_handles(
         self, config_manager, mock_http_client, real_event_hub, mock_message_formatter
     ):
-        """Test EventHub publishing ERROR_OCCURRED event and DiscordNotifier handling it."""
+        """Test EventHub publishing ERROR_OCCURRED event and DiscordNotifier
+        handling it."""
         notifier = DiscordNotifier(
             config_manager, mock_http_client, real_event_hub, mock_message_formatter
         )
@@ -797,7 +806,8 @@ class TestIntegrationScenarios:
         mock_message_formatter,
         sample_trading_signal,
     ):
-        """Test EventHub publishing TRADING_SIGNAL_GENERATED event and DiscordNotifier handling it."""
+        """Test EventHub publishing TRADING_SIGNAL_GENERATED event and
+        DiscordNotifier handling it."""
         notifier = DiscordNotifier(
             config_manager, mock_http_client, real_event_hub, mock_message_formatter
         )
@@ -1123,8 +1133,7 @@ class TestEdgeCasesAndBoundaryConditions:
         self, config_manager, real_event_hub
     ):
         """Test factory function creates DiscordNotifier with EventHub integration."""
-        from trading_bot.notification.discord_notifier import \
-            create_discord_notifier
+        from trading_bot.notification.discord_notifier import create_discord_notifier
 
         notifier = create_discord_notifier(
             config_manager=config_manager, event_hub=real_event_hub

@@ -8,17 +8,21 @@ and cleanup mechanisms for Discord webhook message queue system.
 import asyncio
 import os
 import tempfile
-import time
 from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
 from trading_bot.notification.message_queue import (
-    InMemoryMessageStorage, MessagePriority, MessageQueue, MessageQueueManager,
-    QueueConfig, QueuedMessage, SqliteMessageStorage,
-    create_message_queue_manager)
+    InMemoryMessageStorage,
+    MessagePriority,
+    MessageQueue,
+    MessageQueueManager,
+    QueueConfig,
+    QueuedMessage,
+    SqliteMessageStorage,
+    create_message_queue_manager,
+)
 
 
 class TestQueuedMessage:
@@ -289,7 +293,7 @@ class TestSqliteMessageStorage:
             # Store message in first instance
             storage1 = SqliteMessageStorage(db_path)
             message = QueuedMessage("Persistent", "https://discord.com/test")
-            message_id = storage1.store_message(message)
+            storage1.store_message(message)
 
             # Create new instance and verify persistence
             storage2 = SqliteMessageStorage(db_path)
@@ -443,7 +447,7 @@ class TestMessageQueue:
         queue = MessageQueue(config, storage)
 
         message = QueuedMessage("Test", "https://discord.com/test", max_retries=3)
-        message_id = await queue.enqueue(message)
+        await queue.enqueue(message)
 
         # Dequeue message
         dequeued = await queue.dequeue()
@@ -591,7 +595,7 @@ class TestMessageQueueManager:
             await manager.enqueue_message(message)
 
             # Process message - should trigger dequeue callback
-            processed = await manager.dequeue_message()
+            await manager.dequeue_message()
 
             # Verify callbacks were called
             enqueue_callback.assert_called_once()

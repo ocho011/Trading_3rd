@@ -5,23 +5,22 @@ Tests portfolio management orchestration, event handling, account synchronizatio
 and integration with exchange client.
 """
 
-import pytest
 import asyncio
-import time
 from decimal import Decimal
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, patch
+
+import pytest
 
 from trading_bot.core.config_manager import ConfigManager
 from trading_bot.core.event_hub import EventHub, EventType
-from trading_bot.market_data.binance_client import IExchangeClient, BinanceError
+from trading_bot.market_data.binance_client import BinanceError
 from trading_bot.portfolio_manager.portfolio_manager import (
     PortfolioManager,
     PortfolioManagerConfig,
     PortfolioManagerError,
     create_portfolio_manager,
 )
-from trading_bot.portfolio_manager.portfolio_state import PortfolioHealthStatus
-from trading_bot.portfolio_manager.position import Position, PositionSide
+from trading_bot.portfolio_manager.position import PositionSide
 
 
 class MockExchangeClient:
@@ -69,22 +68,30 @@ class TestPortfolioManagerConfig:
 
     def test_config_invalid_sync_interval(self):
         """Test config with invalid sync interval."""
-        with pytest.raises(PortfolioManagerError, match="Sync interval must be positive"):
+        with pytest.raises(
+            PortfolioManagerError, match="Sync interval must be positive"
+        ):
             PortfolioManagerConfig(sync_interval_minutes=0)
 
     def test_config_invalid_price_update_interval(self):
         """Test config with invalid price update interval."""
-        with pytest.raises(PortfolioManagerError, match="Price update interval must be positive"):
+        with pytest.raises(
+            PortfolioManagerError, match="Price update interval must be positive"
+        ):
             PortfolioManagerConfig(price_update_interval_seconds=0)
 
     def test_config_negative_commission_rate(self):
         """Test config with negative commission rate."""
-        with pytest.raises(PortfolioManagerError, match="Commission rate cannot be negative"):
+        with pytest.raises(
+            PortfolioManagerError, match="Commission rate cannot be negative"
+        ):
             PortfolioManagerConfig(commission_rate=Decimal("-0.001"))
 
     def test_config_empty_base_currency(self):
         """Test config with empty base currency."""
-        with pytest.raises(PortfolioManagerError, match="Base currency cannot be empty"):
+        with pytest.raises(
+            PortfolioManagerError, match="Base currency cannot be empty"
+        ):
             PortfolioManagerConfig(base_currency="")
 
 
@@ -116,7 +123,9 @@ class TestPortfolioManager:
         )
 
     @pytest.fixture
-    def portfolio_manager(self, portfolio_config, mock_exchange_client, event_hub, config_manager):
+    def portfolio_manager(
+        self, portfolio_config, mock_exchange_client, event_hub, config_manager
+    ):
         """Create portfolio manager for testing."""
         return PortfolioManager(
             config=portfolio_config,
@@ -132,9 +141,14 @@ class TestPortfolioManager:
         assert portfolio_manager._portfolio_state is not None
         assert portfolio_manager._is_running is False
 
-    def test_portfolio_manager_creation_invalid_config(self, mock_exchange_client, event_hub, config_manager):
+    def test_portfolio_manager_creation_invalid_config(
+        self, mock_exchange_client, event_hub, config_manager
+    ):
         """Test portfolio manager creation with invalid config."""
-        with pytest.raises(PortfolioManagerError, match="Config must be PortfolioManagerConfig instance"):
+        with pytest.raises(
+            PortfolioManagerError,
+            match="Config must be PortfolioManagerConfig instance",
+        ):
             PortfolioManager(
                 config="invalid_config",
                 exchange_client=mock_exchange_client,
@@ -175,7 +189,9 @@ class TestPortfolioManager:
         assert portfolio_manager._portfolio_state.get_balance("BTC") is not None
 
     @pytest.mark.asyncio
-    async def test_sync_account_balance_exchange_error(self, portfolio_config, event_hub, config_manager):
+    async def test_sync_account_balance_exchange_error(
+        self, portfolio_config, event_hub, config_manager
+    ):
         """Test account balance sync with exchange error."""
         failing_client = MockExchangeClient(should_fail=True)
         portfolio_manager = PortfolioManager(
@@ -189,7 +205,9 @@ class TestPortfolioManager:
         assert success is False
 
     @pytest.mark.asyncio
-    async def test_sync_account_balance_disabled(self, mock_exchange_client, event_hub, config_manager):
+    async def test_sync_account_balance_disabled(
+        self, mock_exchange_client, event_hub, config_manager
+    ):
         """Test account balance sync when balance tracking disabled."""
         config = PortfolioManagerConfig(enable_balance_tracking=False)
         portfolio_manager = PortfolioManager(
@@ -339,7 +357,10 @@ class TestPortfolioManager:
 
     def test_update_config_invalid(self, portfolio_manager):
         """Test updating with invalid configuration."""
-        with pytest.raises(PortfolioManagerError, match="Config must be PortfolioManagerConfig instance"):
+        with pytest.raises(
+            PortfolioManagerError,
+            match="Config must be PortfolioManagerConfig instance",
+        ):
             portfolio_manager.update_config("invalid_config")
 
     @pytest.mark.asyncio
@@ -349,7 +370,9 @@ class TestPortfolioManager:
         portfolio_manager._config.enable_position_tracking = True
 
         # Subscribe to events (reinitialize subscription)
-        event_hub.subscribe(EventType.ORDER_FILLED, portfolio_manager._handle_order_filled)
+        event_hub.subscribe(
+            EventType.ORDER_FILLED, portfolio_manager._handle_order_filled
+        )
 
         # Publish ORDER_FILLED event
         event_data = {
@@ -423,14 +446,18 @@ class TestPortfolioManagerFactory:
 
     def test_create_portfolio_manager_error(self):
         """Test portfolio manager creation with error."""
-        with patch('trading_bot.portfolio_manager.portfolio_manager.PortfolioManager') as mock_manager:
+        with patch(
+            "trading_bot.portfolio_manager.portfolio_manager.PortfolioManager"
+        ) as mock_manager:
             mock_manager.side_effect = Exception("Creation failed")
 
             exchange_client = MockExchangeClient()
             event_hub = EventHub()
             config_manager = Mock(spec=ConfigManager)
 
-            with pytest.raises(PortfolioManagerError, match="Failed to create portfolio manager"):
+            with pytest.raises(
+                PortfolioManagerError, match="Failed to create portfolio manager"
+            ):
                 create_portfolio_manager(
                     exchange_client=exchange_client,
                     event_hub=event_hub,
@@ -529,8 +556,10 @@ class TestPortfolioManagerIntegration:
         await manager.update_position_from_fill(large_loss_fill)
 
         # Update to losing price (significant loss)
-        await manager.update_current_prices({"BTCUSDT": Decimal("30000.0")})  # -40% loss
+        await manager.update_current_prices(
+            {"BTCUSDT": Decimal("30000.0")}
+        )  # -40% loss
 
         # Health status should reflect the loss
-        health_status = manager._portfolio_state.health_status
+        manager._portfolio_state.health_status
         # Note: Exact health status depends on implementation thresholds
