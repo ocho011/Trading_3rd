@@ -738,11 +738,24 @@
             "testStrategy": "Populate `trades.csv` and `portfolio_history.csv` with sample data covering wins, losses, and open positions. Run the `analysis/analyzer.ipynb` script. Verify that all calculations are correct and that all specified charts and metrics are generated without errors."
           }
         ]
+      },
+      {
+        "id": 12,
+        "title": "Fix WebSocket Combined Stream URL Formation",
+        "description": "Correct the WebSocket connection logic to properly format the URL for combined streams on the Binance Testnet, resolving the HTTP 404 connection error.",
+        "details": "The current implementation in `trading_bot/data/websocket_manager.py` incorrectly constructs the WebSocket URL for combined streams. It concatenates stream names directly into the URL path (e.g., `/ws/stream1/stream2`), which is not a valid Binance API endpoint and results in an HTTP 404 error. The fix involves modifying the URL construction logic to adhere to the official Binance documentation format: `wss://<base_url>/stream?streams=<stream1>/<stream2>`. \n\n1. **Locate the Bug:** Open `trading_bot/data/websocket_manager.py` and find the method responsible for creating the connection URL (likely `connect` or a helper method).\n2. **Modify URL Construction:**\n   - The current logic probably looks like this: `full_url = f\"{self.base_url}/ws/{'/'.join(self.streams)}\"`.\n   - Change this to: `stream_names = '/'.join(self.streams)` followed by `full_url = f\"{self.base_url}/stream?streams={stream_names}\"`.\n3. **Verify Configuration:** Ensure the base WebSocket URL in the configuration files (e.g., `config/config.yml`) is set to `wss://testnet.binance.vision` without any trailing slashes or paths.",
+        "testStrategy": "1. **Unit Test:** Add a unit test to the test suite for `WebSocketManager`. This test should instantiate the manager with a sample list of streams (e.g., `['btcusdt@kline_1m', 'btcusdt@ticker']`) and assert that the generated connection URL correctly matches the expected format: `wss://testnet.binance.vision/stream?streams=btcusdt@kline_1m/btcusdt@ticker`.\n2. **Integration Test:** Run the main application using the testnet configuration: `python trading_bot/main.py --config config/config.yml`.\n3. **Verification:**\n   - Monitor the application logs to confirm the absence of `404` connection errors.\n   - Look for log entries indicating a successful WebSocket connection and the start of data reception.\n   - Verify that the `DataProcessor` is receiving and processing data from all subscribed streams by checking for subsequent log messages or events.",
+        "status": "done",
+        "dependencies": [
+          10
+        ],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-09-21T14:07:37.892Z",
-      "updated": "2025-09-26T22:48:07.599Z",
+      "updated": "2025-09-27T03:18:46.013Z",
       "description": "Tasks for master context"
     }
   }

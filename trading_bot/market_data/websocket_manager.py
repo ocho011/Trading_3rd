@@ -173,7 +173,7 @@ class BinanceWebSocketManager(IWebSocketManager):
 
     # Binance WebSocket URLs
     MAINNET_WS_URL = "wss://stream.binance.com:9443/ws/"
-    TESTNET_WS_URL = "wss://testnet.binance.vision/ws/"
+    TESTNET_WS_URL = "wss://stream.testnet.binance.vision/"
 
     def __init__(
         self,
@@ -454,7 +454,7 @@ class BinanceWebSocketManager(IWebSocketManager):
         base_url = self._get_websocket_url()
         stream_names = self._get_stream_names()
         stream_path = "/".join(stream_names)
-        ws_url = f"{base_url}{stream_path}"
+        ws_url = f"{base_url}stream?streams={stream_path}"
 
         self._logger.info(f"Connecting to WebSocket: {ws_url}")
 
@@ -484,7 +484,7 @@ class BinanceWebSocketManager(IWebSocketManager):
         base_url = self._get_websocket_url()
         stream_names = self._get_stream_names()
         stream_path = "/".join(stream_names)
-        ws_url = f"{base_url}{stream_path}"
+        ws_url = f"{base_url}stream?streams={stream_path}"
 
         self._logger.info(f"Connecting to WebSocket: {ws_url}")
 
